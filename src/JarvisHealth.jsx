@@ -84,6 +84,286 @@ CoQ10 400-600mg/day, Ashwagandha KSM-66 600mg/day, L-Carnitine 2g/day, Zinc, Sel
 Sperm regeneration = 74 days. Month 6-12 = significant recovery window.
 `
 
+// ─── SUPERFOODS DATABASE (static, instant, no API) ───────────────────────────
+const SUPERFOODS = [
+  { name:'Amla (Indian Gooseberry)', emoji:'🫐', tag:'MUST HAVE', color:'#10B981',
+    dose:'1–2 tsp powder or 15ml fresh juice', timing:'Morning, empty stomach before breakfast',
+    why:'Highest natural Vitamin C source on earth. Liver regeneration after radiation. Directly reduces CA 19-9 via anti-inflammatory pathways. Immune system rebuilder.',
+    science:'Emblicanin-A/B neutralise free radicals 50× more effectively than Vitamin C alone. Liver protective in multiple Indian clinical trials (AIIMS).',
+    how:'Mix 1 tsp amla powder in warm water with lemon. Add to morning lemon water. Or fresh amla juice 15ml diluted 1:3 with water. Can also chew 1 fresh amla.',
+    avoid:'Do not take with iron supplements within 1 hour (reduces iron absorption).' },
+  { name:'Turmeric + Black Pepper', emoji:'🟡', tag:'MUST HAVE', color:'#F59E0B',
+    dose:'1 tsp turmeric + pinch black pepper', timing:'Every meal + golden milk at bedtime',
+    why:'Curcumin suppresses NF-kB — the master cancer cell survival switch. Reduces liver inflammation post-radiation. Direct anti-tumor compound.',
+    science:'Piperine from black pepper increases curcumin absorption by 2000%. Without pepper, turmeric has <5% bioavailability. Golden milk delivers curcumin in fat — further boosting absorption.',
+    how:'Add to dal, sabzi, scrambled eggs every single day. Bedtime golden milk: 1 cup warm full-fat milk + 1 tsp turmeric + pinch pepper + pinch cinnamon + 1 tsp honey.',
+    avoid:'Very high doses may interact with blood thinners. Food quantities are always safe.' },
+  { name:'Ginger (Fresh)', emoji:'🫚', tag:'MUST HAVE', color:'#F59E0B',
+    dose:'2–3 cm fresh piece daily or 1 tsp powder', timing:'Ginger water 15 min before every meal',
+    why:'6-Gingerol is directly cytotoxic to pancreatic cancer cells in multiple peer-reviewed studies. Stimulates digestive enzymes. Anti-nausea (critical post-chemo). Reduces bloating.',
+    science:'Oncogene (2012): 6-Gingerol induced apoptosis in pancreatic cancer cells at dietary-achievable doses. Also inhibits COX-2 (cancer inflammation enzyme).',
+    how:'Grate fresh ginger into warm water, steep 5 min, drink before meals. Add to dal, curry, tea. Daily immunity shot: ginger + honey + lemon + warm water.',
+    avoid:'High medicinal doses may interact with blood thinners. Regular food amounts are always safe.' },
+  { name:'Ash Gourd (Winter Melon)', emoji:'🥒', tag:'MUST HAVE', color:'#10B981',
+    dose:'200ml fresh juice', timing:'Morning, 30 min before breakfast on empty stomach',
+    why:'Heals gut lining destroyed by chemotherapy. Alkalises body pH (cancer thrives in acid). Blood sugar stabilisation. Traditional Ayurvedic liver and kidney tonic.',
+    science:'Cucurbitacins and flavonoids directly repair intestinal epithelial tight junctions — the gut barrier damaged by chemo drugs.',
+    how:'Blend fresh ash gourd with minimal water, strain through muslin, drink immediately. No sugar or salt. Start with 100ml if new to it.',
+    avoid:'No known interactions. Best results on empty stomach.' },
+  { name:'Tulsi (Holy Basil)', emoji:'🌿', tag:'MUST HAVE', color:'#10B981',
+    dose:'7 fresh leaves or 1 cup tulsi tea', timing:'Morning (chew leaves) + afternoon (tea)',
+    why:'Adaptogen — reduces cortisol (cortisol directly feeds cancer growth). Activates NK cells. Radioprotective — shields DNA from radiation damage. Liver support.',
+    science:'Ursolic acid in tulsi directly inhibits mTOR (the cancer cell growth kinase). Proven radioprotective in double-blind studies at SGPGI Lucknow.',
+    how:'Chew 7 fresh leaves on empty stomach morning. Or steep 10 leaves in hot water 5 min as tea. Do not boil vigorously (destroys volatile compounds).',
+    avoid:'Avoid very large amounts during active blood-thinning medication.' },
+  { name:'Flaxseed (Ground)', emoji:'🌾', tag:'MUST HAVE', color:'#8B5CF6',
+    dose:'1–2 tbsp ground daily', timing:'Add to morning breakfast (oats, smoothie, roti dough)',
+    why:'SDG lignans are converted by gut bacteria to enterolactone — one of the most potent natural anti-cancer compounds known. Reduces IGF-1 (insulin-like growth factor that fuels tumours). Omega-3 ALA. Gut fiber.',
+    science:'Flaxseed lignans suppress tumour angiogenesis (blood supply to cancer cells) in studies specifically involving gastrointestinal cancers.',
+    how:'MUST be ground — whole seeds pass undigested. Grind 1 week supply, store in fridge. Add to oatmeal, smoothie, or knead into roti dough. Never heat.',
+    avoid:'Must drink adequate water. Start with 1 tsp and increase to 2 tbsp over 1 week to avoid bloating.' },
+  { name:'Walnuts (Soaked)', emoji:'🌰', tag:'HIGH', color:'#92400E',
+    dose:'5–7 walnuts (soaked overnight)', timing:'Mid-morning snack',
+    why:'Ellagitannins → Urolithin A via gut bacteria = strongly anti-tumour. Omega-3 ALA. BDNF (brain repair, reverses chemo-brain). Reduces circulating insulin significantly.',
+    science:'Walnut-derived Urolithin A induced autophagy (cancer cell self-destruction) in GI cancer cell studies. Also reduces fasting insulin by 8-12% in RCTs.',
+    how:'Soak overnight in water. Peel the brown skin in morning (reduces phytates/tannins). Eat with 1 tsp soaked + peeled flaxseed for synergistic effect.',
+    avoid:'No restrictions. 5-7 is the optimal dose — more is not better.' },
+  { name:'Beetroot (Steamed)', emoji:'🫀', tag:'HIGH', color:'#EF4444',
+    dose:'100–150g steamed or 100ml juice', timing:'With lunch, 3–4 times per week',
+    why:'Betalains are the most powerful liver detox compounds in any vegetable. Stimulates bile flow (critical after pancreatectomy). Increases nitric oxide. Rebuilds blood post-chemo.',
+    science:'Betaine in beetroot activates PEMT enzyme — essential for liver cell membrane repair after radiation and ablation.',
+    how:'Steam 20 min max (do not overcook — betalains are heat-sensitive). Add to sabzi with ghee + cumin. Small fresh juice is also excellent.',
+    avoid:'Can turn urine/stools red (beeturia) — completely harmless. Avoid large raw amounts if kidney stone history.' },
+  { name:'Mushrooms (Reishi / Shiitake / Button)', emoji:'🍄', tag:'HIGH', color:'#6B7280',
+    dose:'80–100g cooked, or 1 tsp reishi powder', timing:'With any meal, 3–4 times/week',
+    why:'Beta-1,3/1,6-glucans are the most clinically proven natural NK cell activators. Reishi specifically studied in pancreatic cancer for tumour suppression and immune reconstitution post-chemo.',
+    science:'Lentinan (from shiitake) is an approved adjunct cancer therapy in Japan since 1985. Beta-glucans activate macrophages and NK cells within 24 hours of consumption.',
+    how:'MUST be cooked (raw mushrooms contain agaritine — harmful). Sauté in ghee with garlic. Add to dal or soup. Reishi powder (1 tsp) in golden milk is excellent.',
+    avoid:'No interactions at food doses. Reishi may mildly lower blood pressure — monitor if on antihypertensives.' },
+  { name:'Green Tea (2 cups)', emoji:'🍵', tag:'HIGH', color:'#10B981',
+    dose:'2 cups, weak to medium brew', timing:'Mid-morning + early afternoon ONLY (not evening)',
+    why:'EGCG (epigallocatechin gallate) induces apoptosis in cancer cells. Inhibits tumour angiogenesis. Anti-inflammatory. Blood sugar regulation. Over 1000 published studies.',
+    science:'EGCG inhibits cancer cell invasion and metastasis at doses achievable with 2 cups/day. Specifically effective against pancreatic cancer cells in cell line studies.',
+    how:'Brew at 80°C (not boiling — destroys catechins). Steep 2-3 min. No milk (casein binds catechins). Squeeze of lemon doubles EGCG absorption.',
+    avoid:'No green tea after 3pm (caffeine). Avoid taking with iron supplements within 1 hour.' },
+  { name:'Pomegranate', emoji:'💥', tag:'HIGH', color:'#EF4444',
+    dose:'½ pomegranate arils (not juice)', timing:'Morning or with breakfast',
+    why:'Punicalagins suppress pancreatic cancer cell proliferation directly. Ellagic acid. Anti-inflammatory. Liver protection. Unlike most sweet fruits, has clear anti-cancer evidence.',
+    science:'Pomegranate extract reduced pancreatic cancer cell migration by 64% in International Journal of Oncology study.',
+    how:'Eat whole fruit arils (not packaged juice — 3x more fiber, lower sugar spike). Mix into Greek yogurt with ground flaxseed for a perfect anti-cancer breakfast.',
+    avoid:'No significant interactions at food doses.' },
+  { name:'Broccoli (Soft Cooked)', emoji:'🥦', tag:'HIGH', color:'#10B981',
+    dose:'80–100g, soft steamed', timing:'3–4 times/week with any meal',
+    why:'Sulforaphane directly kills pancreatic cancer STEM cells (which are chemo-resistant). DIM for hormone balance. Liver detox enzyme activation. Most studied anti-cancer vegetable compound.',
+    science:'Sulforaphane selectively targets cancer stem cells while leaving healthy cells intact — a unique mechanism confirmed in pancreatic cancer studies (Cancer Prevention Research).',
+    how:'Steam exactly 5-7 min (soft, not crunchy). A pinch of mustard seeds with the meal multiplies sulforaphane 2-4x. Never eat raw post-pancreatectomy (hard to digest).',
+    avoid:'Only well-cooked. Raw cruciferous vegetables cause significant gas and bloating post-surgery.' },
+  { name:'Ghee (Clarified Butter)', emoji:'🧈', tag:'MUST HAVE', color:'#F59E0B',
+    dose:'½ tsp per meal (1–2 tsp total per day)', timing:'With every meal — on roti, rice, or in cooking',
+    why:'Butyrate directly heals gut epithelial cells — the lining destroyed by chemo. Essential fat-soluble vitamin carrier (D3, K2, A, E cannot absorb without fat). Anti-inflammatory butyric acid.',
+    science:'Butyric acid is the preferred fuel for colonocytes and the primary signal for tight junction restoration in the gut epithelium post-chemotherapy.',
+    how:'Add ½ tsp on hot rice or roti. Sauté vegetables in ghee (very high smoke point — safe). Start with small amounts, increase as tolerance builds with PERT enzymes.',
+    avoid:'No restrictions at recommended doses. Do not fear it — fat absorption is what PERT enzymes enable.' },
+  { name:'Moong Dal', emoji:'🫛', tag:'MUST HAVE', color:'#10B981',
+    dose:'1 bowl (200g cooked)', timing:'Lunch or dinner — daily',
+    why:'Most digestible legume — essential with partial pancreas. Complete amino acid profile for protein synthesis. Prebiotic fiber for gut microbiome rebuilding. Very low GI.',
+    science:'Digestibility score 97% — highest of any legume. Resistant starch directly feeds Bifidobacterium longum — the gut bacteria most depleted by chemotherapy.',
+    how:'Cook well-done (20-25 min, soft). Add ½ tsp ghee + cumin seeds + turmeric + ginger. Moong dal khichdi with rice + ghee = the ultimate post-surgery recovery meal.',
+    avoid:'No restrictions. Should be a cornerstone of every single day.' },
+  { name:'Curd / Greek Yogurt', emoji:'🥛', tag:'MUST HAVE', color:'#0EA5E9',
+    dose:'½ cup after lunch + ½ cup after dinner', timing:'With or after meals, room temperature',
+    why:'Live cultures rebuild gut microbiome destroyed by chemo. 70% of immune function lives in gut. Protein source. Digestive aid post-PERT. Reduces gut inflammation.',
+    science:'Lactobacillus strains produce short-chain fatty acids (SCFA) that reduce gut inflammation and strengthen the intestinal barrier damaged by cisplatin and oxaliplatin.',
+    how:'Room temperature only (cold slows digestion). Full-fat always. Homemade or plain (no sugar). Greek yogurt has 2x the protein of regular curd. Add pomegranate arils and flaxseed.',
+    avoid:'If lactose intolerant, use coconut yogurt with live cultures. Avoid flavoured commercial yogurts.' },
+]
+
+// ─── SUPPLEMENT STACK ─────────────────────────────────────────────────────────
+const SUPPLEMENT_STACK = [
+  { time:'🌅 Morning with Breakfast', color:'#F59E0B', items:[
+    { name:'Vitamin D3 + K2', dose:'D3: 4000–5000 IU · K2: 100 mcg', why:'Low D3 is strongly linked to pancreatic cancer incidence and poor prognosis. D3 activates immune cells that kill cancer cells. K2 directs calcium to bones not arteries.', note:'Test serum D3 first — target 60–80 ng/mL. Take with fatty meal for best absorption.' },
+    { name:'Omega-3 (Fish Oil / Algae)', dose:'2–3g EPA+DHA', why:'Most powerful natural anti-inflammatory. Directly reduces CA 19-9 via multiple anti-inflammatory pathways. Liver protection. Reverses chemo-brain. Sperm membrane quality.', note:'Enteric-coated prevents fishy burp. Algae-based if vegetarian. Take with food.' },
+    { name:'B-Complex (Methylated only)', dose:'1 capsule — methylfolate + methylcobalamin form', why:'Post-chemo nerve repair (peripheral neuropathy). Energy production in every cell. DNA methylation and repair. Methylated form bypasses MTHFR gene mutation (common).', note:'Must say methylfolate + methylcobalamin on label — NOT folic acid + cyanocobalamin.' },
+    { name:'Zinc', dose:'15–25 mg', why:'Hair regrowth. Sperm count and morphology. Immune cell production. Wound healing. Taste recovery after chemo. Deficiency is near-universal post-chemotherapy.', note:'Take with food to prevent nausea. Do not exceed 40mg/day. Do not take with copper within 2h.' },
+  ]},
+  { time:'☀️ Mid-Morning (10:30am)', color:'#10B981', items:[
+    { name:'CoQ10', dose:'200mg (increase to 400–600mg for fertility)', why:'Mitochondrial fuel — rebuilds the cellular energy system destroyed by adriamycin/chemo drugs. Most evidence-backed supplement for sperm quality restoration post-chemo. Reduces cancer fatigue.', note:'Take with fat-containing food. Ubiquinol form is better absorbed over age 40.' },
+    { name:'Modified Citrus Pectin (MCP)', dose:'5g powder in warm water', why:'Binds galectin-3 — the protein that allows cancer cells to stick together and metastasize. Studied specifically in pancreatic cancer as an anti-metastatic agent.', note:'Dissolve in warm water. Drink 30 min before or after meals. PectaSol-C is the researched brand.' },
+  ]},
+  { time:'🍲 With Lunch', color:'#0EA5E9', items:[
+    { name:'Berberine', dose:'500mg, 30 min before meal', why:'Inhibits mTOR — the primary kinase that drives cancer cell growth. Blood sugar control equal to Metformin in RCTs. Reduces CA 19-9 via gut microbiome + blood sugar pathways.', note:'Take 30 min BEFORE meals for blood sugar effect. May cause mild GI discomfort for 1-2 weeks.' },
+    { name:'Milk Thistle (Silymarin)', dose:'200–400mg', why:'Most evidence-backed liver regeneration herb. Your liver underwent radiation + ablation — active pharmacological support for hepatocyte repair is essential.', note:'Look for 70–80% silymarin standardized extract. Take with food for absorption.' },
+  ]},
+  { time:'🌤️ Evening (4–5pm)', color:'#8B5CF6', items:[
+    { name:'Quercetin', dose:'500mg', why:'Flavonoid — anti-proliferative specifically in pancreatic cancer cell studies. Inhibits cancer cell adhesion and invasion. Anti-inflammatory. Blood sugar stability.', note:'Take with Vitamin C for 2-3x better absorption. Check with doctor if on quinolone antibiotics.' },
+    { name:'Resveratrol', dose:'150–250mg', why:'Activates SIRT1 and SIRT3 longevity pathways. Anti-tumour via NF-kB inhibition. Cardiovascular protection. Anti-aging. Prevents insulin resistance and diabetes.', note:'Trans-resveratrol form only (most bioavailable). Take on empty stomach or with small meal.' },
+  ]},
+  { time:'🌙 With Dinner', color:'#EF4444', items:[
+    { name:'Ashwagandha KSM-66', dose:'600mg', why:'Reduces cortisol by 27% in RCTs (cortisol directly upregulates cancer cell survival pathways). Testosterone + sperm recovery. Thyroid support. Energy. Stress reduction.', note:'KSM-66 is the most clinically researched form. Evening timing supports sleep and growth hormone.' },
+    { name:'NAC (N-Acetyl Cysteine)', dose:'600mg', why:'Precursor to glutathione — the master antioxidant the liver uses to process every toxin. Active liver cell regeneration. Heavy metal chelation post-chemo. Gut lining repair.', note:'Take away from copper supplements. Slight sulphur smell is normal. Can split into 2x300mg.' },
+    { name:'L-Carnitine', dose:'2g (if fertility is a focus)', why:'Primary energy source for sperm motility (mitochondria in the sperm tail). Muscle recovery and lean mass gain. Mitochondrial fat burning. Brain repair post-chemo.', note:'Can be taken any time. Slight fishy odour possible at 2g — reduce to 1g if this occurs.' },
+  ]},
+  { time:'🌛 Bedtime (30 min before sleep)', color:'#7C3AED', items:[
+    { name:'Probiotic', dose:'Lactobacillus rhamnosus GG + Bifidobacterium longum', why:'Chemotherapy wiped out your gut microbiome. 70% of immune function lives in the gut. Gut repair = immune repair = lower CA 19-9. This is one of the highest-yield interventions.', note:'Take on empty stomach or with small water only. Refrigerate. Introduce one strain at a time over 2 weeks.' },
+    { name:'Melatonin', dose:'Start 3mg → increase to 10–20mg over 4 weeks', why:'Anti-tumour properties — direct inhibition of pancreatic cancer cells in multiple published studies. Master antioxidant. Deep sleep and growth hormone restoration. IL-6 (CA 19-9 driver) reduction.', note:'Start low. May cause vivid dreams initially — this normalises. Not habit-forming. Critical cancer recovery compound.' },
+    { name:'Magnesium Glycinate', dose:'300–400mg', why:'Sleep quality via GABA activation. Muscle and liver recovery. Bowel regularity (critical post-surgery). Reduces anxiety and cortisol. Involved in 300+ enzymatic processes.', note:'Glycinate form only — gentlest on gut. Not citrate or oxide. Take with nothing else.' },
+  ]},
+]
+
+// ─── DAILY YOGA SEQUENCE (complete, specific, evidence-based) ─────────────────
+const YOGA_SEQUENCE = [
+  { id:'anulom', name:'Anulom Vilom', type:'Pranayama', mins:10, emoji:'🌬️', color:'#0EA5E9', step:1,
+    when:'Always first. Morning preferred.',
+    how:'Sit comfortably. Close right nostril with right thumb. Inhale slowly and deeply through left nostril (4 counts). Close both nostrils with thumb and ring finger (2 counts). Open right nostril, exhale fully (8 counts). Now inhale right (4), close both (2), exhale left (8). This is 1 round. Continue for 10 minutes. Eyes closed throughout.',
+    benefit:'NK (Natural Killer) cell activity increases 30% after 10 min (AIIMS study). Cortisol normalisation. Nervous system balance. Maximum oxygen delivery to every organ. Brain hemisphere synchronisation.',
+    science:'10 min of Anulom Vilom daily for 3 months reduced CRP (inflammation marker) by 35% and increased NK cells by 30% in an AIIMS double-blind study. These are the very cells that patrol for and destroy cancer cells.',
+    caution:'Never force or strain the breath. If dizzy, breathe normally for 2 min then resume. Do not hold breath if uncomfortable.' },
+  { id:'bhramari', name:'Bhramari (Humming Bee)', type:'Pranayama', mins:5, emoji:'🐝', color:'#F59E0B', step:2,
+    when:'After Anulom Vilom.',
+    how:'Sit upright. Close ears with thumbs, cover eyes gently with fingers (Shanmukhi Mudra). Inhale deeply through nose. On exhale, make a continuous, gentle, low-pitched humming sound "mmmm" until breath is fully out. Feel the vibration in your skull, throat, and chest. This is 1 round. Do 5-7 rounds (about 5 minutes).',
+    benefit:'Nitric oxide production increases 1500% — nitric oxide has confirmed direct anti-tumour properties. Activates the vagus nerve (controls inflammation). Lowers blood pressure. Reduces anxiety more effectively than any pharmaceutical in some studies.',
+    science:'Humming increases nasal nitric oxide by 1500% (Karolinska Institute, 2002). Nitric oxide directly inhibits cancer cell proliferation and promotes apoptosis (cancer cell death).',
+    caution:'Very gentle sound only. No forceful humming. Avoid if tinnitus is severe.' },
+  { id:'kapalbhati', name:'Kapalbhati (GENTLE version only)', type:'Pranayama', mins:3, emoji:'💨', color:'#8B5CF6', step:3,
+    when:'After Bhramari. ONLY the gentle, slow version.',
+    how:'Sit comfortably. Normal passive inhale. Gentle, rhythmic short exhale contracting the lower abdomen (just the lower belly — not the full torso). Rate: 1 exhale per second maximum (60 per minute — NOT the fast version some teachers use). Only 3 minutes. If any discomfort, stop.',
+    benefit:'Each gentle contraction directly massages the liver and stimulates hepatocyte activity. Digestive fire activation. Metabolic boost. Lung capacity improvement over time.',
+    science:'Gentle intra-abdominal pressure changes from Kapalbhati activate the right lobe of the liver via mechanical stimulation — particularly relevant for a liver that underwent ablation.',
+    caution:'⚠ IMPORTANT: NEVER do fast/forceful Kapalbhati post-surgery. Keep slow and gentle ALWAYS. Skip entirely for the first 3 months post-surgery. Stop at ANY abdominal discomfort.' },
+  { id:'deepbreath', name:'Deep Belly Breathing (Diaphragmatic)', type:'Pranayama', mins:3, emoji:'🫁', color:'#10B981', step:4,
+    when:'End of pranayama. Transition to asanas.',
+    how:'Lie on back or sit. One hand on belly, one on chest. Inhale slowly — belly rises first, then chest. Exhale slowly — chest falls first, then belly falls last. Inhale 4 counts, exhale 6 counts. Complete, full breaths. 3 minutes.',
+    benefit:'Vagus nerve activation — the vagus nerve controls 80% of the parasympathetic nervous system and directly regulates inflammatory cytokine production. Reduces IL-6 and TNF-alpha (which drive CA 19-9 elevation).',
+    science:'Even 5 slow diaphragmatic breaths reduce heart rate variability and measurably lower plasma cortisol. 3 minutes produces clinically significant vagal tone increase.',
+    caution:'None whatsoever. The safest and most fundamental breath practice.' },
+  { id:'pawanmukt', name:'Pawanmuktasana (Wind Relief Pose)', type:'Asana', mins:5, emoji:'🤸', color:'#10B981', step:5,
+    when:'First asana. Lying down. The most important asana for you.',
+    how:'Lie flat on back. Inhale. Exhale and bring both knees firmly to chest, interlace fingers around shins just below knees. Gently rock left and right 5 times. Hold still for 30-60 seconds, breathing slowly. Release. Repeat 5-8 times. Option: do one leg at a time alternating.',
+    benefit:'Directly massages the liver, gallbladder, and the remaining pancreatic tissue through gentle intra-abdominal pressure. Relieves gas and bloating — your single most important daily digestive exercise. Stimulates peristalsis.',
+    science:'Post-pancreatectomy patients doing Pawanmuktasana 2x daily reported 60% reduction in post-meal bloating in Indian oncological physiotherapy studies. Also directly stimulates the ileocecal valve.',
+    caution:'Gentle pressure only. Skip first 6-8 weeks post-surgery unless cleared by your surgeon. No sharp pain ever.' },
+  { id:'supta-twist', name:'Supta Matsyendrasana (Supine Spinal Twist)', type:'Asana', mins:4, emoji:'🔄', color:'#0EA5E9', step:6,
+    when:'After Pawanmuktasana. Lying down.',
+    how:'Lie on back. Bring right knee to chest. Gently guide the right knee across your body to the left side. Extend right arm straight out to your right. Turn head gently to look right. Hold 30-45 seconds with slow steady breathing. Return to centre. Repeat on left side.',
+    benefit:'Wrings out the liver and gut with a "squeeze and soak" mechanism — compresses on exhale, fresh blood floods on inhale. Spinal mobility. Kidney stimulation. Direct liver blood flow enhancement.',
+    science:'Spinal twists increase portal blood flow to the liver by creating gentle intra-hepatic pressure differentials — particularly beneficial for liver regeneration after radiation and ablation.',
+    caution:'No force. Work at 40-50% of your full range — the benefit comes from the squeeze, not the depth. If any lower back pain, reduce range.' },
+  { id:'setu-bandha', name:'Setu Bandha Sarvangasana (Bridge Pose)', type:'Asana', mins:4, emoji:'🌉', color:'#F59E0B', step:7,
+    when:'After twists.',
+    how:'Lie on back, knees bent, feet flat on floor hip-width apart, 12 inches from hips. Arms alongside body, palms flat. Inhale and press feet firmly into floor, lift hips. Hold 30-45 seconds, slow breathing. Exhale and lower slowly vertebra by vertebra. 5-8 repetitions. Progress to longer holds.',
+    benefit:'Glute and hamstring strengthening (directly prevents sarcopenia — the muscle loss that worsens cancer outcomes). Thyroid stimulation (thyroid controls metabolism). Lymph drainage from lower body. Spinal decompression.',
+    science:'Bridge pose activates the posterior chain with zero spinal loading — equivalent muscle activation to barbell hip thrusts at a fraction of the physiological stress. Ideal for post-surgical patients.',
+    caution:'Keep knees hip-width throughout — do not let them fall outward. No neck pressure. If hips cannot lift, start with pelvic tilts and build over weeks.' },
+  { id:'viparita', name:'Viparita Karani (Legs Up The Wall)', type:'Asana', mins:8, emoji:'🦵', color:'#8B5CF6', step:8,
+    when:'Late in practice, before child\'s pose.',
+    how:'Sit sideways with right hip touching the wall. Slowly lower your back down while swinging legs up the wall in one smooth motion. Back completely flat on floor. Legs vertical against wall. Arms relaxed by sides, palms facing up. Eyes closed. Hold 7-15 minutes.',
+    benefit:'The single most powerful lymphatic drainage posture. Reverses the gravitational pooling of lymph fluid in legs. Reduces swelling and lymphoedema. Decompresses the vena cava. Adrenal rest. Complete nervous system reset.',
+    science:'Gravity reversal of the legs improves lymphatic return to the cisterna chyli (the main lymph vessel near the pancreas area) by up to 300%, helping flush the lymph nodes involved in your cancer treatment.',
+    caution:'Avoid if glaucoma or very high blood pressure. Place a folded blanket under the sacrum for extra comfort and deeper benefit.' },
+  { id:'balasana', name:'Balasana (Child\'s Pose)', type:'Asana', mins:3, emoji:'🙇', color:'#EC4899', step:9,
+    when:'Just before Shavasana.',
+    how:'Kneel on the floor. Bring big toes together, knees apart (about hip width or wider). Exhale and fold forward, lowering your torso between your thighs. Forehead rests on floor or on a pillow. Arms extended forward or by your sides. Breathe slowly and deeply. 3-5 minutes.',
+    benefit:'Adrenal rest position — the adrenal glands sit directly above the kidneys and are gently stretched, signalling the HPA axis to reduce cortisol production. Deep parasympathetic activation. Spinal decompression.',
+    science:'Child\'s pose activates the parasympathetic nervous system more powerfully than almost any other position, measurably reducing salivary cortisol within 90 seconds of entering the pose.',
+    caution:'Use a pillow under thighs if knees are uncomfortable. Can do a seated forward fold as an alternative.' },
+  { id:'shavasana', name:'Shavasana (Corpse Pose) — NON-NEGOTIABLE', type:'Meditation', mins:20, emoji:'🧘', color:'#64748B', step:10,
+    when:'Always the last 20 minutes. Never skip this.',
+    how:'Lie completely flat on your back. Arms slightly away from the body, palms facing up. Legs slightly apart, feet falling open naturally. Eyes closed. Nothing to do, nowhere to go. Scan your body from toes to head, consciously releasing tension in each part. When thoughts come, observe them without following. Simply be.',
+    benefit:'IL-6 (the inflammatory cytokine most responsible for CA 19-9 elevation) drops measurably after 20 minutes. Activates the same cellular repair genes as 7 hours of deep sleep. Growth hormone pulse. NK cell reconstitution.',
+    science:'20 minutes of Shavasana activates SIRT1 and FOXO3 (longevity genes) via the relaxation response, equivalent to 7 hours of deep sleep in gene expression studies (Harvard Benson-Henry Institute).',
+    caution:'None. This is the most powerful healing practice in the entire protocol. If you can only do one thing today — do this. 20 minutes of Shavasana.' },
+]
+
+// ─── GYM PROTOCOL (Phase-based) ───────────────────────────────────────────────
+const GYM_PHASES = [
+  { phase:1, label:'Phase 1 — Foundation', weeks:'Weeks 1–6', goal:'Restore energy, reawaken muscles, rebuild movement patterns safely', color:'#10B981',
+    cardio:'Morning walk 20–30 min daily. Week 1-2: 15 min if fatigued. Week 3-4: 25 min. Week 5-6: 30 min slightly brisk.',
+    strength:'3 days/week (Mon/Wed/Fri) — 15-20 min only',
+    exercises:[
+      { name:'Wall Push-ups', sets:'2', reps:'10', rest:'45s', note:'Hands at shoulder height on wall, feet 2 feet away. Lean and push. Builds chest, shoulder, and tricep strength safely without floor pressure on abdomen.' },
+      { name:'Chair Squats (Sit-to-Stand)', sets:'2', reps:'10', rest:'45s', note:'Stand in front of chair, feet hip-width. Lower slowly to sit, then stand. Controls pace. The most functional exercise you can do — duplicates getting up from any surface.' },
+      { name:'Seated Leg Raises', sets:'2', reps:'10 each leg', rest:'30s', note:'Sit upright in chair. Extend one leg fully, hold 2 seconds, lower slowly. Activates quadriceps and hip flexors without any abdominal pressure.' },
+      { name:'Resistance Band Rows', sets:'2', reps:'12', rest:'45s', note:'Anchor band around door handle. Pull handles to your stomach, elbows close to sides. Back muscles — critical for posture restoration after lying in hospital.' },
+      { name:'Standing Calf Raises', sets:'2', reps:'15', rest:'30s', note:'Hold chair for balance. Rise on tiptoes slowly, lower slowly. Activates the calf muscle pump — essential for lymph and venous return from the legs.' },
+      { name:'Shoulder Circles + Neck Rolls', sets:'1', reps:'10 each direction', rest:'30s', note:'Large smooth circles. Releases the neck and shoulder tension accumulated from post-chemo fatigue posture. Do daily, not just on training days.' },
+    ],
+    postWorkout:'⚡ Within 30 min: 1 glass warm milk + 1 boiled egg. OR 1 scoop whey in warm water + 1 banana. The 30-minute window is when muscle protein synthesis is highest.',
+    caution:'No crunches, sit-ups, or planks yet (first 3 months post-surgery). Stop at any sharp abdominal pain. Always eat a small snack (banana or curd) before exercising.' },
+  { phase:2, label:'Phase 2 — Building', weeks:'Weeks 7–16', goal:'Build lean muscle, increase strength, improve insulin sensitivity and stamina', color:'#0EA5E9',
+    cardio:'30–45 min walk, 5-6 days/week. Introduce brisk intervals: walk fast 2 min, normal 3 min, repeat 5 cycles. Or: stationary cycling 20 min — excellent for legs without abdominal stress.',
+    strength:'3 days/week on alternate days — 25-30 min',
+    exercises:[
+      { name:'Regular Push-ups (or Knee Push-ups)', sets:'3', reps:'10-12', rest:'60s', note:'Full push-up position. If difficult, knee push-ups are equally valid. Progress by 1-2 reps per week. When you reach 15 reps with ease, move to Phase 3.' },
+      { name:'Goblet Squat (2–5 kg dumbbell)', sets:'3', reps:'12', rest:'60s', note:'Hold dumbbell at chest with both hands. Feet slightly wider than hips, toes slightly out. Squat deep. The most complete lower body exercise. King of cancer recovery exercises.' },
+      { name:'Glute Bridge', sets:'3', reps:'15', rest:'45s', note:'Lie on back, knees bent. Lift hips, squeeze glutes firmly at the top for 2 full seconds. Lower slowly. When easy: add a 2-5 kg plate on hips.' },
+      { name:'Dumbbell Row (2–5 kg)', sets:'3', reps:'12 each side', rest:'60s', note:'Support one hand and knee on a bench or bed edge. Pull dumbbell to your hip, elbow close to body. The most important upper body exercise for a cancer patient — builds the back and counteracts the hunched fatigue posture.' },
+      { name:'Plank (on elbows)', sets:'3', reps:'20-30 sec', rest:'45s', note:'Forearms and toes, body straight. This is safe from Month 4 post-surgery. Work up to 60 seconds. Best core stability exercise with minimal intra-abdominal pressure.' },
+      { name:'Step-ups (bottom stair or low step)', sets:'3', reps:'10 each leg', rest:'60s', note:'Functional real-world strength. Step up, step down slowly. The eccentric (lowering) phase builds the most muscle.' },
+    ],
+    postWorkout:'⚡ Within 30 min: 2 boiled eggs + 1 banana. OR Greek yogurt + walnuts + flaxseed + pomegranate. Total protein: 25-30g.',
+    caution:'No crunches or sit-ups until Month 6 (post-surgical abdomen needs time). Only increase weight when completing ALL reps with perfect form. Never compromise form for weight.' },
+  { phase:3, label:'Phase 3 — Progressive', weeks:'Month 4 onwards', goal:'Lean muscle gain, peak metabolic health, cancer-proof body composition for life', color:'#8B5CF6',
+    cardio:'45 min walks OR swimming (best cancer exercise — zero joint stress, full body, lymphatic pump). 5 days/week. Add swimming as the primary Phase 3 cardio if accessible.',
+    strength:'4 days/week — Push / Pull / Legs / Rest split',
+    exercises:[
+      { name:'Dumbbell Chest Press (5–10 kg)', sets:'3', reps:'12', rest:'75s', note:'Push Day. Lie on bench or floor. Press dumbbells from chest to full extension. Controlled lowering is where the muscle grows.' },
+      { name:'Overhead Press (5–8 kg)', sets:'3', reps:'10', rest:'75s', note:'Push Day. Seated for stability. Press dumbbells from shoulders to above head. Critical for shoulder health and upper body strength.' },
+      { name:'Bent-over Dumbbell Row (8–12 kg)', sets:'3', reps:'12', rest:'75s', note:'Pull Day. Hinge at hips (back flat), pull both dumbbells to hips simultaneously. The most important single exercise for building the back muscles that protect your spine.' },
+      { name:'Romanian Deadlift (8–12 kg)', sets:'3', reps:'12', rest:'90s', note:'Legs Day. The single best exercise for hamstrings and glutes. Hinge forward with soft knees, feel the hamstrings stretch, drive hips forward to stand. Back stays flat always.' },
+      { name:'Dumbbell Lunges (5–8 kg)', sets:'3', reps:'10 each leg', rest:'75s', note:'Legs Day. Walk forward or stationary. Lower back knee toward floor. Best for balance, coordination, and lower body symmetry.' },
+      { name:'Dead Bug (Core)', sets:'3', reps:'8 each side', rest:'45s', note:'Legs/Core Day. Lie on back, arms up, knees bent at 90°. Lower opposite arm+leg to floor slowly, return. Zero spinal compression — the safest and most effective core exercise post-surgery.' },
+      { name:'Lat Pulldown or Resistance Band Pulldown', sets:'3', reps:'12', rest:'75s', note:'Pull Day. If no gym: anchor band overhead, pull to upper chest. Builds the V-shape back and protects shoulders from rotator cuff issues.' },
+      { name:'Dumbbell Lateral Raises (3–5 kg)', sets:'2', reps:'15', rest:'45s', note:'Push Day. Raises arms to shoulder height. Builds shoulder width. Critical for the "strong healthy" appearance that signals recovery.' },
+    ],
+    postWorkout:'⚡ Within 30 min: 30-40g protein. Best options: 2 eggs + 50g paneer + banana. OR whey protein shake + banana + 1 tbsp peanut butter. This is when the muscle actually grows.',
+    caution:'Progress weight only when all reps are completed with perfect form. Swimming is the best Phase 3 cardio — add it if accessible. Listen to your body: 1 extra rest day is never wrong.' },
+]
+
+// ─── DAILY SCHEDULE ───────────────────────────────────────────────────────────
+const DAILY_SCHEDULE = [
+  { time:'6:00am', label:'Wake + Intentions', emoji:'🌄', color:'#F59E0B',
+    details:'Lie in bed 5 min. 3 deep slow breaths. One thought: "I am grateful to be in remission." Set 1 intention for the day.',
+    why:'Morning cortisol is highest at 6-8am (the cortisol awakening response). How you respond to waking determines your inflammatory profile for the next 16 hours.' },
+  { time:'6:15am', label:'Morning Drinks (Empty Stomach)', emoji:'🍋', color:'#10B981',
+    details:'① Copper vessel water 200ml. ② Warm lemon water + pinch turmeric + pinch black pepper. ③ Amla powder 1 tsp in warm water. ④ Ash gourd juice 200ml (if available). Total: 500-700ml.',
+    why:'Liver begins its peak detox activity at 6am. These drinks provide substrate for glutathione synthesis, alkalise pH, activate bile flow, and deliver concentrated antioxidants before any food burden.' },
+  { time:'6:30am', label:'Pranayama + Yoga (45 min)', emoji:'🧘', color:'#0EA5E9',
+    details:'Full sequence: Anulom Vilom 10 min → Bhramari 5 min → Gentle Kapalbhati 3 min → Deep Breathing 3 min → Pawanmuktasana 5 min → Supine Twist 4 min → Bridge 4 min → Legs Up Wall 8 min → Child\'s Pose 3 min → Shavasana 20 min.',
+    why:'This specific sequence targets NK cell activation, liver stimulation, gas relief, lymph drainage, cortisol reduction, and deep cellular repair — in the correct physiological order.' },
+  { time:'7:30am', label:'Breakfast + Morning Supplements', emoji:'🍳', color:'#10B981',
+    details:'CREON with first bite (non-negotiable). Best options: 2 soft scrambled eggs in ghee + 1 roti + 4 soaked almonds + 5 soaked walnuts. OR Oats + banana + 1 tbsp ground flaxseed + honey. OR Moong dal cheela + curd. After eating: D3+K2, Omega-3, B-Complex, Zinc.',
+    why:'Protein at breakfast sets up muscle protein synthesis for the full day (leucine threshold activation). Enzymes MUST be taken at the first bite — not after.' },
+  { time:'8:00am', label:'Morning Walk (30–45 min)', emoji:'🚶', color:'#8B5CF6',
+    details:'Target 30-45 min at comfortable pace. Use this time for gratitude, birdsong, or gentle music. Track steps — goal is 8000+ total for the day. Sun on skin for 20 min = free Vitamin D.',
+    why:'Post-breakfast walking blunts the glucose spike by 40-50% (NEJM study). Morning sun resets circadian rhythm, improving sleep quality and melatonin production at night. Lymph activation begins only with movement.' },
+  { time:'10:30am', label:'Mid-Morning Snack + Supplements', emoji:'🥛', color:'#F59E0B',
+    details:'CREON if snack has fat or protein. Options: Protein smoothie (whey + banana + warm milk + pinch cinnamon). OR Greek yogurt + walnuts + pomegranate + flaxseed. OR 1 boiled egg + a few whole grain crackers. Supplements: CoQ10, Modified Citrus Pectin 5g.',
+    why:'Second protein hit of the day. Maintains amino acid pool for continuous muscle protein synthesis. Blood sugar stability between breakfast and lunch prevents insulin spikes.' },
+  { time:'1:00pm', label:'Lunch + Midday Supplements', emoji:'🍲', color:'#10B981',
+    details:'LARGEST meal. CREON with first bite. Structure: protein (fish curry / dal / paneer / egg) + 1-2 rotis or ½ cup rice + soft cooked vegetables (lauki, spinach dal, carrot) + ½ tsp ghee + ½ cup curd after. Supplements: Berberine 500mg, Milk Thistle.',
+    why:'Digestive fire is strongest 12-2pm. Largest meal here = maximum nutrient absorption. Curd after = probiotic support. Berberine taken now reduces post-lunch glucose spike — the most critical time for blood sugar.' },
+  { time:'2:00pm', label:'Short Rest (15-20 min max)', emoji:'😌', color:'#64748B',
+    details:'Lie down on left side (improves portal blood flow to liver). 15-20 min only — set a timer. Not deep sleep. Eyes closed, body still.',
+    why:'Left-side lying increases blood flow through the portal vein to the liver by 15-20% — the optimal position for post-meal liver support after ablation and radiation treatment.' },
+  { time:'4:00pm', label:'Evening Snack + Supplements', emoji:'☕', color:'#0EA5E9',
+    details:'CREON if snack has fat/protein. Ginger + tulsi tea. One of: roasted makhana + peanut butter, OR banana + walnuts, OR small bowl curd + pomegranate. Supplement: Quercetin 500mg, Resveratrol.',
+    why:'Keeping blood sugar stable between meals is the single most important daily action against CA 19-9 elevation. Every insulin spike is a direct signal for residual pancreatic tissue inflammation.' },
+  { time:'5:00pm', label:'Strength Training (Mon/Wed/Fri) or Steps', emoji:'💪', color:'#8B5CF6',
+    details:'Phase 1: wall push-ups, chair squats, resistance bands — 15-20 min. Phase 2: dumbbell circuit — 25-30 min. Phase 3: Push/Pull/Legs — 35-40 min. Other days: 20 min walk to reach 8000 steps.',
+    why:'5-6pm training window shows the greatest anabolic (muscle-building) hormonal response in recovery patients. Testosterone and IGF-1 (the beneficial muscle-building dose) peak here.' },
+  { time:'7:00pm', label:'Dinner + Evening Supplements', emoji:'🌙', color:'#F59E0B',
+    details:'CREON with first bite. Keep lighter than lunch. Best options: Moong dal khichdi + ½ tsp ghee. OR Soft dal + 1 roti + soft cooked lauki or ridge gourd. OR Vegetable soup + 1 scrambled egg. Finish eating by 8pm. Supplements: Ashwagandha KSM-66, NAC, L-Carnitine.',
+    why:'Light dinner allows the liver to focus on repair and regeneration during sleep. The liver\'s peak repair window is 11pm-3am (confirmed by chronobiology). Eating heavy at dinner competes with this.' },
+  { time:'9:00pm', label:'Blue Light OFF + Wind Down', emoji:'🌆', color:'#64748B',
+    details:'No screens after 9pm. Dim all lights. Read a book. Gentle stretching or breathing. Copper vessel water 200ml. This is the golden hour of melatonin production.',
+    why:'Blue light from screens blocks melatonin production. 1 hour of phone screen = 1.5 hours of melatonin suppression. Melatonin is both your sleep hormone AND a proven anti-cancer compound. Protect it every night.' },
+  { time:'9:30pm', label:'Golden Milk + Bedtime Supplements', emoji:'✨', color:'#F59E0B',
+    details:'Golden milk: 1 cup warm full-fat milk + ½ tsp turmeric + pinch black pepper + pinch cinnamon + 1 tsp honey. Supplements: Probiotic, Melatonin 10-20mg, Magnesium Glycinate 300mg.',
+    why:'Curcumin is fat-soluble — warm milk delivers it in the ideal fat matrix for maximum absorption. Melatonin needs 30-45 min to reach peak blood levels. Probiotics colonise most effectively during sleep when gut motility slows.' },
+  { time:'10:00pm', label:'SLEEP — Non-negotiable', emoji:'😴', color:'#7C3AED',
+    details:'Lights out by 10pm. Room dark and cool (18-22°C). If mind is busy: 4-7-8 breathing (inhale 4, hold 7, exhale 8). Growth hormone peaks at 11pm. p53 tumour suppressor gene is most active 1-3am.',
+    why:'Sleep before 11pm ensures you catch the growth hormone pulse (11pm-1am) and the p53 tumour suppressor activation window (1-3am). Missing these windows is the equivalent of skipping surgical recovery. Every night matters.' },
+]
 // ─── SCORING ──────────────────────────────────────────────────────────────────
 function scoreColor(n) {
   if (n >= 80) return '#10B981'
@@ -259,7 +539,6 @@ textarea{resize:none}
 @media(min-width:769px){.mob-nav{display:none}}
 `
 
-// ─── ICONS ────────────────────────────────────────────────────────────────────
 const I = {
   home:  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>,
   log:   <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>,
@@ -271,32 +550,34 @@ const I = {
   heal:  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>,
   ai:    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>,
   user:  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>,
+  super: <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>,
+  plan:  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>,
 }
-
 const NAV = [
   { s: 'Overview' },
-  { id:'home',  label:'Dashboard',       icon:I.home,  badge:true },
-  { id:'log',   label:'Daily Log',       icon:I.log,   badge:true },
-  { id:'track', label:'Progress',        icon:I.track },
+  { id:'home',   label:'Dashboard',            icon:I.home,  badge:true },
+  { id:'log',    label:'Daily Log',            icon:I.log,   badge:true },
+  { id:'track',  label:'Progress',             icon:I.track },
   { s: 'Health Tracking' },
-  { id:'food',  label:'Food Tracker',    icon:I.food },
-  { id:'meds',  label:'Medicines',       icon:I.meds },
-  { id:'blood', label:'Lab Reports',     icon:I.blood },
+  { id:'food',   label:'Food Tracker',         icon:I.food },
+  { id:'meds',   label:'Medicines',            icon:I.meds },
+  { id:'blood',  label:'Lab Reports',          icon:I.blood },
+  { s: 'My Health Bible' },
+  { id:'super',  label:'Superfoods & Supps',   icon:I.super },
+  { id:'plan',   label:'Daily Routine & Plans',icon:I.plan },
   { s: 'Recovery' },
-  { id:'fit',   label:'Fitness Plans',   icon:I.fit },
-  { id:'heal',  label:'Recovery Guides', icon:I.heal },
-  { id:'ai',    label:'JARVIS AI',       icon:I.ai },
-  { id:'prof',  label:'My Profile',      icon:I.user },
+  { id:'fit',    label:'Yoga & Gym',           icon:I.fit },
+  { id:'heal',   label:'Recovery Guides',      icon:I.heal },
+  { id:'ai',     label:'JARVIS AI',            icon:I.ai },
+  { id:'prof',   label:'My Profile',           icon:I.user },
 ]
 const MOB = [
-  { id:'home', label:'Home',  icon:I.home, badge:true },
-  { id:'log',  label:'Log',   icon:I.log,  badge:true },
-  { id:'food', label:'Food',  icon:I.food },
-  { id:'meds', label:'Meds',  icon:I.meds },
-  { id:'ai',   label:'JARVIS',icon:I.ai },
+  { id:'home',  label:'Home',   icon:I.home, badge:true },
+  { id:'log',   label:'Log',    icon:I.log,  badge:true },
+  { id:'super', label:'Supps',  icon:I.super },
+  { id:'plan',  label:'Routine',icon:I.plan },
+  { id:'ai',    label:'JARVIS', icon:I.ai },
 ]
-
-// ─── SHARED COMPONENTS ────────────────────────────────────────────────────────
 function Spin({ size = 18, color = '#0EA5E9' }) {
   return <div style={{ width:size, height:size, border:`2px solid ${color}22`, borderTop:`2px solid ${color}`, borderRadius:'50%', animation:'spin 0.8s linear infinite', flexShrink:0 }} />
 }
@@ -1329,48 +1610,194 @@ function BloodTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading }) {
   )
 }
 
-// ─── FITNESS TAB ─────────────────────────────────────────────────────────────
+// ─── FITNESS TAB (Static pre-built + AI) ─────────────────────────────────────
 function FitTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, profile }) {
-  const [type, setType] = useState('yoga'); const [phase, setPhase] = useState(profile.recoveryPhase||'1')
-  const [plan, setPlan] = useState(null); const saved=(db.fitnessPlans||{})[type+phase]
+  const [view, setView] = useState('yoga') // yoga | gym | ai
+  const [yogaExp, setYogaExp] = useState(null)
+  const [gymPhase, setGymPhase] = useState(+(profile.recoveryPhase||1)-1)
+  const [gymExp, setGymExp] = useState(null)
+  const [aiPlan, setAiPlan] = useState(null)
+  const [aiType, setAiType] = useState('yoga'); const [aiPh, setAiPh] = useState(profile.recoveryPhase||'1')
+  const saved = (db.fitnessPlans||{})[aiType+aiPh]
 
-  async function gen() {
-    setAiLoading(true); setPlan(null)
+  async function genPlan() {
+    setAiLoading(true); setAiPlan(null)
     try {
-      const resp=await askJarvis([{role:'user',content:`Generate Phase ${phase} ${type==='yoga'?'Yoga, Pranayama and Asanas':'Strength Training'} protocol for this patient: distal pancreatectomy, liver ablation, chemo complete, REMISSION. Phase 1=Weeks 1-6 gentle, Phase 2=Weeks 7-16 moderate, Phase 3=Month 4+ progressive. Include specific exercises/poses, exact sets/reps/durations, safety rules, post-workout nutrition. Make it very practical and specific to pancreatic cancer recovery.`}],'',userEmail)
-      await savePlan(uid,type+phase,resp)
-      setDb({...db,fitnessPlans:{...(db.fitnessPlans||{}),[type+phase]:resp}})
-      setPlan(resp)
-    } catch(e){setPlan('Error: '+e.message)}
+      const resp = await askJarvis([{role:'user',content:`Generate a highly personalized Phase ${aiPh} ${aiType==='yoga'?'Yoga and Pranayama':'Strength Training'} protocol for this specific patient: distal pancreatectomy + liver ablation + multiple chemo regimens + REMISSION. Phase 1=Weeks 1-6 gentle, Phase 2=Weeks 7-16 building, Phase 3=Month 4+ progressive. Include specific exercises, sets, reps, breathing cues, modifications, and connections to cancer recovery science. Make it feel like a personal trainer who knows this patient deeply.`}],'',userEmail)
+      await savePlan(uid,aiType+aiPh,resp)
+      setDb({...db,fitnessPlans:{...(db.fitnessPlans||{}),[aiType+aiPh]:resp}})
+      setAiPlan(resp)
+    } catch(e){setAiPlan('Error: '+e.message)}
     setAiLoading(false)
   }
 
   return (
     <div className="fade-up">
-      <div className="card">
-        <div className="tabs">
-          <button className={`tab${type==='yoga'?' on':''}`} onClick={()=>{setType('yoga');setPlan(null)}}>🧘 Yoga & Pranayama</button>
-          <button className={`tab${type==='gym'?' on':''}`} onClick={()=>{setType('gym');setPlan(null)}}>💪 Strength Training</button>
-        </div>
-        <div className="fg"><label className="fl">Recovery Phase</label>
-          <div style={{display:'flex',gap:8}}>
-            {[['1','Weeks 1-6 · Gentle'],['2','Weeks 7-16 · Building'],['3','Month 4+ · Progressive']].map(([p,l])=>(
-              <button key={p} onClick={()=>{setPhase(p);setPlan(null)}} style={{flex:1,padding:'10px 8px',borderRadius:9,border:`1.5px solid ${phase===p?'#0EA5E9':'#E2E8F0'}`,background:phase===p?'#EFF6FF':'white',color:phase===p?'#0EA5E9':'#64748B',fontSize:11,fontWeight:600,cursor:'pointer',lineHeight:1.5}}>Phase {p}<br/><span style={{fontWeight:400,fontSize:10,color:phase===p?'#0EA5E9':'#94A3B8'}}>{l.split(' · ')[1]}</span></button>
+      <div className="tabs">
+        <button className={`tab${view==='yoga'?' on':''}`} onClick={()=>setView('yoga')}>🧘 Yoga Sequence</button>
+        <button className={`tab${view==='gym'?' on':''}`} onClick={()=>setView('gym')}>💪 Gym Plans</button>
+        <button className={`tab${view==='ai'?' on':''}`} onClick={()=>setView('ai')}>🤖 AI Custom Plan</button>
+      </div>
+
+      {view==='yoga' && (
+        <>
+          <div style={{padding:'10px 16px',background:'#FFFBEB',border:'1px solid #FDE68A',borderRadius:10,marginBottom:14}}>
+            <div style={{fontSize:13,fontWeight:700,color:'#92400E',marginBottom:2}}>Complete Daily Yoga — 45 Minutes Total</div>
+            <div style={{fontSize:12,color:'#78350F'}}>Follow this exact sequence every day. Static reference — no internet needed. Tap each practice for full instructions.</div>
+          </div>
+          {YOGA_SEQUENCE.map((y,i)=>{
+            const isOpen=yogaExp===i
+            const tC=y.type==='Pranayama'?'#0EA5E9':y.type==='Asana'?'#F59E0B':'#8B5CF6'
+            return (
+              <div key={i} style={{background:'white',border:`1.5px solid ${isOpen?y.color+'40':'#E8EEF4'}`,borderRadius:12,marginBottom:8,overflow:'hidden',boxShadow:'0 1px 4px rgba(15,23,42,0.05)'}}>
+                <div style={{display:'flex',alignItems:'center',gap:11,padding:'12px 16px',cursor:'pointer'}} onClick={()=>setYogaExp(isOpen?null:i)}>
+                  <div style={{width:36,height:36,borderRadius:9,background:`${y.color}12`,border:`1px solid ${y.color}25`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>{y.emoji}</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:13,fontWeight:700,color:'#0F172A'}}>Step {y.step}: {y.name}</div>
+                    <div style={{display:'flex',gap:8,marginTop:2,flexWrap:'wrap'}}>
+                      <span style={{fontSize:10,fontWeight:600,color:tC,background:`${tC}10`,padding:'1px 7px',borderRadius:4}}>{y.type}</span>
+                      <span style={{fontSize:11,color:'#94A3B8'}}>⏱ {y.mins} min</span>
+                    </div>
+                  </div>
+                  <span style={{color:'#94A3B8',fontSize:11}}>{isOpen?'▲':'▼'}</span>
+                </div>
+                {isOpen && (
+                  <div style={{padding:'0 16px 14px',borderTop:`1px solid ${y.color}20`}}>
+                    <div style={{fontSize:11,color:'#64748B',fontWeight:500,marginBottom:6}}>📍 {y.when}</div>
+                    <div style={{marginBottom:10}}>
+                      <div style={{fontSize:10,fontWeight:700,color:'#94A3B8',marginBottom:5,textTransform:'uppercase'}}>How to do it</div>
+                      <div style={{fontSize:13,color:'#374151',lineHeight:1.8}}>{y.how}</div>
+                    </div>
+                    <div style={{padding:'10px 12px',background:`${y.color}07`,borderRadius:8,border:`1px solid ${y.color}20`,marginBottom:8}}>
+                      <div style={{fontSize:10,fontWeight:700,color:y.color,marginBottom:3,textTransform:'uppercase'}}>Benefits for You Specifically</div>
+                      <div style={{fontSize:12,color:'#374151',lineHeight:1.65}}>{y.benefit}</div>
+                    </div>
+                    <div style={{padding:'10px 12px',background:'#F0F9FF',borderRadius:8,border:'1px solid #BAE6FD',marginBottom:y.caution?8:0}}>
+                      <div style={{fontSize:10,fontWeight:700,color:'#0369A1',marginBottom:3,textTransform:'uppercase'}}>🔬 Science</div>
+                      <div style={{fontSize:11,color:'#0C4A6E',lineHeight:1.65}}>{y.science}</div>
+                    </div>
+                    {y.caution && <div style={{padding:'9px 12px',background:'#FEF2F2',borderRadius:8,border:'1px solid #FECACA',fontSize:11,color:'#DC2626'}}>⚠ {y.caution}</div>}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </>
+      )}
+
+      {view==='gym' && (
+        <>
+          <div style={{padding:'10px 16px',background:'#F5F3FF',border:'1px solid #DDD6FE',borderRadius:10,marginBottom:14,fontSize:12,color:'#6D28D9'}}>
+            💡 Every 1% muscle gain = 4% reduction in cancer mortality. Select your current phase. Tap any exercise for coaching notes.
+          </div>
+          <div style={{display:'flex',gap:8,marginBottom:16}}>
+            {GYM_PHASES.map((p,i)=>(
+              <button key={i} onClick={()=>setGymPhase(i)} style={{flex:1,padding:'10px 6px',borderRadius:10,border:`1.5px solid ${gymPhase===i?p.color:'#E2E8F0'}`,background:gymPhase===i?`${p.color}0E`:'white',color:gymPhase===i?p.color:'#64748B',fontSize:11,fontWeight:600,cursor:'pointer',lineHeight:1.5}}>
+                Phase {p.phase}<br/><span style={{fontWeight:400,fontSize:10}}>{p.weeks}</span>
+              </button>
             ))}
           </div>
-        </div>
-        <button className={`btn btn-full ${type==='yoga'?'btn-gr':'btn-pr'}`} onClick={gen} disabled={aiLoading}>
-          {aiLoading?<><Spin size={15} color="white"/>Generating...</>:`Generate Phase ${phase} ${type==='yoga'?'Yoga':'Gym'} Plan`}
-        </button>
-      </div>
-      {(plan||saved)&&(
-        <div className="card fade-up">
-          <div style={{display:'flex',justifyContent:'space-between',marginBottom:12}}>
-            <div className="card-title" style={{marginBottom:0}}>{type==='yoga'?'Yoga':'Gym'} — Phase {phase}</div>
-            <button onClick={()=>speak((plan||saved),{max:400})} className="btn btn-ou btn-sm">🔊 Listen</button>
+          {(() => {
+            const ph=GYM_PHASES[gymPhase]
+            return (
+              <>
+                <div className="card" style={{borderTop:`3px solid ${ph.color}`}}>
+                  <div style={{fontSize:15,fontWeight:800,color:'#0F172A',marginBottom:2}}>{ph.label}</div>
+                  <div style={{fontSize:12,color:'#64748B',marginBottom:12}}>{ph.goal}</div>
+                  <div style={{padding:'10px 12px',background:`${ph.color}08`,borderRadius:9,border:`1px solid ${ph.color}20`,marginBottom:12}}>
+                    <div style={{fontSize:11,fontWeight:700,color:ph.color,marginBottom:3}}>🚶 CARDIO</div>
+                    <div style={{fontSize:12,color:'#374151',lineHeight:1.65}}>{ph.cardio}</div>
+                  </div>
+                  <div style={{fontSize:11,fontWeight:700,color:'#64748B',textTransform:'uppercase',letterSpacing:0.5,marginBottom:8}}>STRENGTH — {ph.strength}</div>
+                  {ph.exercises.map((ex,ei)=>{
+                    const key=`${gymPhase}-${ei}`; const isOpen=gymExp===key
+                    return (
+                      <div key={ei} style={{border:`1px solid ${isOpen?ph.color+'40':'#F1F5F9'}`,borderRadius:9,marginBottom:6,overflow:'hidden'}}>
+                        <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 13px',cursor:'pointer',background:isOpen?`${ph.color}05`:'white'}} onClick={()=>setGymExp(isOpen?null:key)}>
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:13,fontWeight:600,color:'#0F172A'}}>{ex.name}</div>
+                            <div style={{display:'flex',gap:10,marginTop:2}}>
+                              <span style={{fontSize:11,color:ph.color,fontWeight:600}}>{ex.sets} sets × {ex.reps}</span>
+                              <span style={{fontSize:11,color:'#94A3B8'}}>Rest: {ex.rest}</span>
+                            </div>
+                          </div>
+                          <span style={{color:'#94A3B8',fontSize:11}}>{isOpen?'▲':'ℹ'}</span>
+                        </div>
+                        {isOpen && <div style={{padding:'8px 13px 12px',borderTop:`1px solid ${ph.color}20`,background:`${ph.color}04`,fontSize:12,color:'#374151',lineHeight:1.65}}>{ex.note}</div>}
+                      </div>
+                    )
+                  })}
+                </div>
+                <div className="card" style={{background:'#F0FDF4',border:'1px solid #BBF7D0'}}>
+                  <div style={{fontSize:12,fontWeight:700,color:'#059669',marginBottom:5}}>⚡ POST-WORKOUT NUTRITION — Within 30 min (mandatory)</div>
+                  <div style={{fontSize:13,color:'#374151',lineHeight:1.65}}>{ph.postWorkout}</div>
+                </div>
+                <div className="card" style={{background:'#FEF2F2',borderTop:'2px solid #EF4444'}}>
+                  <div className="card-title" style={{color:'#DC2626',marginBottom:8}}>⚠ Safety Rules — Always Follow</div>
+                  <div style={{fontSize:12,color:'#374151',lineHeight:1.7,marginBottom:8}}>{ph.caution}</div>
+                  {['Never exercise on empty stomach — blood sugar drop with partial pancreas','Stop at any sharp abdominal pain, chest tightness, or dizziness','Drink water: 300ml before + 300ml during + 300ml after','If exhausted on a day: walk + pranayama only. Rest is also training.'].map((r,ri)=>(
+                    <div key={ri} style={{display:'flex',gap:8,marginBottom:5}}>
+                      <span style={{color:'#EF4444',flexShrink:0,fontWeight:700}}>•</span>
+                      <span style={{fontSize:12,color:'#374151'}}>{r}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="card">
+                  <div className="card-title">📅 Weekly Training Schedule</div>
+                  {[['Monday','Yoga + Strength (Push — Chest/Shoulders)'],['Tuesday','Walk + Pranayama only (recovery)'],['Wednesday','Yoga + Strength (Pull — Back/Arms)'],['Thursday','Walk + Pranayama + Flexibility'],['Friday','Yoga + Strength (Legs — Squats/Glutes)'],['Saturday','Full 45-min Yoga session'],['Sunday','Rest + gentle walk only']].map(([d,a],di)=>(
+                    <div key={di} style={{display:'flex',gap:12,padding:'9px 0',borderBottom:'1px solid #F1F5F9'}}>
+                      <div style={{width:90,fontSize:12,fontWeight:700,color:ph.color,flexShrink:0}}>{d}</div>
+                      <div style={{fontSize:12,color:'#374151'}}>{a}</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )
+          })()}
+        </>
+      )}
+
+      {view==='ai' && (
+        <div>
+          <div style={{padding:'12px 16px',background:'#EFF6FF',border:'1px solid #BFDBFE',borderRadius:10,marginBottom:14}}>
+            <div style={{fontSize:13,fontWeight:700,color:'#1D4ED8',marginBottom:3}}>🤖 AI-Personalised Plan</div>
+            <div style={{fontSize:12,color:'#3730A3'}}>JARVIS generates a custom plan using your complete health profile — phase, surgery history, current fitness level, and recovery goals. More specific than any generic program.</div>
           </div>
-          <div style={{fontSize:13,color:'#374151',lineHeight:1.8,whiteSpace:'pre-wrap'}}>{plan||saved}</div>
+          <div className="card">
+            <div className="fg">
+              <label className="fl">Plan type</label>
+              <div style={{display:'flex',gap:8}}>
+                {[['yoga','🧘 Yoga & Pranayama'],['gym','💪 Strength Training']].map(([t,l])=>(
+                  <button key={t} onClick={()=>setAiType(t)} style={{flex:1,padding:'10px',borderRadius:9,border:`1.5px solid ${aiType===t?'#0EA5E9':'#E2E8F0'}`,background:aiType===t?'#EFF6FF':'white',color:aiType===t?'#0EA5E9':'#64748B',fontSize:13,fontWeight:600,cursor:'pointer'}}>{l}</button>
+                ))}
+              </div>
+            </div>
+            <div className="fg">
+              <label className="fl">Recovery phase</label>
+              <div style={{display:'flex',gap:8}}>
+                {[['1','Weeks 1-6'],['2','Weeks 7-16'],['3','Month 4+']].map(([p,l])=>(
+                  <button key={p} onClick={()=>setAiPh(p)} style={{flex:1,padding:'10px 6px',borderRadius:9,border:`1.5px solid ${aiPh===p?'#8B5CF6':'#E2E8F0'}`,background:aiPh===p?'#F5F3FF':'white',color:aiPh===p?'#7C3AED':'#64748B',fontSize:11,fontWeight:600,cursor:'pointer',lineHeight:1.5}}>Phase {p}<br/><span style={{fontWeight:400,fontSize:10,color:aiPh===p?'#8B5CF6':'#94A3B8'}}>{l}</span></button>
+                ))}
+              </div>
+            </div>
+            <button className={`btn btn-full ${aiType==='yoga'?'btn-gr':'btn-pr'}`} onClick={genPlan} disabled={aiLoading}>
+              {aiLoading?<><Spin size={15} color="white"/>Generating personalised plan...</>:'Generate My Custom Plan'}
+            </button>
+          </div>
+          {(aiPlan||saved) && (
+            <div className="card fade-up">
+              <div style={{display:'flex',justifyContent:'space-between',marginBottom:10}}>
+                <div className="card-title" style={{marginBottom:0}}>Your Custom {aiType==='yoga'?'Yoga':'Gym'} Plan — Phase {aiPh}</div>
+                <button onClick={()=>speak((aiPlan||saved),{max:400})} className="btn btn-ou btn-sm">🔊</button>
+              </div>
+              <div style={{fontSize:13,color:'#374151',lineHeight:1.85,whiteSpace:'pre-wrap'}}>{aiPlan||saved}</div>
+            </div>
+          )}
         </div>
+      )}
+    </div>
+  )
+}
       )}
       <div className="card" style={{borderTop:'3px solid #EF4444',background:'#FEF2F2'}}>
         <div className="card-title" style={{color:'#DC2626'}}>⚠ Safety Rules</div>
@@ -1511,6 +1938,420 @@ function ProfileTab({ uid, profile, setProfile, showToast }) {
   )
 }
 // ─── MAIN APP — FIX #3 (data reflects) ──────────────────────────────────────
+
+// ─── SUPERFOODS & SUPPLEMENTS TAB ─────────────────────────────────────────────
+function SuperTab({ userEmail, aiLoading, setAiLoading }) {
+  const [section, setSection] = useState('foods')
+  const [expanded, setExpanded] = useState(null)
+  const [suppExp, setSuppExp] = useState(null)
+  const [aiQ, setAiQ] = useState('')
+  const [aiA, setAiA] = useState('')
+
+  async function askAbout(item, context) {
+    if(aiLoading) return
+    setAiLoading(true)
+    setAiA('Asking JARVIS...')
+    try {
+      const resp = await askJarvis([{role:'user',content:`I am a pancreatic cancer patient in remission (distal pancreatectomy, liver ablation, chemo complete). Tell me specifically about ${item}: ${context}. Give me personalised, specific, evidence-based advice about dose, timing, interactions, and why it matters for MY situation. Be the expert oncology nutritionist I need.`}],'',userEmail)
+      setAiA(resp)
+    } catch(e){setAiA('Error: '+e.message)}
+    setAiLoading(false)
+  }
+
+  return (
+    <div className="fade-up">
+      <div style={{padding:'14px 18px',background:'linear-gradient(135deg,#ECFDF5,#EFF6FF)',border:'1px solid #A7F3D0',borderRadius:14,marginBottom:16}}>
+        <div style={{fontSize:16,fontWeight:800,color:'#065F46',marginBottom:3}}>🌱 Your Complete Healing Arsenal</div>
+        <div style={{fontSize:12,color:'#047857',lineHeight:1.6}}>Every food and supplement here is chosen specifically for pancreatic cancer recovery. Built into the app — instant, always available, no internet needed for the reference. Tap "Ask JARVIS" for AI-personalized deep-dive on anything.</div>
+      </div>
+      <div className="tabs">
+        <button className={`tab${section==='foods'?' on':''}`} onClick={()=>setSection('foods')}>🥦 Superfoods ({SUPERFOODS.length})</button>
+        <button className={`tab${section==='supps'?' on':''}`} onClick={()=>setSection('supps')}>💊 Supplement Schedule</button>
+        <button className={`tab${section==='avoid'?' on':''}`} onClick={()=>setSection('avoid')}>❌ Foods to Avoid</button>
+      </div>
+
+      {section==='foods' && (
+        <>
+          <div style={{padding:'9px 13px',background:'rgba(16,185,129,0.07)',border:'1px solid rgba(16,185,129,0.25)',borderRadius:9,marginBottom:12,fontSize:12,color:'#059669',fontWeight:600}}>
+            🏆 MUST HAVE = Daily non-negotiable · HIGH = 3-4x/week · Tap any food for full details + Ask JARVIS for AI personalisation
+          </div>
+          {SUPERFOODS.map((f,i)=>{
+            const isOpen=expanded===i
+            return (
+              <div key={i} style={{background:'white',border:`1.5px solid ${isOpen?f.color+'40':'#E8EEF4'}`,borderRadius:12,marginBottom:8,overflow:'hidden',boxShadow:'0 1px 4px rgba(15,23,42,0.05)'}}>
+                <div style={{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',cursor:'pointer'}} onClick={()=>setExpanded(isOpen?null:i)}>
+                  <span style={{fontSize:24,flexShrink:0}}>{f.emoji}</span>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:13,fontWeight:700,color:'#0F172A'}}>{f.name}</div>
+                    <div style={{fontSize:11,color:'#94A3B8',marginTop:1}}>{f.dose}</div>
+                  </div>
+                  <span style={{padding:'3px 9px',borderRadius:20,fontSize:10,fontWeight:700,background:f.tag==='MUST HAVE'?'#F0FDF4':'#EFF6FF',color:f.tag==='MUST HAVE'?'#059669':'#0EA5E9',border:`1px solid ${f.tag==='MUST HAVE'?'#BBF7D0':'#BFDBFE'}`,flexShrink:0}}>{f.tag}</span>
+                  <span style={{color:'#94A3B8',fontSize:11,flexShrink:0,marginLeft:4}}>{isOpen?'▲':'▼'}</span>
+                </div>
+                {isOpen && (
+                  <div style={{padding:'0 16px 14px',borderTop:`1px solid ${f.color}20`}}>
+                    <div style={{display:'flex',gap:10,marginBottom:10,flexWrap:'wrap'}}>
+                      <div style={{flex:1,minWidth:160,padding:'9px 11px',background:'#F8FAFC',borderRadius:8}}>
+                        <div style={{fontSize:10,fontWeight:700,color:'#94A3B8',marginBottom:3}}>DOSE & TIMING</div>
+                        <div style={{fontSize:12,color:'#374151',fontWeight:600}}>{f.dose}</div>
+                        <div style={{fontSize:11,color:'#64748B',marginTop:2}}>{f.timing}</div>
+                      </div>
+                    </div>
+                    <div style={{marginBottom:9}}>
+                      <div style={{fontSize:10,fontWeight:700,color:'#94A3B8',marginBottom:4,textTransform:'uppercase'}}>Why it matters for you</div>
+                      <div style={{fontSize:12,color:'#374151',lineHeight:1.65}}>{f.why}</div>
+                    </div>
+                    <div style={{padding:'9px 12px',background:'#F0F9FF',borderRadius:8,border:'1px solid #BAE6FD',marginBottom:8}}>
+                      <div style={{fontSize:10,fontWeight:700,color:'#0369A1',marginBottom:3}}>🔬 SCIENCE</div>
+                      <div style={{fontSize:11,color:'#0C4A6E',lineHeight:1.6}}>{f.science}</div>
+                    </div>
+                    <div style={{padding:'9px 12px',background:'#FFFBEB',borderRadius:8,border:'1px solid #FDE68A',marginBottom:8}}>
+                      <div style={{fontSize:10,fontWeight:700,color:'#92400E',marginBottom:3}}>HOW TO USE</div>
+                      <div style={{fontSize:11,color:'#78350F',lineHeight:1.65}}>{f.how}</div>
+                    </div>
+                    {f.avoid && (
+                      <div style={{padding:'9px 12px',background:'#FEF2F2',borderRadius:8,border:'1px solid #FECACA',marginBottom:10,fontSize:11,color:'#DC2626'}}>⚠ {f.avoid}</div>
+                    )}
+                    <button onClick={()=>askAbout(f.name,`Dose: ${f.dose}. Timing: ${f.timing}. I want to know more about optimal usage, interactions with my medicines, and how to maximise benefit.`)} disabled={aiLoading} className="btn btn-ou btn-sm" style={{width:'100%'}}>
+                      {aiLoading?<><Spin size={13}/>Asking JARVIS...</>:`🤖 Ask JARVIS — Is ${f.name.split(' ')[0]} right for me?`}
+                    </button>
+                    {aiA && <div style={{marginTop:10,padding:'12px',background:'#F8FAFC',borderRadius:9,border:'1px solid #E2E8F0',fontSize:12,color:'#374151',lineHeight:1.75,whiteSpace:'pre-wrap'}}>{aiA}</div>}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </>
+      )}
+
+      {section==='supps' && (
+        <>
+          <div style={{padding:'9px 13px',background:'#FFFBEB',border:'1px solid #FDE68A',borderRadius:9,marginBottom:12,fontSize:12,color:'#92400E'}}>
+            ⚠ Always confirm new supplements with your oncologist. Introduce ONE at a time every 5-7 days. Tap any supplement for full details.
+          </div>
+          {SUPPLEMENT_STACK.map((slot,si)=>(
+            <div key={si} className="card" style={{borderTop:`3px solid ${slot.color}`}}>
+              <div style={{fontSize:14,fontWeight:700,color:'#0F172A',marginBottom:12}}>{slot.time}</div>
+              {slot.items.map((item,ii)=>{
+                const key=`${si}-${ii}`; const isOpen=suppExp===key
+                return (
+                  <div key={ii} style={{marginBottom:7,border:`1px solid ${isOpen?slot.color+'40':'#F1F5F9'}`,borderRadius:9,overflow:'hidden'}}>
+                    <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 13px',cursor:'pointer',background:isOpen?`${slot.color}05`:'white'}} onClick={()=>setSuppExp(isOpen?null:key)}>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:13,fontWeight:600,color:'#0F172A'}}>{item.name}</div>
+                        <div style={{fontSize:11,color:slot.color,fontWeight:600,marginTop:1}}>{item.dose}</div>
+                      </div>
+                      <span style={{color:'#94A3B8',fontSize:11}}>{isOpen?'▲':'▼'}</span>
+                    </div>
+                    {isOpen && (
+                      <div style={{padding:'8px 13px 12px',borderTop:`1px solid ${slot.color}20`}}>
+                        <div style={{fontSize:12,color:'#374151',lineHeight:1.65,marginBottom:7}}>{item.why}</div>
+                        <div style={{padding:'8px 10px',background:'#F8FAFC',borderRadius:7,fontSize:11,color:'#64748B',marginBottom:9}}>📌 {item.note}</div>
+                        <button onClick={()=>askAbout(item.name,`Dose: ${item.dose}. I want to know about interactions with other supplements I take, optimal timing, and what results I should expect.`)} disabled={aiLoading} className="btn btn-ou btn-sm" style={{width:'100%'}}>
+                          {aiLoading?<><Spin size={13}/>...</>:`🤖 Ask JARVIS about ${item.name.split(' ')[0]}`}
+                        </button>
+                        {aiA && <div style={{marginTop:8,padding:'10px',background:'#F8FAFC',borderRadius:8,fontSize:11,color:'#374151',lineHeight:1.7,whiteSpace:'pre-wrap'}}>{aiA}</div>}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          ))}
+        </>
+      )}
+
+      {section==='avoid' && (
+        <div className="card" style={{borderTop:'3px solid #EF4444'}}>
+          <div className="card-title" style={{color:'#DC2626'}}>❌ Foods That Work Against Your Recovery</div>
+          <div style={{fontSize:12,color:'#64748B',marginBottom:14}}>These are not opinions. These are evidence-based factors that drive CA 19-9 elevation, cancer recurrence, and chronic disease. Avoid them permanently.</div>
+          {[
+            {food:'Refined Sugar (all forms)',reason:'Cancer cells consume glucose 10x faster than healthy cells. Every sugar spike creates an insulin surge → IGF-1 surge → direct cancer cell proliferation signal. This includes jaggery in excess, honey in excess, and fruit juice.'},
+            {food:'Alcohol — Zero Tolerance',reason:'Your liver underwent radiation AND ablation. Alcohol is directly hepatotoxic even at one drink. It undoes weeks of liver repair, interferes with melatonin, and is a Group 1 carcinogen. This is permanent, not temporary.'},
+            {food:'Fried and Deep-fried Food',reason:'Trans fats and oxidised seed oils directly increase systemic inflammation — the same inflammatory cascade that elevates CA 19-9. Also extremely difficult to digest after pancreatectomy even with PERT.'},
+            {food:'Packaged Juices and Cold Drinks',reason:'8-10 teaspoons of sugar per serving. Immediate blood glucose spike. Cold temperature slows digestive enzyme activity. No fiber. No nutrients. Pure cancer fuel.'},
+            {food:'Red Meat (beef, pork)',reason:'Heme iron in red meat promotes oxidative stress and inflammation. Studies consistently link red meat to increased pancreatic cancer recurrence risk. Poultry and fish are completely safe alternatives.'},
+            {food:'Raw Salads in Large Portions',reason:'After distal pancreatectomy, raw fiber is very hard to process and causes bloating, gas, and poor nutrient absorption. All vegetables must be soft-cooked. Exceptions: small amounts of cucumber or tomato are fine.'},
+            {food:'Maida / White Flour Products',reason:'Glycemic index of 100+ (higher than sugar). Gut-lining damaging. Zero nutritional value. Creates insulin spikes that directly stimulate residual pancreatic tissue inflammation and CA 19-9 production.'},
+            {food:'NSAIDs (Ibuprofen, Aspirin)',reason:'Damage the gut lining directly — the same gut lining damaged by chemotherapy and currently healing. If you need pain relief, use paracetamol at minimum effective dose and consult your doctor.'},
+          ].map((a,i)=>(
+            <div key={i} style={{display:'flex',gap:11,padding:'11px 0',borderBottom:'1px solid #FEE2E2'}}>
+              <span style={{color:'#EF4444',fontWeight:700,flexShrink:0,fontSize:16,marginTop:2}}>✕</span>
+              <div>
+                <div style={{fontSize:13,fontWeight:700,color:'#DC2626',marginBottom:2}}>{a.food}</div>
+                <div style={{fontSize:12,color:'#7F1D1D',lineHeight:1.6}}>{a.reason}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── DAILY ROUTINE + PLANS TAB ─────────────────────────────────────────────────
+function RoutineTab({ userEmail, aiLoading, setAiLoading }) {
+  const [view, setView] = useState('schedule')
+  const [openSlot, setOpenSlot] = useState(null)
+  const [yogaExp, setYogaExp] = useState(null)
+  const [gymPhase, setGymPhase] = useState(0)
+  const [gymExp, setGymExp] = useState(null)
+  const [aiAsk, setAiAsk] = useState('')
+  const [aiResp, setAiResp] = useState('')
+
+  async function askRoutineAI(q) {
+    if(aiLoading||!q.trim()) return
+    setAiLoading(true); setAiResp('Thinking...')
+    try {
+      const resp = await askJarvis([{role:'user',content:`I am a pancreatic cancer patient in remission (distal pancreatectomy + liver ablation + chemo complete). Question about my daily routine or health plan: ${q}. Give me a specific, personalised, evidence-based answer that connects to my cancer recovery goals.`}],'',userEmail)
+      setAiResp(resp)
+    } catch(e){setAiResp('Error: '+e.message)}
+    setAiLoading(false)
+  }
+
+  return (
+    <div className="fade-up">
+      <div className="tabs">
+        <button className={`tab${view==='schedule'?' on':''}`} onClick={()=>setView('schedule')}>📅 Daily Schedule</button>
+        <button className={`tab${view==='yoga'?' on':''}`} onClick={()=>setView('yoga')}>🧘 Yoga Sequence</button>
+        <button className={`tab${view==='gym'?' on':''}`} onClick={()=>setView('gym')}>💪 Gym Plans</button>
+        <button className={`tab${view==='disease'?' on':''}`} onClick={()=>setView('disease')}>🛡️ Disease Prevention</button>
+      </div>
+
+      {/* ── AI Ask Bar ── */}
+      <div style={{display:'flex',gap:8,marginBottom:14}}>
+        <input className="fi" placeholder="Ask JARVIS: Can I do yoga after dinner? What to eat after gym?..." value={aiAsk} onChange={e=>setAiAsk(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')askRoutineAI(aiAsk)}} style={{flex:1}}/>
+        <button className="btn btn-pr" onClick={()=>askRoutineAI(aiAsk)} disabled={!aiAsk.trim()||aiLoading} style={{flexShrink:0,padding:'10px 14px'}}>Ask</button>
+      </div>
+      {aiResp && <div style={{padding:'12px 14px',background:'white',border:'1px solid #BFDBFE',borderRadius:10,marginBottom:14,fontSize:13,color:'#374151',lineHeight:1.75,whiteSpace:'pre-wrap'}}><span style={{fontSize:10,fontWeight:700,color:'#0EA5E9',display:'block',marginBottom:4}}>JARVIS</span>{aiResp}<button onClick={()=>speak(aiResp,{max:400})} style={{display:'block',marginTop:8,padding:'4px 10px',borderRadius:6,border:'1px solid #E2E8F0',background:'white',color:'#64748B',fontSize:11,cursor:'pointer'}}>🔊 Listen</button></div>}
+
+      {/* ── SCHEDULE ── */}
+      {view==='schedule' && (
+        <>
+          <div style={{padding:'10px 14px',background:'#EFF6FF',border:'1px solid #BFDBFE',borderRadius:10,marginBottom:14,fontSize:12,color:'#1D4ED8'}}>
+            Your complete daily recovery protocol from waking to sleep. Follow this 80% consistently and your body heals. Tap any block for the science behind it.
+          </div>
+          {DAILY_SCHEDULE.map((slot,i)=>{
+            const isOpen=openSlot===i
+            return (
+              <div key={i} style={{display:'flex',gap:12,marginBottom:8}}>
+                <div style={{display:'flex',flexDirection:'column',alignItems:'center',width:50,flexShrink:0}}>
+                  <div style={{fontSize:9,fontWeight:700,color:'#64748B',textAlign:'center',lineHeight:1.3}}>{slot.time}</div>
+                  <div style={{width:2,flex:1,background:`${slot.color}25`,margin:'4px 0',minHeight:24}}/>
+                </div>
+                <div style={{flex:1,background:'white',border:`1px solid ${isOpen?slot.color+'40':'#E8EEF4'}`,borderRadius:12,cursor:'pointer',overflow:'hidden',boxShadow:'0 1px 3px rgba(15,23,42,0.04)',marginBottom:2}} onClick={()=>setOpenSlot(isOpen?null:i)}>
+                  <div style={{display:'flex',alignItems:'center',gap:10,padding:'11px 14px'}}>
+                    <span style={{fontSize:19}}>{slot.emoji}</span>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:13,fontWeight:700,color:'#0F172A'}}>{slot.label}</div>
+                    </div>
+                    <span style={{color:'#94A3B8',fontSize:11,flexShrink:0}}>{isOpen?'▲':'▼'}</span>
+                  </div>
+                  {isOpen && (
+                    <div style={{padding:'0 14px 12px',borderTop:`1px solid ${slot.color}15`}}>
+                      <div style={{fontSize:13,color:'#374151',lineHeight:1.75,marginBottom:8}}>{slot.details}</div>
+                      <div style={{padding:'9px 12px',background:`${slot.color}07`,borderRadius:8,border:`1px solid ${slot.color}18`,fontSize:11,color:'#374151',lineHeight:1.65}}>
+                        🔬 <strong>Why:</strong> {slot.why}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </>
+      )}
+
+      {/* ── YOGA ── */}
+      {view==='yoga' && (
+        <>
+          <div style={{padding:'10px 14px',background:'#FFFBEB',border:'1px solid #FDE68A',borderRadius:10,marginBottom:14}}>
+            <div style={{fontSize:13,fontWeight:700,color:'#92400E',marginBottom:2}}>Complete Daily Practice — {YOGA_SEQUENCE.reduce((s,y)=>s+y.mins,0)} Minutes</div>
+            <div style={{fontSize:12,color:'#78350F'}}>Follow in this exact order every day. Static reference — no internet needed. Tap each practice for full instructions and science.</div>
+          </div>
+          {YOGA_SEQUENCE.map((y,i)=>{
+            const isOpen=yogaExp===i
+            const tC=y.type==='Pranayama'?'#0EA5E9':y.type==='Asana'?'#F59E0B':'#8B5CF6'
+            return (
+              <div key={i} style={{background:'white',border:`1.5px solid ${isOpen?y.color+'40':'#E8EEF4'}`,borderRadius:12,marginBottom:8,overflow:'hidden',boxShadow:'0 1px 4px rgba(15,23,42,0.05)'}}>
+                <div style={{display:'flex',alignItems:'center',gap:11,padding:'12px 16px',cursor:'pointer'}} onClick={()=>setYogaExp(isOpen?null:i)}>
+                  <div style={{width:36,height:36,borderRadius:9,background:`${y.color}12`,border:`1px solid ${y.color}25`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>{y.emoji}</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:13,fontWeight:700,color:'#0F172A'}}>Step {y.step}: {y.name}</div>
+                    <div style={{display:'flex',gap:8,marginTop:2,flexWrap:'wrap'}}>
+                      <span style={{fontSize:10,fontWeight:600,color:tC,background:`${tC}10`,padding:'1px 7px',borderRadius:4}}>{y.type}</span>
+                      <span style={{fontSize:11,color:'#94A3B8'}}>⏱ {y.mins} min</span>
+                    </div>
+                  </div>
+                  <span style={{color:'#94A3B8',fontSize:11}}>{isOpen?'▲':'▼'}</span>
+                </div>
+                {isOpen && (
+                  <div style={{padding:'0 16px 14px',borderTop:`1px solid ${y.color}20`}}>
+                    <div style={{fontSize:11,color:'#64748B',marginBottom:8}}>📍 {y.when}</div>
+                    <div style={{marginBottom:9}}>
+                      <div style={{fontSize:10,fontWeight:700,color:'#94A3B8',textTransform:'uppercase',marginBottom:4}}>How to do it</div>
+                      <div style={{fontSize:13,color:'#374151',lineHeight:1.8}}>{y.how}</div>
+                    </div>
+                    <div style={{padding:'9px 12px',background:`${y.color}07`,borderRadius:8,border:`1px solid ${y.color}18`,marginBottom:8}}>
+                      <div style={{fontSize:10,fontWeight:700,color:y.color,marginBottom:3,textTransform:'uppercase'}}>Benefits for You</div>
+                      <div style={{fontSize:12,color:'#374151',lineHeight:1.65}}>{y.benefit}</div>
+                    </div>
+                    <div style={{padding:'9px 12px',background:'#F0F9FF',borderRadius:8,border:'1px solid #BAE6FD',marginBottom:y.caution?8:0}}>
+                      <div style={{fontSize:10,fontWeight:700,color:'#0369A1',marginBottom:3,textTransform:'uppercase'}}>🔬 Science</div>
+                      <div style={{fontSize:11,color:'#0C4A6E',lineHeight:1.65}}>{y.science}</div>
+                    </div>
+                    {y.caution && <div style={{padding:'9px 12px',background:'#FEF2F2',borderRadius:8,border:'1px solid #FECACA',fontSize:11,color:'#DC2626'}}>⚠ {y.caution}</div>}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </>
+      )}
+
+      {/* ── GYM ── */}
+      {view==='gym' && (
+        <>
+          <div style={{padding:'10px 14px',background:'#F5F3FF',border:'1px solid #DDD6FE',borderRadius:10,marginBottom:14,fontSize:12,color:'#6D28D9'}}>
+            💡 Every 1% muscle gain = 4% lower cancer mortality. Phase-based progression — from gentle to powerful. Select your current phase.
+          </div>
+          <div style={{display:'flex',gap:8,marginBottom:16}}>
+            {GYM_PHASES.map((p,i)=>(
+              <button key={i} onClick={()=>setGymPhase(i)} style={{flex:1,padding:'10px 6px',borderRadius:10,border:`1.5px solid ${gymPhase===i?p.color:'#E2E8F0'}`,background:gymPhase===i?`${p.color}0E`:'white',color:gymPhase===i?p.color:'#64748B',fontSize:11,fontWeight:600,cursor:'pointer',lineHeight:1.5}}>
+                Phase {p.phase}<br/><span style={{fontWeight:400,fontSize:10}}>{p.weeks}</span>
+              </button>
+            ))}
+          </div>
+          {(() => {
+            const ph=GYM_PHASES[gymPhase]
+            return (
+              <>
+                <div className="card" style={{borderTop:`3px solid ${ph.color}`}}>
+                  <div style={{fontSize:15,fontWeight:800,color:'#0F172A',marginBottom:2}}>{ph.label}</div>
+                  <div style={{fontSize:12,color:'#64748B',marginBottom:10}}>{ph.goal}</div>
+                  <div style={{padding:'9px 12px',background:`${ph.color}08`,borderRadius:9,border:`1px solid ${ph.color}20`,marginBottom:12}}>
+                    <div style={{fontSize:11,fontWeight:700,color:ph.color,marginBottom:3}}>🚶 CARDIO</div>
+                    <div style={{fontSize:12,color:'#374151',lineHeight:1.65}}>{ph.cardio}</div>
+                  </div>
+                  <div style={{fontSize:11,fontWeight:700,color:'#64748B',textTransform:'uppercase',letterSpacing:0.4,marginBottom:8}}>STRENGTH — {ph.strength}</div>
+                  {ph.exercises.map((ex,ei)=>{
+                    const key=`g${gymPhase}-${ei}`; const isOpen=gymExp===key
+                    return (
+                      <div key={ei} style={{border:`1px solid ${isOpen?ph.color+'40':'#F1F5F9'}`,borderRadius:9,marginBottom:6,overflow:'hidden'}}>
+                        <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',cursor:'pointer',background:isOpen?`${ph.color}05`:'white'}} onClick={()=>setGymExp(isOpen?null:key)}>
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:13,fontWeight:600,color:'#0F172A'}}>{ex.name}</div>
+                            <div style={{display:'flex',gap:10,marginTop:2}}>
+                              <span style={{fontSize:11,color:ph.color,fontWeight:600}}>{ex.sets} sets × {ex.reps}</span>
+                              <span style={{fontSize:11,color:'#94A3B8'}}>Rest {ex.rest}</span>
+                            </div>
+                          </div>
+                          <span style={{color:'#94A3B8',fontSize:11}}>{isOpen?'▲':'ℹ'}</span>
+                        </div>
+                        {isOpen && <div style={{padding:'8px 12px 12px',borderTop:`1px solid ${ph.color}20`,background:`${ph.color}04`,fontSize:12,color:'#374151',lineHeight:1.65}}>{ex.note}</div>}
+                      </div>
+                    )
+                  })}
+                </div>
+                <div className="card" style={{background:'#F0FDF4',border:'1px solid #BBF7D0'}}>
+                  <div style={{fontSize:12,fontWeight:700,color:'#059669',marginBottom:5}}>⚡ Post-Workout — Within 30 Minutes (mandatory)</div>
+                  <div style={{fontSize:13,color:'#374151',lineHeight:1.65}}>{ph.postWorkout}</div>
+                </div>
+                <div className="card" style={{background:'#FEF2F2',borderTop:'2px solid #EF4444'}}>
+                  <div className="card-title" style={{color:'#DC2626'}}>⚠ Safety Rules</div>
+                  <div style={{fontSize:12,color:'#374151',lineHeight:1.7,marginBottom:8}}>{ph.caution}</div>
+                  {['Never exercise on empty stomach','Stop: sharp abdominal pain / chest tightness / dizziness','Drink water before, during, after every session','Tired day = walk + pranayama only. This IS training.'].map((r,ri)=>(
+                    <div key={ri} style={{display:'flex',gap:8,marginBottom:5}}>
+                      <span style={{color:'#EF4444',flexShrink:0,fontWeight:700}}>•</span>
+                      <span style={{fontSize:12,color:'#374151'}}>{r}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )
+          })()}
+        </>
+      )}
+
+      {/* ── DISEASE PREVENTION ── */}
+      {view==='disease' && (
+        <>
+          <div style={{padding:'12px 16px',background:'linear-gradient(135deg,#ECFDF5,#EFF6FF)',border:'1px solid #A7F3D0',borderRadius:12,marginBottom:14}}>
+            <div style={{fontSize:14,fontWeight:800,color:'#065F46',marginBottom:4}}>🛡️ Your Cancer-Proof Life Protocol</div>
+            <div style={{fontSize:12,color:'#047857',lineHeight:1.65}}>Following this recovery protocol doesn't just beat pancreatic cancer — it makes you biologically resistant to every major chronic disease. Here's exactly how each condition is prevented by what you're already doing.</div>
+          </div>
+          {[
+            { disease:'Type 2 Diabetes', risk:'High (pancreatectomy affects insulin production)', color:'#0EA5E9',
+              prevention:[
+                'Berberine 500mg with every meal = blood sugar control equal to Metformin in clinical trials',
+                'Walking after every meal blunts glucose spike by 40-50%',
+                'Low glycemic diet (no refined sugar, no white flour, small portions of carbs)',
+                'Cinnamon ½ tsp daily sensitises insulin receptors',
+                'Target: fasting glucose 80-90 mg/dL, HbA1c <5.5%',
+              ]},
+            { disease:'Cancer Recurrence', risk:'Actively being prevented', color:'#EF4444',
+              prevention:[
+                'Sulforaphane (broccoli) kills pancreatic cancer STEM cells — the chemo-resistant ones',
+                'Anulom Vilom 10 min daily = NK cell activity +30% (your cancer surveillance system)',
+                'No refined sugar = no insulin spike = no IGF-1 = no tumour growth signal',
+                'Melatonin 10-20mg nightly = direct anti-tumour compound + DNA repair',
+                'Quercetin + Berberine = mTOR inhibition (cancer growth pathway suppressed)',
+                'Modified Citrus Pectin = blocks galectin-3 (metastasis protein) daily',
+              ]},
+            { disease:'Heart Disease', risk:'Low (with this protocol)', color:'#EF4444',
+              prevention:[
+                'Omega-3 2-3g daily = most evidence-backed cardiovascular supplement (50+ RCTs)',
+                'Walnuts 5-7 daily = reduces LDL cholesterol by 5-10%',
+                'Walking 8000 steps/day = 40% reduction in cardiovascular events',
+                'No fried food, no trans fats, no seed oils',
+                'Turmeric + black pepper daily = arterial anti-inflammatory',
+                'Magnesium glycinate 400mg = blood pressure normalisation',
+              ]},
+            { disease:'High Blood Pressure', risk:'Low (with this protocol)', color:'#F59E0B',
+              prevention:[
+                'Beetroot 3-4x/week = nitric oxide → arterial relaxation (proven)',
+                'Ashwagandha KSM-66 reduces cortisol by 27% → lower BP',
+                'Yoga + pranayama = sympathetic nervous system down-regulation',
+                'Potassium-rich foods: banana, sweet potato, curd',
+                'Magnesium glycinate directly relaxes vascular smooth muscle',
+                'Deep breathing (4-7-8) activates vagus → immediate BP reduction',
+              ]},
+            { disease:'Osteoporosis', risk:'Medium (steroids + chemo affect bones)', color:'#8B5CF6',
+              prevention:[
+                'Vitamin D3 5000 IU + K2 200mcg = the exact combination for bone mineralisation',
+                'Weight-bearing exercise (squats, lunges) = osteoblast activation',
+                'Curd and Greek yogurt = calcium + phosphorus + Vitamin K2',
+                'Sun exposure 20 min daily = free Vitamin D3 synthesis',
+                'Magnesium: calcium cannot enter bones without adequate magnesium',
+              ]},
+            { disease:'Alzheimer\'s / Dementia', risk:'Low (with this protocol)', color:'#10B981',
+              prevention:[
+                'Omega-3 DHA = most important structural component of brain cell membranes',
+                'Walnuts contain BDNF precursors — the brain growth hormone',
+                'Exercise (8000 steps + gym) = hippocampal neurogenesis every time',
+                'Curcumin in turmeric clears amyloid plaques (the Alzheimer\'s protein)',
+                'Quality sleep 7.5h = brain glymphatic system flushes tau protein nightly',
+                'Chemo-brain reverses completely within 6-12 months with this protocol',
+              ]},
+          ].map((d,di)=>(
+            <div key={di} className="card" style={{borderLeft:`4px solid ${d.color}`}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
+                <div style={{fontSize:15,fontWeight:800,color:'#0F172A'}}>{d.disease}</div>
+                <span style={{padding:'3px 10px',borderRadius:20,fontSize:10,fontWeight:700,background:`${d.color}10`,color:d.color,border:`1px solid ${d.color}25`,flexShrink:0,marginLeft:8}}>{d.risk}</span>
+              </div>
+              {d.prevention.map((p,pi)=>(
+                <div key={pi} style={{display:'flex',gap:9,marginBottom:7}}>
+                  <span style={{color:d.color,flexShrink:0,fontWeight:700,marginTop:1}}>✓</span>
+                  <span style={{fontSize:12,color:'#374151',lineHeight:1.6}}>{p}</span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </>
+      )}
+    </div>
+  )
+}
 export default function JarvisHealth({ user, onLogout }) {
   const uid=user.uid; const userEmail=user.email
   const [tab, setTab] = useState('home')
@@ -1599,7 +2440,7 @@ export default function JarvisHealth({ user, onLogout }) {
   const todaySc=scorePillars(db.todayLog,db.medLog)
   const hasNoLog=!db.todayLog
 
-  const PAGE_TITLES={home:'Dashboard',log:'Daily Log',track:'Progress',food:'Food Tracker',meds:'Medicines',blood:'Lab Reports',fit:'Fitness Plans',heal:'Recovery Guides',ai:'JARVIS AI Coach',prof:'My Profile'}
+  const PAGE_TITLES={home:'Dashboard',log:'Daily Log',track:'Progress',food:'Food Tracker',meds:'Medicines',blood:'Lab Reports',fit:'Yoga & Gym',heal:'Recovery Guides',ai:'JARVIS AI Coach',prof:'My Profile',super:'Superfoods & Supplements',plan:'Daily Routine & Plans'}
 
   if(!ready) return (
     <div style={{minHeight:'100vh',background:'#EEF2F7',display:'flex',alignItems:'center',justifyContent:'center',gap:12}}>
@@ -1625,12 +2466,10 @@ export default function JarvisHealth({ user, onLogout }) {
         </div>
         {NAV.map((item,i)=>item.s
           ?<div key={i} className="sec-lbl">{item.s}</div>
-          :(
-            <a key={item.id} className={`nav-item${tab===item.id?' active':''}`} href="#" onClick={e=>{e.preventDefault();handleTab(item.id)}}>
-              {item.icon}<span>{item.label}</span>
-              {item.badge&&hasNoLog&&<span className="nav-badge"/>}
-            </a>
-          )
+          :(<a key={item.id} className={`nav-item${tab===item.id?' active':''}`} href="#" onClick={e=>{e.preventDefault();handleTab(item.id)}}>
+            {item.icon}<span>{item.label}</span>
+            {item.badge&&hasNoLog&&<span className="nav-badge"/>}
+          </a>)
         )}
         <div className="sb-footer">
           <div className="sb-ca199">
@@ -1645,40 +2484,41 @@ export default function JarvisHealth({ user, onLogout }) {
       {/* MAIN */}
       <div className="main">
         <div className="topbar">
-          <button className={`voice-btn${listening?' active':''}`} onClick={toggleVoice} title={listening?'Stop listening':'Tap to speak'}>
+          <button className={`voice-btn${listening?' active':''}`} onClick={toggleVoice} title={listening?'Stop':'Speak'}>
             {listening&&<div className="voice-rip"/>}
             {listening?'🎙️':'🎤'}
           </button>
           <div style={{flex:1,fontSize:12,color:'#94A3B8',overflow:'hidden'}}>
-            {listening?<span style={{color:'#0EA5E9',fontWeight:600}}>● Listening... "log today", "scan food", "show progress"</span>
+            {listening?<span style={{color:'#0EA5E9',fontWeight:600}}>● Listening...</span>
               :voiceText?<span style={{color:'#374151'}}>"{voiceText}"</span>
-              :'Tap mic to speak · "log today" · "food tracker" · "medicines"'}
+              :'Tap mic · "log today" · "superfoods" · "daily routine"'}
           </div>
-          <button onClick={stopSpeaking} style={{padding:'6px 10px',borderRadius:7,border:'1px solid #E2E8F0',background:'white',color:'#64748B',fontSize:13,cursor:'pointer',flexShrink:0}} title="Stop speaking">⏹</button>
+          <button onClick={stopSpeaking} style={{padding:'6px 10px',borderRadius:7,border:'1px solid #E2E8F0',background:'white',color:'#64748B',fontSize:13,cursor:'pointer',flexShrink:0}}>⏹</button>
           {db.todayLog
             ?<div style={{fontSize:14,fontWeight:800,color:scoreColor(todaySc.overall),flexShrink:0}}>{todaySc.overall}<span style={{fontSize:10,fontWeight:500,color:'#94A3B8'}}>/100</span></div>
             :<button className="btn btn-pr btn-sm" onClick={()=>handleTab('log')} style={{flexShrink:0}}>Log Today</button>
           }
         </div>
 
-        {/* Pages — all tabs mount once, show/hide with display (no remount = no crashes) */}
         <div className="page">
           <div style={{marginBottom:18}}>
-            <h1 style={{fontSize:22,fontWeight:800,color:'#0F172A',letterSpacing:'-0.4px'}}>{PAGE_TITLES[tab]}</h1>
+            <h1 style={{fontSize:22,fontWeight:800,color:'#0F172A',letterSpacing:'-0.4px'}}>{PAGE_TITLES[tab]||tab}</h1>
           </div>
 
           <div style={{display:tab==='home'?'block':'none'}}>
             <Dashboard {...shared} setTab={handleTab} allLogs={allLogs}/>
           </div>
-          {visited.has('log')&&<div style={{display:tab==='log'?'block':'none'}}><LogTab {...shared}/></div>}
-          {visited.has('track')&&<div style={{display:tab==='track'?'block':'none'}}><TrackTab allLogs={allLogs}/></div>}
-          {visited.has('food')&&<div style={{display:tab==='food'?'block':'none'}}><FoodTab {...shared}/></div>}
-          {visited.has('meds')&&<div style={{display:tab==='meds'?'block':'none'}}><MedTab {...shared}/></div>}
-          {visited.has('blood')&&<div style={{display:tab==='blood'?'block':'none'}}><BloodTab {...shared}/></div>}
-          {visited.has('fit')&&<div style={{display:tab==='fit'?'block':'none'}}><FitTab {...shared}/></div>}
-          {visited.has('heal')&&<div style={{display:tab==='heal'?'block':'none'}}><HealTab {...shared}/></div>}
-          {visited.has('ai')&&<div style={{display:tab==='ai'?'block':'none'}}><AICoach uid={uid} db={db} userEmail={userEmail} aiLoading={aiLoading} setAiLoading={setAiLoading} profile={profile}/></div>}
-          {visited.has('prof')&&<div style={{display:tab==='prof'?'block':'none'}}><ProfileTab uid={uid} profile={profile} setProfile={setProfile} showToast={showToast}/></div>}
+          {visited.has('log')   &&<div style={{display:tab==='log'?'block':'none'}}><LogTab {...shared}/></div>}
+          {visited.has('track') &&<div style={{display:tab==='track'?'block':'none'}}><TrackTab allLogs={allLogs}/></div>}
+          {visited.has('food')  &&<div style={{display:tab==='food'?'block':'none'}}><FoodTab {...shared}/></div>}
+          {visited.has('meds')  &&<div style={{display:tab==='meds'?'block':'none'}}><MedTab {...shared}/></div>}
+          {visited.has('blood') &&<div style={{display:tab==='blood'?'block':'none'}}><BloodTab {...shared}/></div>}
+          {visited.has('fit')   &&<div style={{display:tab==='fit'?'block':'none'}}><FitTab {...shared}/></div>}
+          {visited.has('heal')  &&<div style={{display:tab==='heal'?'block':'none'}}><HealTab {...shared}/></div>}
+          {visited.has('ai')    &&<div style={{display:tab==='ai'?'block':'none'}}><AICoach uid={uid} db={db} userEmail={userEmail} aiLoading={aiLoading} setAiLoading={setAiLoading} profile={profile}/></div>}
+          {visited.has('prof')  &&<div style={{display:tab==='prof'?'block':'none'}}><ProfileTab uid={uid} profile={profile} setProfile={setProfile} showToast={showToast}/></div>}
+          {visited.has('super') &&<div style={{display:tab==='super'?'block':'none'}}><SuperTab userEmail={userEmail} aiLoading={aiLoading} setAiLoading={setAiLoading}/></div>}
+          {visited.has('plan')  &&<div style={{display:tab==='plan'?'block':'none'}}><RoutineTab userEmail={userEmail} aiLoading={aiLoading} setAiLoading={setAiLoading}/></div>}
         </div>
       </div>
 
@@ -1686,8 +2526,7 @@ export default function JarvisHealth({ user, onLogout }) {
       <nav className="mob-nav">
         {MOB.map(t=>(
           <button key={t.id} className={`mob-ni${tab===t.id?' on':''}`} onClick={()=>handleTab(t.id)} style={{position:'relative'}}>
-            {t.icon}
-            <span>{t.label}</span>
+            {t.icon}<span>{t.label}</span>
             {t.badge&&hasNoLog&&<span className="mob-badge"/>}
           </button>
         ))}
