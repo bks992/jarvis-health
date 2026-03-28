@@ -1798,17 +1798,6 @@ function FitTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, profile })
     </div>
   )
 }
-      )}
-      <div className="card" style={{borderTop:'3px solid #EF4444',background:'#FEF2F2'}}>
-        <div className="card-title" style={{color:'#DC2626'}}>⚠ Safety Rules</div>
-        {['Never exercise on empty stomach — blood sugar drops with partial pancreas','Stop immediately: chest pain, sharp abdominal pain, dizziness','Protein within 30 min post-workout (critical for muscle synthesis)','Avoid heavy ab exercises in Phases 1 and 2 (post-surgical)','Drink 500ml water during and after every session'].map((t,i)=>(
-          <div key={i} style={{display:'flex',gap:8,marginBottom:7}}><span style={{color:'#EF4444',flexShrink:0,fontWeight:700}}>•</span><span style={{fontSize:13,color:'#374151',lineHeight:1.5}}>{t}</span></div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 // ─── HEALING GUIDES ───────────────────────────────────────────────────────────
 const HEAL_TOPICS = [
   {id:'ca199',    icon:'🎯',label:'Reduce CA 19-9',        color:'#EF4444'},
