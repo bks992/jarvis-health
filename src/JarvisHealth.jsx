@@ -4,7 +4,7 @@ import {
   getGuides, saveGuide, getPlans, savePlan, getChat, saveChat,
   getIntolerances, saveIntolerance, getDailyLog, saveDailyLog,
 } from './firebase'
-import { askJarvis, imgToBase64, speak } from './api'
+import { askJarvis, imgToBase64, speak, stopSpeaking, unlockSpeech } from './api'
 
 // ─── VOICE COMMANDS ───────────────────────────────────────────────────────────
 const VOICE_COMMANDS = {
@@ -898,6 +898,13 @@ INTOLERANCE FLAG: [problem foods found, or NONE]`}
       setDb(prev=>({...prev,foodLogs:[entry,...(prev.foodLogs||[])].slice(0,50),intolerances:[...new Set([...(prev.intolerances||[]),...flagged])]}))
       setResult(entry)
       if(flagged.length) showToast(`Intolerance flagged: ${flagged.join(', ')}`)
+      // Speak the verdict
+      const verdictMsg = verdict==='optimal'
+        ? `Excellent choice. This meal scores ${score} out of 10. ${entry.analysis.split('\n').find(l=>l.startsWith('BENEFITS'))||''}`
+        : verdict==='acceptable'
+        ? `Acceptable meal, scoring ${score} out of 10. ${entry.analysis.split('\n').find(l=>l.startsWith('CONCERNS'))||''}`
+        : `I would advise against this meal. Score is only ${score} out of 10. ${entry.analysis.split('\n').find(l=>l.startsWith('CONCERNS'))||''}`
+      speak(verdictMsg, { maxChars: 300 })
     } catch(e) { setResult({analysis:`Error: ${e.message}`,verdict:'acceptable',score:0,flagged:[]}) }
     setAiLoading(false)
   }
@@ -915,13 +922,42 @@ INTOLERANCE FLAG: [problem foods found, or NONE]`}
             : <>
                 <div style={{fontSize:32,marginBottom:8}}>📷</div>
                 <div style={{fontSize:14,fontWeight:500,color:'#64748B',marginBottom:4}}>Tap to upload meal photo</div>
-                <div style={{fontSize:12,color:'#334155'}}>Camera or photo library</div>
+                <div style={{fontSize:12,color:'#334155'}}>Takes camera or gallery photo · Auto-compressed to 5MB</div>
               </>
           }
         </div>
-        <input ref={fileRef} type="file" accept="image/*" capture="environment" style={{display:'none'}}
-          onChange={async e=>{const f=e.target.files[0];if(!f)return;setImg(URL.createObjectURL(f));setResult(null);setImgData(await imgToBase64(f))}}/>
-        <button className="btn btn-primary btn-full" style={{marginTop:10}} onClick={scan} disabled={!imgData||aiLoading}>
+        {/* Two separate inputs: camera + gallery — better mobile compatibility */}
+        <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}}
+          onChange={async e=>{
+            const f=e.target.files[0]; if(!f) return
+            setImg(URL.createObjectURL(f)); setResult(null)
+            try { setImgData(await imgToBase64(f)) }
+            catch(err) { console.error('Image error',err) }
+          }}/>
+        {/* Mobile: show two buttons for camera vs gallery */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:10}}>
+          <label style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'9px',borderRadius:8,border:'1px solid #1E293B',background:'#0A0F1E',color:'#64748B',fontSize:13,fontWeight:500,cursor:'pointer'}}>
+            📷 Camera
+            <input type="file" accept="image/*" capture="environment" style={{display:'none'}}
+              onChange={async e=>{
+                const f=e.target.files[0]; if(!f) return
+                setImg(URL.createObjectURL(f)); setResult(null)
+                try { setImgData(await imgToBase64(f)) }
+                catch(err) { console.error('Image error',err) }
+              }}/>
+          </label>
+          <label style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'9px',borderRadius:8,border:'1px solid #1E293B',background:'#0A0F1E',color:'#64748B',fontSize:13,fontWeight:500,cursor:'pointer'}}>
+            🖼️ Gallery
+            <input type="file" accept="image/*" style={{display:'none'}}
+              onChange={async e=>{
+                const f=e.target.files[0]; if(!f) return
+                setImg(URL.createObjectURL(f)); setResult(null)
+                try { setImgData(await imgToBase64(f)) }
+                catch(err) { console.error('Image error',err) }
+              }}/>
+          </label>
+        </div>
+        <button className="btn btn-primary btn-full" style={{marginTop:10}} onClick={()=>{ unlockSpeech(); scan() }} disabled={!imgData||aiLoading}>
           {aiLoading?<><Spinner size={16} color="white"/>Analyzing...</>:'Analyze This Meal'}
         </button>
       </div>
@@ -996,6 +1032,7 @@ function BloodTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading }) {
       await saveBloodReport(uid,entry)
       setDb(prev=>({...prev,bloodReports:[...(prev.bloodReports||[]),entry]}))
       setResult(entry)
+      speak('Blood report analysis complete. ' + entry.summary, { maxChars: 350 })
     } catch(e){ setResult({full:`Error: ${e.message}`,summary:'Error'}) }
     setAiLoading(false)
   }
@@ -1016,7 +1053,7 @@ function BloodTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading }) {
               <textarea className="form-input" rows={8} value={text} onChange={e=>setText(e.target.value)} style={{resize:'vertical'}}
                 placeholder={'CA 19-9: 28 U/mL\nHbA1c: 6.2%\nFasting Glucose: 105 mg/dL\nVitamin D: 22 ng/mL\nHemoglobin: 11.5 g/dL\nALT: 38 U/L\n...'}/>
             </div>
-            <button className="btn btn-primary btn-full" onClick={analyze} disabled={!text.trim()||aiLoading}>
+            <button className="btn btn-primary btn-full" onClick={()=>{ unlockSpeech(); analyze() }} disabled={!text.trim()||aiLoading}>
               {aiLoading?<><Spinner size={16} color="white"/>Analyzing...</>:'Analyze Values'}
             </button>
           </>
@@ -1024,11 +1061,23 @@ function BloodTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading }) {
           <>
             <div className={`upload-zone${img?' has-img':''}`} onClick={()=>fileRef.current.click()}>
               {img?<img src={img} alt="report" style={{width:'100%',maxHeight:220,objectFit:'contain'}}/>
-              :(<><div style={{fontSize:32,marginBottom:8}}>📋</div><div style={{fontSize:14,fontWeight:500,color:'#64748B'}}>Upload blood test report photo</div></>)}
+              :(<><div style={{fontSize:32,marginBottom:8}}>📋</div><div style={{fontSize:14,fontWeight:500,color:'#64748B'}}>Upload blood test report photo</div><div style={{fontSize:12,color:'#334155',marginTop:4}}>Auto-compressed · Camera or gallery</div></>)}
             </div>
             <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}}
               onChange={async e=>{const f=e.target.files[0];if(!f)return;setImg(URL.createObjectURL(f));setImgData(await imgToBase64(f))}}/>
-            <button className="btn btn-primary btn-full" style={{marginTop:10}} onClick={analyze} disabled={!imgData||aiLoading}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:10}}>
+              <label style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'9px',borderRadius:8,border:'1px solid #1E293B',background:'#0A0F1E',color:'#64748B',fontSize:13,fontWeight:500,cursor:'pointer'}}>
+                📷 Camera
+                <input type="file" accept="image/*" capture="environment" style={{display:'none'}}
+                  onChange={async e=>{const f=e.target.files[0];if(!f)return;setImg(URL.createObjectURL(f));setImgData(await imgToBase64(f))}}/>
+              </label>
+              <label style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'9px',borderRadius:8,border:'1px solid #1E293B',background:'#0A0F1E',color:'#64748B',fontSize:13,fontWeight:500,cursor:'pointer'}}>
+                🖼️ Gallery
+                <input type="file" accept="image/*" style={{display:'none'}}
+                  onChange={async e=>{const f=e.target.files[0];if(!f)return;setImg(URL.createObjectURL(f));setImgData(await imgToBase64(f))}}/>
+              </label>
+            </div>
+            <button className="btn btn-primary btn-full" style={{marginTop:10}} onClick={()=>{ unlockSpeech(); analyze() }} disabled={!imgData||aiLoading}>
               {aiLoading?<><Spinner size={16} color="white"/>Analyzing...</>:'Analyze Report'}
             </button>
           </>
@@ -1073,6 +1122,7 @@ function FitTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading }) {
       await savePlan(uid, type+phase, resp)
       setDb(prev=>({...prev,fitnessPlans:{...(prev.fitnessPlans||{}),[type+phase]:resp}}))
       setPlan(resp)
+      speak(`Your Phase ${phase} ${type} protocol is ready. ${resp.slice(0,200)}`, { maxChars: 250 })
     } catch(e){ setPlan(`Error: ${e.message}`) }
     setAiLoading(false)
   }
@@ -1098,7 +1148,7 @@ function FitTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading }) {
             </button>
           ))}
         </div>
-        <button className={`btn btn-full${type==='yoga'?' btn-green':' btn-primary'}`} onClick={generate} disabled={aiLoading}>
+        <button className={`btn btn-full${type==='yoga'?' btn-green':' btn-primary'}`} onClick={()=>{ unlockSpeech(); generate() }} disabled={aiLoading}>
           {aiLoading?<><Spinner size={16} color="white"/>Generating...</>:`Generate Phase ${phase} ${type==='yoga'?'Yoga':'Gym'} Plan`}
         </button>
       </div>
@@ -1159,6 +1209,7 @@ function HealTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading }) {
       await saveGuide(uid,t,resp)
       setDb(prev=>({...prev,recoveryGuides:{...(prev.recoveryGuides||{}),[t]:resp}}))
       setResult(resp)
+      speak(`Here is your ${RECOVERY_TOPICS.find(x=>x.id===t)?.label} protocol. ` + resp.slice(0, 200), { maxChars: 280 })
     } catch(e){ setResult(`Error: ${e.message}`) }
     setAiLoading(false)
   }
@@ -1167,7 +1218,7 @@ function HealTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading }) {
     <div className="fade-in">
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))',gap:10,marginBottom:14}}>
         {RECOVERY_TOPICS.map(t=>(
-          <button key={t.id} onClick={()=>getGuide(t.id)} style={{
+          <button key={t.id} onClick={()=>{ unlockSpeech(); getGuide(t.id) }} style={{
             padding:'14px 12px',borderRadius:10,cursor:'pointer',textAlign:'left',
             background:topic===t.id?`${t.color}12`:'#0F172A',
             border:`1px solid ${topic===t.id?t.color+'45':'#1E293B'}`,
@@ -1217,6 +1268,8 @@ function AICoachTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading }) {
       const final=[...newMsgs,aiMsg]
       setMsgs(final)
       await saveChat(uid,'assistant',resp)
+      // JARVIS speaks back — speak first 400 chars so it doesn't cut off too early
+      speak(resp, { maxChars: 400 })
     } catch(e){ setMsgs([...newMsgs,{role:'assistant',content:`Sorry, I had trouble connecting. ${e.message}`}]) }
     setAiLoading(false)
   }
@@ -1249,7 +1302,7 @@ function AICoachTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading }) {
       {/* Quick chips */}
       <div style={{display:'flex',gap:5,overflowX:'auto',padding:'8px 0',scrollbarWidth:'none'}}>
         {quick.map((q,i)=>(
-          <button key={i} onClick={()=>send(q)} style={{flexShrink:0,padding:'5px 11px',borderRadius:20,border:'1px solid #1E293B',background:'#0F172A',color:'#64748B',fontSize:12,cursor:'pointer',whiteSpace:'nowrap',transition:'all 0.15s'}}>
+          <button key={i} onClick={()=>{ unlockSpeech(); send(q) }} style={{flexShrink:0,padding:'5px 11px',borderRadius:20,border:'1px solid #1E293B',background:'#0F172A',color:'#64748B',fontSize:12,cursor:'pointer',whiteSpace:'nowrap',transition:'all 0.15s'}}>
             {q}
           </button>
         ))}
@@ -1259,11 +1312,11 @@ function AICoachTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading }) {
       <div style={{display:'flex',gap:8,paddingTop:6}}>
         <textarea rows={1} placeholder="Ask anything about your recovery..." value={input}
           onChange={e=>{setInput(e.target.value);e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,100)+'px'}}
-          onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}}
+          onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault(); unlockSpeech(); send()}}}
           style={{flex:1,background:'#0F172A',border:'1px solid #1E293B',borderRadius:10,padding:'10px 14px',color:'#E2E8F0',fontSize:14,resize:'none',outline:'none',lineHeight:1.4,transition:'border-color 0.15s'}}
           onFocus={e=>e.target.style.borderColor='#3B82F6'}
           onBlur={e=>e.target.style.borderColor='#1E293B'}/>
-        <button onClick={()=>send()} disabled={!input.trim()||aiLoading} className="btn btn-primary" style={{alignSelf:'flex-end',padding:'10px 14px'}}>
+        <button onClick={()=>{ unlockSpeech(); send() }} disabled={!input.trim()||aiLoading} className="btn btn-primary" style={{alignSelf:'flex-end',padding:'10px 14px'}}>
           ➤
         </button>
       </div>
@@ -1383,7 +1436,7 @@ export default function JarvisHealth({ user, onLogout }) {
       <div className="main-content">
         {/* Top bar */}
         <div className="top-bar">
-          <div className="arc-reactor" onClick={listening?stop:start} title="Voice command">
+          <div className="arc-reactor" onClick={()=>{ unlockSpeech(); listening?stop():start() }} title="Voice command">
             {listening&&<div className="arc-ripple"/>}
             <div className="arc-outer"/>
             <div className="arc-inner">{listening?'🎙️':supported?'🎤':'🔇'}</div>
@@ -1396,10 +1449,16 @@ export default function JarvisHealth({ user, onLogout }) {
               <div style={{fontSize:13,color:'#64748B'}}>"{voiceText}"</div>
             ):(
               <div style={{fontSize:13,color:'#334155'}}>
-                {supported?'Tap mic or say "log today", "scan food", "show progress"...':'Voice not supported in this browser'}
+                {supported?'Tap mic · Say "log today", "scan food", "show progress"...':'Voice not supported in this browser'}
               </div>
             )}
           </div>
+
+          {/* Stop speaking button — shows when speech is active */}
+          <button onClick={()=>stopSpeaking()} title="Stop speaking"
+            style={{padding:'6px 10px',borderRadius:6,border:'1px solid #1E293B',background:'transparent',color:'#475569',fontSize:12,cursor:'pointer',flexShrink:0}}>
+            ⏹
+          </button>
 
           {/* Today's score badge */}
           {db.todayLog&&(
