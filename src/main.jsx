@@ -1,10 +1,9 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import AppShell from './components/AppShell.jsx'
-import './styles/global.css'
+import App from './App.jsx'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <AppShell />
+    <App />
   </React.StrictMode>
 )
