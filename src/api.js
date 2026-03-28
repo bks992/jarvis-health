@@ -1,6 +1,6 @@
 const WORKER = import.meta.env.VITE_WORKER_URL
 
-// ─── ASK JARVIS ───────────────────────────────────────────────────────────────
+// ── ASK JARVIS ───────────────────────────────────────────────────────────────
 export async function askJarvis(messages, systemExtra = '', userEmail = '') {
   const res = await fetch(WORKER, {
     method: 'POST',
@@ -8,7 +8,7 @@ export async function askJarvis(messages, systemExtra = '', userEmail = '') {
       'Content-Type': 'application/json',
       'X-User-Email': userEmail,
     },
-    body: JSON.stringify({ messages, systemExtra, maxTokens: 1200 }),
+    body: JSON.stringify({ messages, systemExtra, maxTokens: 1500 }),
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
@@ -18,168 +18,143 @@ export async function askJarvis(messages, systemExtra = '', userEmail = '') {
   return data.content?.find(b => b.type === 'text')?.text || 'No response'
 }
 
-// ─── IMAGE COMPRESSION + BASE64 ───────────────────────────────────────────────
-// Compresses image to under 5MB before sending to API
-// Works on mobile (iOS Safari + Android Chrome)
+// ── IMAGE: COMPRESS + BASE64 ─────────────────────────────────────────────────
+// Compresses image to under 4.5MB using canvas. Works on iOS + Android.
 export function imgToBase64(file, maxSizeMB = 4.5) {
   return new Promise((resolve, reject) => {
     const maxBytes = maxSizeMB * 1024 * 1024
 
-    // If already small enough, just convert directly
-    if (file.size <= maxBytes) {
-      const reader = new FileReader()
-      reader.onload  = () => resolve(reader.result.split(',')[1])
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-      return
-    }
+    const compress = (src) => {
+      const img = new Image()
+      img.onload = () => {
+        URL.revokeObjectURL(src)
+        // Scale down if needed
+        const scale = file.size > maxBytes ? Math.sqrt(maxBytes / file.size) * 0.9 : 1
+        const w = Math.round(img.naturalWidth  * Math.min(scale, 1))
+        const h = Math.round(img.naturalHeight * Math.min(scale, 1))
+        const canvas = document.createElement('canvas')
+        canvas.width = w; canvas.height = h
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h)
 
-    // Compress using canvas
-    const img = new Image()
-    const url = URL.createObjectURL(file)
-
-    img.onload = () => {
-      URL.revokeObjectURL(url)
-
-      // Calculate scale to get under limit
-      const ratio = Math.sqrt(maxBytes / file.size)
-      const w = Math.round(img.width  * ratio)
-      const h = Math.round(img.height * ratio)
-
-      const canvas = document.createElement('canvas')
-      canvas.width  = w
-      canvas.height = h
-
-      const ctx = canvas.getContext('2d')
-      ctx.drawImage(img, 0, 0, w, h)
-
-      // Try progressively lower quality until under limit
-      let quality = 0.85
-      const tryCompress = () => {
-        canvas.toBlob(
-          blob => {
-            if (!blob) { reject(new Error('Compression failed')); return }
-            if (blob.size <= maxBytes || quality <= 0.3) {
+        const tryQ = (q) => {
+          canvas.toBlob(blob => {
+            if (!blob) { reject(new Error('Canvas compression failed')); return }
+            if (blob.size <= maxBytes || q <= 0.25) {
               const reader = new FileReader()
               reader.onload  = () => resolve(reader.result.split(',')[1])
               reader.onerror = reject
               reader.readAsDataURL(blob)
             } else {
-              quality -= 0.1
-              tryCompress()
+              tryQ(q - 0.1)
             }
-          },
-          'image/jpeg',
-          quality
-        )
+          }, 'image/jpeg', q)
+        }
+        tryQ(file.size > maxBytes ? 0.75 : 0.9)
       }
-      tryCompress()
+      img.onerror = () => { URL.revokeObjectURL(src); reject(new Error('Image load failed')) }
+      img.src = src
     }
 
-    img.onerror = () => {
-      URL.revokeObjectURL(url)
-      reject(new Error('Could not load image'))
+    // Use FileReader as fallback if createObjectURL fails
+    try {
+      compress(URL.createObjectURL(file))
+    } catch {
+      const reader = new FileReader()
+      reader.onload = e => {
+        const img = new Image()
+        img.onload = () => {
+          const canvas = document.createElement('canvas')
+          canvas.width = img.naturalWidth; canvas.height = img.naturalHeight
+          canvas.getContext('2d').drawImage(img, 0, 0)
+          canvas.toBlob(blob => {
+            if (!blob) { reject(new Error('Failed')); return }
+            const r2 = new FileReader()
+            r2.onload = () => resolve(r2.result.split(',')[1])
+            r2.readAsDataURL(blob)
+          }, 'image/jpeg', 0.8)
+        }
+        img.src = e.target.result
+      }
+      reader.readAsDataURL(file)
     }
-
-    img.src = url
   })
 }
 
-// ─── SPEECH ENGINE ────────────────────────────────────────────────────────────
-// Unlocked flag — iOS Safari requires a user gesture to enable speech
-// Call unlockSpeech() once on first user tap
-let speechUnlocked = false
+// ── SPEECH ENGINE ────────────────────────────────────────────────────────────
+let _speechReady = false
 
+// Must be called on a direct user tap (iOS requirement)
 export function unlockSpeech() {
-  if (speechUnlocked || !window.speechSynthesis) return
-  // Speak a silent utterance to unlock the audio context on iOS
-  const utt = new SpeechSynthesisUtterance('')
-  utt.volume = 0
-  window.speechSynthesis.speak(utt)
-  speechUnlocked = true
+  if (_speechReady || !window.speechSynthesis) return
+  const u = new SpeechSynthesisUtterance(' ')
+  u.volume = 0; u.rate = 10
+  window.speechSynthesis.speak(u)
+  _speechReady = true
 }
 
-// Get best available voice (called lazily after voices load)
-function getBestVoice() {
-  const voices = window.speechSynthesis.getVoices()
+function pickVoice() {
+  const vs = window.speechSynthesis.getVoices()
   return (
-    voices.find(v => v.name === 'Daniel') ||                    // iOS UK Male
-    voices.find(v => v.name.includes('Google UK English Male')) || // Android
-    voices.find(v => v.name === 'Alex') ||                       // macOS
-    voices.find(v => v.name.includes('Microsoft David')) ||       // Windows
-    voices.find(v => v.lang === 'en-GB' && !v.name.includes('Female')) ||
-    voices.find(v => v.lang.startsWith('en-') && !v.name.toLowerCase().includes('female')) ||
-    voices[0] ||
-    null
+    vs.find(v => v.name === 'Daniel') ||
+    vs.find(v => /Google UK English Male/i.test(v.name)) ||
+    vs.find(v => v.name === 'Alex') ||
+    vs.find(v => /Microsoft David/i.test(v.name)) ||
+    vs.find(v => v.lang === 'en-GB') ||
+    vs.find(v => v.lang.startsWith('en') && !/female|zira|hazel/i.test(v.name)) ||
+    vs[0]
   )
 }
 
-// Clean text for speech — remove markdown, symbols, keep structure
-function cleanForSpeech(text, maxChars = 600) {
+function cleanText(text, max = 500) {
   return text
-    .replace(/[#*`_~◈◉◎◆▸⬡◐✦◫]/g, '')  // remove symbols
-    .replace(/\*\*(.*?)\*\*/g, '$1')         // remove bold
-    .replace(/\[(.*?)\]/g, '$1')             // remove brackets
-    .replace(/https?:\/\/\S+/g, '')          // remove URLs
-    .replace(/\n{3,}/g, '\n\n')              // collapse blank lines
-    .replace(/\n/g, '. ')                    // newlines to pauses
-    .replace(/\.{2,}/g, '.')                 // collapse dots
-    .replace(/\s{2,}/g, ' ')                 // collapse spaces
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/[#*`_~◈◉◎◆▸⬡◐✦|]/g, '')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/https?:\/\/\S+/g, '')
+    .replace(/\n{2,}/g, '. ')
+    .replace(/\n/g, ' ')
+    .replace(/\s{2,}/g, ' ')
     .trim()
-    .slice(0, maxChars)
+    .slice(0, max)
 }
 
-export function speak(text, options = {}) {
-  if (!window.speechSynthesis) return
-
-  const {
-    rate  = 0.90,   // slightly slower = clearer on mobile
-    pitch = 0.88,   // slightly lower = JARVIS-like
-    volume = 1.0,
-    maxChars = 600,
-  } = options
-
-  // Cancel any ongoing speech
+export function speak(text, opts = {}) {
+  if (!window.speechSynthesis || !text) return
+  const { rate = 0.88, pitch = 0.85, volume = 1, max = 500 } = opts
   window.speechSynthesis.cancel()
+  const clean = cleanText(text, max)
+  if (!clean.trim()) return
 
-  const clean = cleanForSpeech(text, maxChars)
-  if (!clean) return
-
-  const utt = new SpeechSynthesisUtterance(clean)
-  utt.rate   = rate
-  utt.pitch  = pitch
-  utt.volume = volume
-  utt.lang   = 'en-GB'  // British English for JARVIS feel
-
-  // Voices may not be loaded yet — wait for them
-  const voices = window.speechSynthesis.getVoices()
-  if (voices.length > 0) {
-    const v = getBestVoice()
+  const say = () => {
+    const utt = new SpeechSynthesisUtterance(clean)
+    utt.lang = 'en-GB'; utt.rate = rate; utt.pitch = pitch; utt.volume = volume
+    const v = pickVoice()
     if (v) utt.voice = v
-    window.speechSynthesis.speak(utt)
-  } else {
-    // Voices not ready yet (common on iOS) — wait for the event
-    window.speechSynthesis.onvoiceschanged = () => {
-      const v = getBestVoice()
-      if (v) utt.voice = v
-      window.speechSynthesis.speak(utt)
-      window.speechSynthesis.onvoiceschanged = null
+
+    // iOS keepalive — speech cuts after ~15s
+    let alive
+    utt.onstart = () => {
+      alive = setInterval(() => {
+        if (window.speechSynthesis.speaking) {
+          window.speechSynthesis.pause()
+          window.speechSynthesis.resume()
+        } else clearInterval(alive)
+      }, 12000)
     }
+    utt.onend   = () => clearInterval(alive)
+    utt.onerror = () => clearInterval(alive)
+    window.speechSynthesis.speak(utt)
   }
 
-  // iOS Safari bug workaround: speech pauses after ~15s
-  // Keep it alive with periodic resume calls
-  const keepAlive = setInterval(() => {
-    if (window.speechSynthesis.speaking) {
-      window.speechSynthesis.pause()
-      window.speechSynthesis.resume()
-    } else {
-      clearInterval(keepAlive)
+  // Voices may not be loaded yet
+  if (window.speechSynthesis.getVoices().length > 0) {
+    say()
+  } else {
+    window.speechSynthesis.onvoiceschanged = () => {
+      window.speechSynthesis.onvoiceschanged = null
+      say()
     }
-  }, 10000)
-
-  utt.onend   = () => clearInterval(keepAlive)
-  utt.onerror = () => clearInterval(keepAlive)
+  }
 }
 
 export function stopSpeaking() {
