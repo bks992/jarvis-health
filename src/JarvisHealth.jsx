@@ -1184,89 +1184,201 @@ function TrackTab({ allLogs }) {
     }
     return result
   }, [allLogs, period])
+
   const logged = days.filter(d => d.log)
-  let streak=0; for(let i=days.length-1;i>=0;i--){if(days[i].log&&days[i].overall>=40)streak++;else break}
-  const avg = k => logged.length ? Math.round(logged.reduce((s,d)=>s+(d[k]||0),0)/logged.length) : 0
+  let streak=0
+  for(let i=days.length-1;i>=0;i--){if(days[i].log&&days[i].overall>=40)streak++;else break}
+
+  // Average a numeric field across logged days
+  const avgScore = k => logged.length ? Math.round(logged.reduce((s,d)=>s+(d[k]||0),0)/logged.length) : 0
+  const avgVal   = k => logged.length ? (logged.reduce((s,d)=>s+(+d.log?.[k]||0),0)/logged.length) : 0
+
+  // Metric config: what was actually logged vs target
+  const METRICS = [
+    { key:'proteinG',       label:'Protein',              unit:'g',   target:80,   goal:'≥ 80g',   color:'#34D399', why:'Rebuilds muscle — cancer armor' },
+    { key:'waterL',         label:'Plain Water',           unit:'L',   target:2,    goal:'≥ 2L',    color:'#60A5FA', why:'Liver flush post-radiation' },
+    { key:'healthDrinksMl', label:'Medicinal Drinks',      unit:'ml',  target:400,  goal:'≥ 400ml', color:'#7DD3FC', why:'Ash gourd, lemon water, tulsi, golden milk' },
+    { key:'yogaMins',       label:'Yoga Asanas',           unit:'min', target:20,   goal:'≥ 20 min',color:'#FBBF24', why:'Lymphatic flow + physical recovery' },
+    { key:'pranayamaMins',  label:'Pranayama',             unit:'min', target:15,   goal:'≥ 15 min',color:'#FDE68A', why:'NK cell boost +30% (Anulom Vilom)' },
+    { key:'walkingSteps',   label:'Steps',                 unit:'',    target:8000, goal:'≥ 8,000', color:'#C4B5FD', why:'8% recurrence reduction per 1,000 steps' },
+    { key:'sleepH',         label:'Sleep',                 unit:'hrs', target:7.5,  goal:'≥ 7.5 hrs',color:'#F9A8D4', why:'Growth hormone + tumor suppressor activation' },
+    { key:'fiberG',         label:'Fiber',                 unit:'g',   target:30,   goal:'≥ 30g',   color:'#6EE7B7', why:'Gut microbiome fuel' },
+    { key:'creonDoses',     label:'CREON Doses',           unit:'',    target:3,    goal:'≥ 3 doses',color:'#93C5FD', why:'Enzyme compliance = nutrition absorption' },
+    { key:'veggieServings', label:'Vegetable Servings',    unit:'svgs',target:5,    goal:'≥ 5',     color:'#34D399', why:'Phytonutrients suppress cancer pathways' },
+    { key:'weightKg',       label:'Body Weight',           unit:'kg',  target:null, goal:'Tracked', color:'#A78BFA', why:'Weight gain target: 0.3-0.5 kg/week' },
+  ]
 
   if (logged.length===0) return (
     <div className="fade-up">
-      <div style={{display:'flex',gap:8,marginBottom:16}}>
-        {[7,15,30].map(p=><button key={p} className={`btn btn-sm ${period===p?'btn-pr':'btn-ou'}`} onClick={()=>setPeriod(p)}>{p} Days</button>)}
+      <div style={{display:"flex",gap:8,marginBottom:16}}>
+        {[7,15,30].map(p=><button key={p} className={"btn btn-sm "+(period===p?"btn-pr":"btn-ou")} onClick={()=>setPeriod(p)}>{p} Days</button>)}
       </div>
-      <div className="card" style={{textAlign:'center',padding:'40px 20px'}}>
-        <div style={{fontSize:40,marginBottom:12}}>📊</div>
-        <div style={{fontSize:16,fontWeight:700,color:'#64748B',marginBottom:6}}>No data yet</div>
-        <div style={{fontSize:13,color:'#94A3B8'}}>Start logging daily to see your progress</div>
+      <div className="card" style={{textAlign:"center",padding:"48px 24px"}}>
+        <div style={{fontSize:48,marginBottom:14}}>📊</div>
+        <div style={{fontSize:17,fontWeight:800,color:"rgba(241,245,249,0.7)",marginBottom:8}}>No logs yet for this period</div>
+        <div style={{fontSize:13,color:"rgba(241,245,249,0.35)",marginBottom:20}}>Go to Daily Log, fill in your data, and save. Your progress will appear here.</div>
+        <div style={{padding:"12px 16px",background:"rgba(167,139,250,0.1)",border:"1px solid rgba(167,139,250,0.25)",borderRadius:12,fontSize:12,color:"#C4B5FD"}}>
+          Tip: Log at least 3 days to see meaningful trends
+        </div>
       </div>
     </div>
   )
 
+  const latestLog = logged[logged.length-1]?.log || null
+
   return (
     <div className="fade-up">
-      <div style={{display:'flex',gap:8,marginBottom:14,alignItems:'center'}}>
-        {[7,15,30].map(p=><button key={p} className={`btn btn-sm ${period===p?'btn-pr':'btn-ou'}`} onClick={()=>setPeriod(p)}>{p} Days</button>)}
-        <span style={{marginLeft:'auto',fontSize:13,color:'#64748B',fontWeight:600}}>🔥 {streak} day streak</span>
+      {/* Period selector + streak */}
+      <div style={{display:"flex",gap:8,marginBottom:18,alignItems:"center"}}>
+        {[7,15,30].map(p=><button key={p} className={"btn btn-sm "+(period===p?"btn-pr":"btn-ou")} onClick={()=>setPeriod(p)}>{p} Days</button>)}
+        <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:6}}>
+          <span style={{fontSize:18}}>🔥</span>
+          <span style={{fontSize:14,fontWeight:800,color:"#FBBF24"}}>{streak}</span>
+          <span style={{fontSize:12,color:"rgba(241,245,249,0.4)"}}>day streak</span>
+          <span style={{marginLeft:8,fontSize:11,color:"rgba(241,245,249,0.3)"}}>({logged.length}/{period} days logged)</span>
+        </div>
       </div>
 
-      {/* FIX #2: English names | FIX #6: use correct score keys */}
-      <div className="stats-row">
+      {/* Pillar score averages */}
+      <div className="stats-row" style={{marginBottom:18}}>
         {[
-          {l:'Overall',    v:avg('overall'),   c:scoreColor(avg('overall'))},
-          {l:'🍽️ Nutrition', v:avg('nutrition'), c:'#10B981'},
-          {l:'💧 Hydration', v:avg('hydration'), c:'#0EA5E9'},
-          {l:'🧘 Mind & Body',v:avg('mindBody'),  c:'#F59E0B'},
-          {l:'💪 Exercise',  v:avg('exercise'),  c:'#8B5CF6'},
+          {l:"Overall",     v:avgScore("overall"),   c:scoreColor(avgScore("overall")), grad:"linear-gradient(135deg,#6366F1,#8B5CF6)"},
+          {l:"🍽️ Nutrition", v:avgScore("nutrition"), c:"#34D399", grad:"linear-gradient(135deg,#10B981,#06B6D4)"},
+          {l:"💧 Hydration", v:avgScore("hydration"), c:"#60A5FA", grad:"linear-gradient(135deg,#3B82F6,#06B6D4)"},
+          {l:"🧘 Mind & Body",v:avgScore("mindBody"),  c:"#FBBF24", grad:"linear-gradient(135deg,#F59E0B,#EF4444)"},
+          {l:"💪 Exercise",  v:avgScore("exercise"),  c:"#C4B5FD", grad:"linear-gradient(135deg,#8B5CF6,#6366F1)"},
         ].map(s=>(
-          <div key={s.l} className="stat"><div className="stat-lbl">{s.l}</div><div className="stat-val" style={{color:s.v>0?s.c:'#CBD5E1',fontSize:20}}>{s.v>0?s.v:'—'}</div><PBar value={s.v} color={s.c} height={3}/></div>
+          <div key={s.l} className="stat" style={{borderTop:"3px solid transparent",backgroundImage:`${s.grad},linear-gradient(rgba(255,255,255,0.05),rgba(255,255,255,0.05))`,backgroundOrigin:"border-box",backgroundClip:"padding-box,padding-box"}}>
+            <div className="stat-lbl">{s.l}</div>
+            <div className="stat-val" style={{color:s.v>0?s.c:"rgba(241,245,249,0.2)",fontSize:22,background:s.v>0?s.grad:"none",WebkitBackgroundClip:s.v>0?"text":"unset",WebkitTextFillColor:s.v>0?"transparent":"rgba(241,245,249,0.2)"}}>
+              {s.v>0?s.v:"—"}
+            </div>
+            <PBar value={s.v} color={s.c} height={4}/>
+          </div>
         ))}
       </div>
 
+      {/* Latest log — actual values */}
+      {latestLog && (
+        <div className="card" style={{marginBottom:14,borderTop:"3px solid transparent",background:"linear-gradient(rgba(255,255,255,0.06),rgba(255,255,255,0.06)) padding-box, linear-gradient(135deg,#10B981,#6366F1,#8B5CF6) border-box",border:"3px solid transparent"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+            <div>
+              <div style={{fontSize:15,fontWeight:800,color:"#F1F5F9"}}>Most Recent Log — Actual Values</div>
+              <div style={{fontSize:11,color:"rgba(241,245,249,0.4)",marginTop:2}}>What you actually logged on {logged[logged.length-1]?.ds || "last logged day"}</div>
+            </div>
+            <div style={{textAlign:"center",padding:"8px 14px",background:"rgba(99,102,241,0.15)",borderRadius:12,border:"1px solid rgba(167,139,250,0.25)"}}>
+              <div style={{fontSize:10,fontWeight:700,color:"rgba(241,245,249,0.5)"}}>SCORE</div>
+              <div style={{fontSize:22,fontWeight:800,background:"linear-gradient(135deg,#10B981,#6366F1)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{logged[logged.length-1]?.overall||0}</div>
+            </div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:8}}>
+            {[
+              {k:"proteinG",     label:"Protein",     unit:"g",   target:80,   icon:"🥩"},
+              {k:"waterL",       label:"Water",        unit:"L",   target:2,    icon:"💧"},
+              {k:"healthDrinksMl",label:"Health Drinks",unit:"ml", target:400,  icon:"🍵"},
+              {k:"yogaMins",     label:"Yoga",         unit:"min", target:20,   icon:"🧘"},
+              {k:"pranayamaMins",label:"Pranayama",    unit:"min", target:15,   icon:"🌬️"},
+              {k:"walkingSteps", label:"Steps",        unit:"",    target:8000, icon:"🚶"},
+              {k:"sleepH",       label:"Sleep",        unit:"hrs", target:7.5,  icon:"😴"},
+              {k:"creonDoses",   label:"CREON",        unit:"x",   target:3,    icon:"💊"},
+            ].map(m=>{
+              const val = +latestLog[m.k]||0
+              const pct = m.target ? Math.min(100,Math.round(val/m.target*100)) : 100
+              const hit = m.target ? val >= m.target : val > 0
+              return (
+                <div key={m.k} style={{padding:"10px 12px",background:hit?"rgba(16,185,129,0.1)":"rgba(255,255,255,0.04)",border:"1px solid "+(hit?"rgba(52,211,153,0.3)":"rgba(255,255,255,0.08)"),borderRadius:12}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+                    <span style={{fontSize:11,color:"rgba(241,245,249,0.45)",fontWeight:600}}>{m.icon} {m.label}</span>
+                    <span style={{fontSize:10,fontWeight:800,color:hit?"#34D399":"#F87171"}}>{hit?"✓":"✕"}</span>
+                  </div>
+                  <div style={{fontSize:18,fontWeight:800,color:hit?"#34D399":"#F1F5F9"}}>
+                    {val>0?`${val}${m.unit}`:"—"}
+                  </div>
+                  {m.target && <div style={{fontSize:10,color:"rgba(241,245,249,0.3)",marginTop:2}}>Target: {m.target}{m.unit}</div>}
+                  <div style={{marginTop:6}}>
+                    <PBar value={pct} color={hit?"#34D399":"#F87171"} height={3}/>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Target achievement — with actual averages shown */}
       <div className="card">
-        <div className="card-title">Recovery Target Achievement — {logged.length} days logged</div>
-        {[
-          {l:'Protein ≥ 80g/day',        n:logged.filter(d=>(+d.log?.proteinG||0)>=80).length,          c:'#10B981', why:'Rebuilds muscle — your cancer armor'},
-          {l:'Plain Water ≥ 2L/day',      n:logged.filter(d=>(+d.log?.waterL||0)>=2).length,             c:'#0EA5E9', why:'Liver flush post-radiation'},
-          {l:'Health Drinks ≥ 400ml/day', n:logged.filter(d=>(+d.log?.healthDrinksMl||0)>=400).length,   c:'#7DD3FC', why:'Medicinal hydration (lemon water, ash gourd, tulsi)'},
-          {l:'Yoga ≥ 20 mins/day',        n:logged.filter(d=>(+d.log?.yogaMins||0)>=20).length,          c:'#F59E0B', why:'Physical postures for lymphatic flow'},
-          {l:'Pranayama ≥ 15 mins/day',   n:logged.filter(d=>(+d.log?.pranayamaMins||0)>=15).length,     c:'#FCD34D', why:'NK cell boost +30% (Anulom Vilom)'},
-          {l:'Steps ≥ 8000/day',          n:logged.filter(d=>(+d.log?.walkingSteps||0)>=8000).length,    c:'#8B5CF6', why:'8% cancer recurrence reduction per 1000 steps'},
-          {l:'Sleep ≥ 7.5 hours/night',   n:logged.filter(d=>(+d.log?.sleepH||0)>=7.5).length,          c:'#EC4899', why:'Growth hormone + tumor suppressor activation'},
-          {l:'CREON ≥ 3 doses/day',       n:logged.filter(d=>(+d.log?.creonDoses||0)>=3).length,         c:'#0EA5E9', why:'Enzyme compliance = nutrition absorption'},
-        ].map((g,i)=>{
-          const pct = Math.round((g.n/Math.max(1,logged.length))*100)
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+          <div className="card-title" style={{marginBottom:0}}>Recovery Targets — {period}-Day Period</div>
+          <span style={{fontSize:11,color:"rgba(241,245,249,0.35)"}}>{logged.length} days logged</span>
+        </div>
+        {METRICS.filter(m=>m.target).map((m,i)=>{
+          const days_hit = logged.filter(d=>(+d.log?.[m.key]||0) >= m.target).length
+          const pct_days = Math.round(days_hit/Math.max(1,logged.length)*100)
+          const avg = avgVal(m.key)
+          const pct_avg = Math.min(100, Math.round(avg/m.target*100))
+          const isGood = pct_days >= 70
+          const isFair = pct_days >= 40
+          const barColor = isGood?"#34D399":isFair?"#FBBF24":"#F87171"
           return (
-            <div key={i} style={{marginBottom:12}}>
-              <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
-                <div><div style={{fontSize:13,color:'#374151'}}>{g.l}</div><div style={{fontSize:10,color:'#94A3B8'}}>{g.why}</div></div>
-                <span style={{fontSize:13,fontWeight:700,color:scoreColor(pct),flexShrink:0,marginLeft:8}}>{g.n}/{logged.length}</span>
+            <div key={i} style={{marginBottom:14,padding:"12px 14px",background:"rgba(255,255,255,0.03)",borderRadius:12,border:"1px solid rgba(255,255,255,0.06)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+                <div>
+                  <div style={{fontSize:13,fontWeight:600,color:"#E2E8F0"}}>{m.label} {m.goal}</div>
+                  <div style={{fontSize:11,color:"rgba(241,245,249,0.35)",marginTop:1}}>{m.why}</div>
+                </div>
+                <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
+                  <div style={{fontSize:14,fontWeight:800,color:barColor}}>{days_hit}/{logged.length}</div>
+                  <div style={{fontSize:10,color:"rgba(241,245,249,0.35)"}}>days hit</div>
+                </div>
               </div>
-              <PBar value={pct} color={g.c}/>
+              {/* Two bars: avg value vs target */}
+              <div style={{display:"flex",gap:12,alignItems:"center",marginBottom:4}}>
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                    <span style={{fontSize:10,color:"rgba(241,245,249,0.4)"}}>Average logged</span>
+                    <span style={{fontSize:11,fontWeight:700,color:pct_avg>=100?m.color:"rgba(241,245,249,0.7)"}}>{avg>0?`${avg%1===0?avg:avg.toFixed(1)}${m.unit}`:"—"}</span>
+                  </div>
+                  <PBar value={pct_avg} color={m.color} height={5}/>
+                </div>
+                <div style={{width:50,textAlign:"center"}}>
+                  <div style={{fontSize:10,color:"rgba(241,245,249,0.35)"}}>% days</div>
+                  <div style={{fontSize:14,fontWeight:800,color:barColor}}>{pct_days}%</div>
+                </div>
+              </div>
             </div>
           )
         })}
       </div>
 
+      {/* Day-by-day grid */}
       <div className="card">
-        <div className="card-title">Day by Day</div>
-        <div style={{display:'grid',gridTemplateColumns:'58px 1fr 40px',gap:'4px 10px',marginBottom:6,fontSize:10,fontWeight:700,color:'#94A3B8',textTransform:'uppercase',letterSpacing:0.5}}>
+        <div className="card-title">Day by Day Breakdown</div>
+        <div style={{display:"grid",gridTemplateColumns:"60px 1fr 45px",gap:"4px 10px",marginBottom:8,fontSize:10,fontWeight:700,color:"rgba(241,245,249,0.3)",textTransform:"uppercase",letterSpacing:0.5}}>
           <span>Date</span>
-          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}><span>🍽️</span><span>💧</span><span>🧘</span><span>💪</span></div>
-          <span style={{textAlign:'right'}}>Score</span>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
+            <span>🍽️</span><span>💧</span><span>🧘</span><span>💪</span>
+          </div>
+          <span style={{textAlign:"right"}}>Score</span>
         </div>
         {days.map(day=>(
-          <div key={day.ds} className={`day-row${!day.log?' no-data':''}`}>
+          <div key={day.ds} className={"day-row"+(!day.log?" no-data":"")}>
             <div>
-              <div style={{fontSize:11,fontWeight:700,color:day.isToday?'#0EA5E9':'#64748B'}}>{day.day}</div>
-              <div style={{fontSize:12,color:day.isToday?'#0EA5E9':'#94A3B8'}}>{day.dateN} {day.mon}</div>
-              {day.isToday&&<div style={{fontSize:9,color:'#10B981',fontWeight:700}}>TODAY</div>}
+              <div style={{fontSize:11,fontWeight:700,color:day.isToday?"#A78BFA":"rgba(241,245,249,0.55)"}}>{day.day}</div>
+              <div style={{fontSize:11,color:day.isToday?"#C4B5FD":"rgba(241,245,249,0.3)"}}>{day.dateN} {day.mon}</div>
+              {day.isToday&&<div style={{fontSize:9,color:"#34D399",fontWeight:700,letterSpacing:0.5}}>TODAY</div>}
             </div>
-            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}>
-              {[{k:'nutrition',c:'#10B981'},{k:'hydration',c:'#0EA5E9'},{k:'mindBody',c:'#F59E0B'},{k:'exercise',c:'#8B5CF6'}].map(p=>(
-                <div key={p.k}><PBar value={day[p.k]||0} color={p.c}/><div style={{fontSize:9,color:day.log?p.c:'#E2E8F0',marginTop:2,fontWeight:600}}>{day.log?day[p.k]:'—'}</div></div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
+              {[{k:"nutrition",c:"#34D399"},{k:"hydration",c:"#60A5FA"},{k:"mindBody",c:"#FBBF24"},{k:"exercise",c:"#C4B5FD"}].map(p=>(
+                <div key={p.k}>
+                  <PBar value={day[p.k]||0} color={p.c} height={5}/>
+                  <div style={{fontSize:9,color:day.log?p.c:"rgba(255,255,255,0.1)",marginTop:2,fontWeight:700}}>{day.log?day[p.k]:"—"}</div>
+                </div>
               ))}
             </div>
-            <div style={{textAlign:'right'}}>
-              {day.log?<span style={{fontSize:15,fontWeight:800,color:scoreColor(day.overall)}}>{day.overall}</span>:<span style={{color:'#E2E8F0'}}>—</span>}
+            <div style={{textAlign:"right"}}>
+              {day.log
+                ?<span style={{fontSize:15,fontWeight:800,background:"linear-gradient(135deg,#10B981,#6366F1)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{day.overall}</span>
+                :<span style={{color:"rgba(255,255,255,0.1)"}}>—</span>}
             </div>
           </div>
         ))}
