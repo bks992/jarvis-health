@@ -478,8 +478,7 @@ INTOLERANCE FLAG: [Problem foods found or NONE]`}
 
         {/* Ticker */}
         <div style={{overflow:'hidden',height:16,marginBottom:6}}>
-          <div style={{display:'flex',gap:36,whiteSpace:'nowrap',
-            animation:'none',opacity:0.5}}>
+          <div style={{display:'flex',gap:36,whiteSpace:'nowrap',opacity:0.5}}>
             {TICKER.map((t,i)=>(
               <span key={i} style={{fontSize:9,fontFamily:'Rajdhani',
                 color:'#00D4FF',letterSpacing:1}}>◆ {t}</span>
@@ -664,7 +663,7 @@ INTOLERANCE FLAG: [Problem foods found or NONE]`}
             {aiLoading&&tab==='food'&&<Thinking text="JARVIS ANALYZING NUTRITIONAL DATA..."/>}
 
             {foodResult&&(
-              <Panel className="fade-slide" title="Scan Complete"
+              <Panel title="Scan Complete"
                 color={vColor[foodResult.verdict]||'#FFB800'}>
                 <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:12}}>
                   <div style={{width:44,height:44,border:`2px solid ${vColor[foodResult.verdict]||'#FFB800'}`,
@@ -865,9 +864,11 @@ INTOLERANCE FLAG: [Problem foods found or NONE]`}
             </Panel>
 
             <OrbBtn
-              label={aiLoading?'GENERATING...`:`◎ GENERATE PHASE ${fitnessPhase} ${fitnessType.toUpperCase()} PROTOCOL`}
-              onClick={generateFitness} disabled={aiLoading}
-              color={fitnessType==='yoga'?'#00FF88':'#00D4FF'}/>
+              label={aiLoading ? 'GENERATING...' : `◎ GENERATE PHASE ${fitnessPhase} ${fitnessType.toUpperCase()} PROTOCOL`}
+              onClick={generateFitness}
+              disabled={aiLoading}
+              color={fitnessType==='yoga'?'#00FF88':'#00D4FF'}
+            />
 
             {aiLoading&&tab==='fitness'&&(
               <Thinking color={fitnessType==='yoga'?'#00FF88':'#00D4FF'}
@@ -934,7 +935,8 @@ INTOLERANCE FLAG: [Problem foods found or NONE]`}
             )}
 
             {recoveryResult&&recoveryTopic&&(
-              <Panel title={`${RECOVERY_TOPICS.find(t=>t.id===recoveryTopic)?.label?.toUpperCase()} PROTOCOL`}
+              <Panel
+                title={`${RECOVERY_TOPICS.find(t=>t.id===recoveryTopic)?.label?.toUpperCase()} PROTOCOL`}
                 color={RECOVERY_TOPICS.find(t=>t.id===recoveryTopic)?.color}>
                 <div style={{fontSize:13,color:'#B8E4F0',lineHeight:1.8,
                   whiteSpace:'pre-wrap',fontFamily:'Rajdhani'}}>
