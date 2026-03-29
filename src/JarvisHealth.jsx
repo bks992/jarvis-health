@@ -1314,221 +1314,514 @@ function MedTab({ uid, db, setDb, showToast }) {
   )
 }
 // ─── TRACK TAB — FIX #2 (English names) FIX #6 (correct data) ───────────────
-function TrackTab({ allLogs }) {
-  const [period, setPeriod] = useState(7)
+function TrackTab({ allLogs, db }) {
+  const [period,  setPeriod]  = useState(7)
+  const [selDay,  setSelDay]  = useState(null) // selected day ISO string
+  const [view,    setView]    = useState('calendar') // calendar | summary
+
+  // ── Build day array ────────────────────────────────────────────────────────
   const days = useMemo(() => {
     const today = new Date(); const result = []
-    for (let i = period-1; i>=0; i--) {
-      const d = new Date(today); d.setDate(d.getDate()-i)
-      const ds = d.toISOString().slice(0,10)
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(today); d.setDate(d.getDate() - i)
+      const ds = d.toISOString().slice(0, 10)
       const log = allLogs.find(l => l.date === ds) || null
-      const sc = scorePillars(log)
-      result.push({ds, day:d.toLocaleDateString('en-IN',{weekday:'short'}), dateN:d.getDate(), mon:d.toLocaleDateString('en-IN',{month:'short'}), isToday:i===0, log, ...sc})
+      const sc  = scorePillars(log)
+      result.push({
+        ds,
+        day:  d.toLocaleDateString('en-IN', { weekday: 'short' }),
+        dayFull: d.toLocaleDateString('en-IN', { weekday: 'long' }),
+        dateN: d.getDate(),
+        mon:  d.toLocaleDateString('en-IN', { month: 'short' }),
+        monFull: d.toLocaleDateString('en-IN', { month: 'long' }),
+        year: d.getFullYear(),
+        isToday: i === 0,
+        log, ...sc,
+      })
     }
     return result
-  }, [allLogs, period])
+  }, [allLogs])
 
-  const logged = days.filter(d => d.log)
-  let streak=0
-  for(let i=days.length-1;i>=0;i--){if(days[i].log&&days[i].overall>=40)streak++;else break}
+  // Days within selected period
+  const periodDays   = days.slice(days.length - period)
+  const logged       = periodDays.filter(d => d.log)
+  let streak = 0
+  for (let i = days.length - 1; i >= 0; i--) {
+    if (days[i].log && days[i].overall >= 40) streak++; else break
+  }
+  const avgScore = k => logged.length ? Math.round(logged.reduce((s,d) => s + (d[k]||0), 0) / logged.length) : 0
+  const avgVal   = k => logged.length ? +(logged.reduce((s,d) => s + (+d.log?.[k]||0), 0) / logged.length).toFixed(1) : 0
 
-  // Average a numeric field across logged days
-  const avgScore = k => logged.length ? Math.round(logged.reduce((s,d)=>s+(d[k]||0),0)/logged.length) : 0
-  const avgVal   = k => logged.length ? (logged.reduce((s,d)=>s+(+d.log?.[k]||0),0)/logged.length) : 0
+  // ── Selected day ──────────────────────────────────────────────────────────
+  const selDayData = selDay ? days.find(d => d.ds === selDay) : null
 
-  // Metric config: what was actually logged vs target
-  const METRICS = [
-    { key:'proteinG',       label:'Protein',              unit:'g',   target:80,   goal:'≥ 80g',   color:'#5E8030', why:'Rebuilds muscle — cancer armor' },
-    { key:'waterL',         label:'Plain Water',           unit:'L',   target:2,    goal:'≥ 2L',    color:'#5A88B0', why:'Liver flush post-radiation' },
-    { key:'healthDrinksMl', label:'Medicinal Drinks',      unit:'ml',  target:400,  goal:'≥ 400ml', color:'#68B4D8', why:'Ash gourd, lemon water, tulsi, golden milk' },
-    { key:'yogaMins',       label:'Yoga Asanas',           unit:'min', target:20,   goal:'≥ 20 min',color:'#C88A1E', why:'Lymphatic flow + physical recovery' },
-    { key:'pranayamaMins',  label:'Pranayama',             unit:'min', target:15,   goal:'≥ 15 min',color:'#E4C070', why:'NK cell boost +30% (Anulom Vilom)' },
-    { key:'walkingSteps',   label:'Steps',                 unit:'',    target:8000, goal:'≥ 8,000', color:'#9ABE6E', why:'8% recurrence reduction per 1,000 steps' },
-    { key:'sleepH',         label:'Sleep',                 unit:'hrs', target:7.5,  goal:'≥ 7.5 hrs',color:'#E4A8C0', why:'Growth hormone + tumor suppressor activation' },
-    { key:'fiberG',         label:'Fiber',                 unit:'g',   target:30,   goal:'≥ 30g',   color:'#82AA4E', why:'Gut microbiome fuel' },
-    { key:'creonDoses',     label:'CREON Doses',           unit:'',    target:3,    goal:'≥ 3 doses',color:'#7AAAD0', why:'Enzyme compliance = nutrition absorption' },
-    { key:'veggieServings', label:'Vegetable Servings',    unit:'svgs',target:5,    goal:'≥ 5',     color:'#5E8030', why:'Phytonutrients suppress cancer pathways' },
-    { key:'weightKg',       label:'Body Weight',           unit:'kg',  target:null, goal:'Tracked', color:'#82AA4E', why:'Weight gain target: 0.3-0.5 kg/week' },
+  // Food logs for selected day
+  const foodsForDay = (date) => {
+    if (!db?.foodLogs || !date) return []
+    const d = new Date(date)
+    const localStr = d.toLocaleDateString('en-IN')
+    return (db.foodLogs || []).filter(f => f.date === localStr)
+  }
+
+  // All METRICS definitions
+  const ALL_METRICS = [
+    { k:'proteinG',      label:'Protein',           unit:'g',   target:80,   icon:'🥩', color:'#5E8030' },
+    { k:'waterL',        label:'Plain Water',         unit:'L',   target:2,    icon:'💧', color:'#4A7090' },
+    { k:'healthDrinksMl',label:'Medicinal Drinks',    unit:'ml',  target:400,  icon:'🍵', color:'#4A7090' },
+    { k:'yogaMins',      label:'Yoga Asanas',         unit:'min', target:20,   icon:'🧘', color:'#B87820' },
+    { k:'pranayamaMins', label:'Pranayama',            unit:'min', target:15,   icon:'🌬️', color:'#B87820' },
+    { k:'walkingSteps',  label:'Steps',               unit:'',    target:8000, icon:'🚶', color:'#5E8030' },
+    { k:'sleepH',        label:'Sleep',               unit:'hrs', target:7.5,  icon:'😴', color:'#B05878' },
+    { k:'fiberG',        label:'Fiber',               unit:'g',   target:30,   icon:'🌾', color:'#5E8030' },
+    { k:'creonDoses',    label:'CREON doses',         unit:'x',   target:3,    icon:'💊', color:'#4A7090' },
+    { k:'veggieServings',label:'Veggie servings',     unit:'',    target:5,    icon:'🥦', color:'#5E8030' },
+    { k:'weightKg',      label:'Body Weight',         unit:'kg',  target:null, icon:'⚖️', color:'#8A7060' },
   ]
 
-  if (logged.length===0) return (
+  const HABITS_LIST = [
+    'Lemon water on waking','CREON with every meal','Ash gourd juice 200ml',
+    'Amla powder 1 tsp','Tulsi / ginger tea','Golden milk before bed',
+    'No refined sugar','No fried food','In bed by 10pm',
+    'Anulom Vilom 10 mins','Morning walk done','Protein at every meal',
+  ]
+
+  if (!selDay && days.filter(d => d.log).length === 0) return (
     <div className="fade-up">
-      <div style={{display:"flex",gap:8,marginBottom:16}}>
-        {[7,15,30].map(p=><button key={p} className={"btn btn-sm "+(period===p?"btn-pr":"btn-ou")} onClick={()=>setPeriod(p)}>{p} Days</button>)}
-      </div>
-      <div className="card" style={{textAlign:"center",padding:"48px 24px"}}>
-        <div style={{fontSize:48,marginBottom:14}}>📊</div>
-        <div style={{fontSize:17,fontWeight:800,color:"rgba(241,245,249,0.7)",marginBottom:8}}>No logs yet for this period</div>
-        <div style={{fontSize:13,color:"rgba(241,245,249,0.35)",marginBottom:20}}>Go to Daily Log, fill in your data, and save. Your progress will appear here.</div>
-        <div style={{padding:"12px 16px",background:"rgba(167,139,250,0.1)",border:"1px solid rgba(167,139,250,0.25)",borderRadius:12,fontSize:12,color:"#C4B5FD"}}>
-          Tip: Log at least 3 days to see meaningful trends
-        </div>
+      <div className="card" style={{textAlign:'center',padding:'48px 24px'}}>
+        <div style={{fontSize:52,marginBottom:14}}>📅</div>
+        <div style={{fontSize:17,fontWeight:800,color:'#1A2412',marginBottom:8}}>No logs yet</div>
+        <div style={{fontSize:13,color:'#8A9482',marginBottom:20}}>Start logging in Daily Log — tap any past day here to see your full journal for that day.</div>
       </div>
     </div>
   )
 
-  const latestLog = logged[logged.length-1]?.log || null
-
   return (
     <div className="fade-up">
-      {/* Period selector + streak */}
-      <div style={{display:"flex",gap:8,marginBottom:18,alignItems:"center"}}>
-        {[7,15,30].map(p=><button key={p} className={"btn btn-sm "+(period===p?"btn-pr":"btn-ou")} onClick={()=>setPeriod(p)}>{p} Days</button>)}
-        <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:6}}>
+      {/* ── Streak + period ── */}
+      <div style={{display:'flex',gap:8,marginBottom:16,alignItems:'center',flexWrap:'wrap'}}>
+        {[7,15,30].map(p => (
+          <button key={p} className={'btn btn-sm ' + (period===p?'btn-pr':'btn-ou')} onClick={() => { setPeriod(p); setSelDay(null) }}>{p} Days</button>
+        ))}
+        <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:8}}>
           <span style={{fontSize:18}}>🔥</span>
-          <span style={{fontSize:14,fontWeight:800,color:"#FBBF24"}}>{streak}</span>
-          <span style={{fontSize:12,color:"rgba(241,245,249,0.4)"}}>day streak</span>
-          <span style={{marginLeft:8,fontSize:11,color:"rgba(241,245,249,0.3)"}}>({logged.length}/{period} days logged)</span>
+          <span style={{fontSize:15,fontWeight:800,color:'#B87820'}}>{streak}</span>
+          <span style={{fontSize:12,color:'#8A9482'}}>day streak</span>
+          <span style={{fontSize:11,color:'#A8B0A0',marginLeft:4}}>({logged.length}/{period} logged)</span>
         </div>
       </div>
 
-      {/* Pillar score averages */}
-      <div className="stats-row" style={{marginBottom:18}}>
-        {[
-          {l:"Overall",     v:avgScore("overall"),   c:scoreColor(avgScore("overall")), grad:"linear-gradient(135deg,#6366F1,#8B5CF6)"},
-          {l:"🍽️ Nutrition", v:avgScore("nutrition"), c:"#34D399", grad:"linear-gradient(135deg,#10B981,#06B6D4)"},
-          {l:"💧 Hydration", v:avgScore("hydration"), c:"#60A5FA", grad:"linear-gradient(135deg,#3B82F6,#06B6D4)"},
-          {l:"🧘 Mind & Body",v:avgScore("mindBody"),  c:"#FBBF24", grad:"linear-gradient(135deg,#F59E0B,#EF4444)"},
-          {l:"💪 Exercise",  v:avgScore("exercise"),  c:"#C4B5FD", grad:"linear-gradient(135deg,#8B5CF6,#6366F1)"},
-        ].map(s=>(
-          <div key={s.l} className="stat" style={{borderTop:"3px solid transparent",backgroundImage:`${s.grad},linear-gradient(rgba(255,255,255,0.05),rgba(255,255,255,0.05))`,backgroundOrigin:"border-box",backgroundClip:"padding-box,padding-box"}}>
-            <div className="stat-lbl">{s.l}</div>
-            <div className="stat-val" style={{color:s.v>0?s.c:"rgba(241,245,249,0.2)",fontSize:22,background:s.v>0?s.grad:"none",WebkitBackgroundClip:s.v>0?"text":"unset",WebkitTextFillColor:s.v>0?"transparent":"rgba(241,245,249,0.2)"}}>
-              {s.v>0?s.v:"—"}
-            </div>
-            <PBar value={s.v} color={s.c} height={4}/>
+      {/* ── 30-day calendar heatmap ── */}
+      <div className="card" style={{marginBottom:14}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+          <div className="card-title" style={{marginBottom:0}}>Tap any day to see your full journal</div>
+          <div style={{display:'flex',gap:8,alignItems:'center',fontSize:10,color:'#8A9482'}}>
+            <span style={{display:'inline-block',width:10,height:10,borderRadius:3,background:'#EDE8E0'}}/>No log
+            <span style={{display:'inline-block',width:10,height:10,borderRadius:3,background:'#C8DDA8'}}/>Fair
+            <span style={{display:'inline-block',width:10,height:10,borderRadius:3,background:'#5E8030'}}/>Good
           </div>
-        ))}
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:5}}>
+          {days.map(day => {
+            const isSel = selDay === day.ds
+            const bgColor = !day.log ? '#EDE8E0'
+              : day.overall >= 80 ? '#3C5A1E'
+              : day.overall >= 60 ? '#5E8030'
+              : day.overall >= 40 ? '#9AB85E'
+              : '#C8DDA8'
+            const textColor = !day.log ? '#A8B0A0' : day.overall >= 60 ? 'white' : '#3C5A1E'
+            return (
+              <div key={day.ds}
+                onClick={() => setSelDay(isSel ? null : day.ds)}
+                style={{
+                  background: bgColor,
+                  border: isSel ? '2px solid #1A2412' : day.isToday ? '2px solid #B87820' : '2px solid transparent',
+                  borderRadius: 10, padding: '7px 4px', textAlign: 'center', cursor: 'pointer',
+                  transition: 'all 0.12s', transform: isSel ? 'scale(1.1)' : 'scale(1)',
+                  boxShadow: isSel ? '0 4px 12px rgba(0,0,0,0.18)' : 'none',
+                }}>
+                <div style={{fontSize:9,fontWeight:700,color:textColor,opacity:0.7,lineHeight:1}}>{day.day}</div>
+                <div style={{fontSize:13,fontWeight:800,color:textColor,margin:'2px 0'}}>{day.dateN}</div>
+                {day.log && (
+                  <div style={{fontSize:9,fontWeight:700,color:textColor,opacity:0.85}}>{day.overall}</div>
+                )}
+                {day.isToday && !day.log && (
+                  <div style={{fontSize:7,color:'#B87820',fontWeight:800,marginTop:1}}>LOG</div>
+                )}
+              </div>
+            )
+          })}
+        </div>
       </div>
 
-      {/* Latest log — actual values */}
-      {latestLog && (
-        <div className="card" style={{marginBottom:14,borderTop:"3px solid transparent",background:"linear-gradient(rgba(255,255,255,0.06),rgba(255,255,255,0.06)) padding-box, linear-gradient(135deg,#10B981,#6366F1,#8B5CF6) border-box",border:"3px solid transparent"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+      {/* ── SELECTED DAY FULL DETAIL ── */}
+      {selDayData && (
+        <div className="fade-up">
+          {/* Day header */}
+          <div style={{
+            padding:'16px 20px',
+            background: selDayData.log
+              ? 'linear-gradient(135deg,#EAF3DC,#E2EECF)'
+              : '#FDF8EC',
+            border: `1.5px solid ${selDayData.log ? 'rgba(94,128,48,0.25)' : '#E8D090'}`,
+            borderRadius:16,marginBottom:14,
+            display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,
+          }}>
             <div>
-              <div style={{fontSize:15,fontWeight:800,color:"#F1F5F9"}}>Most Recent Log — Actual Values</div>
-              <div style={{fontSize:11,color:"rgba(241,245,249,0.4)",marginTop:2}}>What you actually logged on {logged[logged.length-1]?.ds || "last logged day"}</div>
+              <div style={{fontSize:18,fontWeight:800,color:'#1A2412'}}>
+                {selDayData.dayFull}, {selDayData.dateN} {selDayData.monFull} {selDayData.year}
+                {selDayData.isToday && <span style={{marginLeft:8,fontSize:11,fontWeight:700,color:'#B87820',background:'#FDF8EC',padding:'2px 8px',borderRadius:6}}>TODAY</span>}
+              </div>
+              <div style={{fontSize:12,color:'#657060',marginTop:3}}>
+                {selDayData.log ? 'Log found — full journal below' : '⚠ No log for this day — nothing was saved'}
+              </div>
             </div>
-            <div style={{textAlign:"center",padding:"8px 14px",background:"rgba(99,102,241,0.15)",borderRadius:12,border:"1px solid rgba(167,139,250,0.25)"}}>
-              <div style={{fontSize:10,fontWeight:700,color:"rgba(241,245,249,0.5)"}}>SCORE</div>
-              <div style={{fontSize:22,fontWeight:800,background:"linear-gradient(135deg,#10B981,#6366F1)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{logged[logged.length-1]?.overall||0}</div>
-            </div>
+            {selDayData.log && (
+              <div style={{textAlign:'center',padding:'10px 16px',background:'white',borderRadius:12,border:'1px solid rgba(94,128,48,0.2)'}}>
+                <div style={{fontSize:10,fontWeight:700,color:'#8A9482'}}>DAILY SCORE</div>
+                <div style={{fontSize:30,fontWeight:800,color:scoreColor(selDayData.overall)}}>{selDayData.overall}</div>
+                <div style={{fontSize:10,color:'#8A9482'}}>{scoreLabel(selDayData.overall)}</div>
+              </div>
+            )}
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:8}}>
+
+          {!selDayData.log ? (
+            <div className="card" style={{textAlign:'center',padding:'36px 20px'}}>
+              <div style={{fontSize:36,marginBottom:10}}>📋</div>
+              <div style={{fontSize:15,fontWeight:700,color:'#1A2412',marginBottom:6}}>No data logged for this day</div>
+              <div style={{fontSize:13,color:'#8A9482'}}>You didn't log this day, or the data wasn't saved. Go to Daily Log to log today's data.</div>
+            </div>
+          ) : (() => {
+            const L = selDayData.log
+
+            // What was hit vs missed
+            const metrics = ALL_METRICS.filter(m => m.target)
+            const hit    = metrics.filter(m => (+L[m.k]||0) >= m.target)
+            const missed = metrics.filter(m => (+L[m.k]||0) < m.target)
+
+            const foods = foodsForDay(selDayData.ds)
+            const habits = L.habits || {}
+            const doneHabits   = HABITS_LIST.filter(h => habits[h])
+            const missedHabits = HABITS_LIST.filter(h => !habits[h])
+
+            return (
+              <>
+                {/* ── 5-pillar score cards ── */}
+                <div className="stats-row" style={{marginBottom:14}}>
+                  {[
+                    {l:'🍽️ Nutrition', v:selDayData.nutrition, c:'#5E8030'},
+                    {l:'💧 Hydration',  v:selDayData.hydration, c:'#4A7090'},
+                    {l:'🧘 Mind & Body',v:selDayData.mindBody,  c:'#B87820'},
+                    {l:'💪 Exercise',   v:selDayData.exercise,  c:'#5E8030'},
+                    {l:'💊 Medicines',  v:selDayData.medicine,  c:'#B05878'},
+                  ].map(s => (
+                    <div key={s.l} className="stat" style={{borderTop:`3px solid ${s.v>0?s.c:'#EDE8E0'}`}}>
+                      <div className="stat-lbl">{s.l}</div>
+                      <div className="stat-val" style={{color:s.v>0?s.c:'#A8B0A0',fontSize:20}}>{s.v>0?s.v:'—'}</div>
+                      <PBar value={s.v} color={s.c} height={3}/>
+                    </div>
+                  ))}
+                </div>
+
+                {/* ── Sleep & Energy ── */}
+                <div className="card" style={{marginBottom:14}}>
+                  <div className="card-title">😴 Sleep & Energy</div>
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:10}}>
+                    {[
+                      {label:'Sleep',    val:+L.sleepH||0,    unit:'hrs', target:7.5, icon:'😴'},
+                      {label:'Morning energy', val:+L.energyAM||0,  unit:'/10', target:6,   icon:'🌅'},
+                      {label:'Evening energy', val:+L.energyPM||0,  unit:'/10', target:6,   icon:'🌇'},
+                    ].map(m => {
+                      const hit = m.val >= m.target
+                      return (
+                        <div key={m.label} style={{padding:'12px',background:hit?'#EAF3DC':'#FDF8EC',border:`1px solid ${hit?'rgba(94,128,48,0.25)':'rgba(184,120,32,0.25)'}`,borderRadius:12}}>
+                          <div style={{fontSize:11,color:'#8A9482',fontWeight:600,marginBottom:4}}>{m.icon} {m.label}</div>
+                          <div style={{fontSize:20,fontWeight:800,color:hit?'#3C5A1E':'#B87820'}}>{m.val>0?`${m.val}${m.unit}`:'—'}</div>
+                          <div style={{fontSize:10,color:'#A8B0A0',marginTop:2}}>Target: {m.target}{m.unit}</div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* ── What you DID (hit targets) ── */}
+                {hit.length > 0 && (
+                  <div className="card" style={{marginBottom:14,borderLeft:'4px solid #5E8030'}}>
+                    <div className="card-title" style={{color:'#3C5A1E'}}>✅ Targets Hit ({hit.length}/{metrics.length})</div>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:9}}>
+                      {hit.map(m => {
+                        const val = +L[m.k] || 0
+                        const pct = Math.min(100, Math.round(val / m.target * 100))
+                        return (
+                          <div key={m.k} style={{padding:'10px 12px',background:'#EAF3DC',border:'1px solid rgba(94,128,48,0.2)',borderRadius:11}}>
+                            <div style={{fontSize:11,color:'#657060',fontWeight:600,marginBottom:4}}>{m.icon} {m.label}</div>
+                            <div style={{fontSize:18,fontWeight:800,color:'#3C5A1E'}}>{val}{m.unit}</div>
+                            <div style={{fontSize:10,color:'#5E8030',marginTop:2}}>Target: {m.target}{m.unit} · {pct}%</div>
+                            <PBar value={pct} color="#5E8030" height={3}/>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── What was MISSING ── */}
+                {missed.length > 0 && (
+                  <div className="card" style={{marginBottom:14,borderLeft:'4px solid #B87820'}}>
+                    <div className="card-title" style={{color:'#7A4A10'}}>⚠ Missing / Below Target ({missed.length})</div>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:9}}>
+                      {missed.map(m => {
+                        const val = +L[m.k] || 0
+                        const pct = m.target ? Math.min(100, Math.round(val / m.target * 100)) : 0
+                        const notLogged = val === 0
+                        return (
+                          <div key={m.k} style={{padding:'10px 12px',background:notLogged?'#FDF0EC':'#FDF8EC',border:`1px solid ${notLogged?'rgba(184,56,40,0.2)':'rgba(184,120,32,0.2)'}`,borderRadius:11}}>
+                            <div style={{fontSize:11,color:'#657060',fontWeight:600,marginBottom:4}}>{m.icon} {m.label}</div>
+                            <div style={{fontSize:18,fontWeight:800,color:notLogged?'#B83828':'#B87820'}}>
+                              {notLogged ? 'Not logged' : `${val}${m.unit}`}
+                            </div>
+                            <div style={{fontSize:10,color:'#A8B0A0',marginTop:2}}>
+                              Need: {m.target}{m.unit}{!notLogged && ` · ${pct}% done`}
+                            </div>
+                            {!notLogged && <PBar value={pct} color="#B87820" height={3}/>}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Body weight ── */}
+                {(+L.weightKg > 0) && (
+                  <div className="card" style={{marginBottom:14}}>
+                    <div className="card-title">⚖️ Body Weight</div>
+                    <div style={{display:'flex',alignItems:'center',gap:14}}>
+                      <div style={{fontSize:32,fontWeight:800,color:'#3C5A1E'}}>{L.weightKg} <span style={{fontSize:14,fontWeight:500,color:'#8A9482'}}>kg</span></div>
+                      <div style={{fontSize:12,color:'#8A9482'}}>Target: gain 0.3–0.5 kg/week</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Gym session ── */}
+                {L.gymGroup && L.gymGroup !== 'None today' && (
+                  <div style={{marginBottom:14,padding:'12px 16px',background:'#EAF3DC',border:'1px solid rgba(94,128,48,0.2)',borderRadius:14,display:'flex',alignItems:'center',gap:10}}>
+                    <span style={{fontSize:22}}>💪</span>
+                    <div>
+                      <div style={{fontSize:13,fontWeight:700,color:'#3C5A1E'}}>Gym session: {L.gymGroup}</div>
+                      <div style={{fontSize:11,color:'#5E8030'}}>Strength training completed ✓</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Digestion signals ── */}
+                <div className="card" style={{marginBottom:14}}>
+                  <div className="card-title">🌿 Digestion Signals</div>
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
+                    {[
+                      {label:'Gas level',        val:+L.gasLevel||0,      lower:true,  icon:'💨'},
+                      {label:'Bloating',          val:+L.bloating||0,      lower:true,  icon:'🫧'},
+                      {label:'Digestive comfort', val:+L.digestComfort||0, lower:false, icon:'✨'},
+                    ].map(m => {
+                      const good = m.lower ? m.val <= 4 : m.val >= 6
+                      return (
+                        <div key={m.label} style={{padding:'10px',background:good?'#EAF3DC':'#FDF8EC',border:`1px solid ${good?'rgba(94,128,48,0.2)':'rgba(184,120,32,0.2)'}`,borderRadius:11,textAlign:'center'}}>
+                          <div style={{fontSize:18}}>{m.icon}</div>
+                          <div style={{fontSize:16,fontWeight:800,color:good?'#3C5A1E':'#B87820',margin:'4px 0'}}>{m.val}/10</div>
+                          <div style={{fontSize:10,color:'#8A9482'}}>{m.label}</div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* ── Food logged that day ── */}
+                {foods.length > 0 && (
+                  <div className="card" style={{marginBottom:14}}>
+                    <div className="card-title">🍽️ Food Logged This Day ({foods.length} entries)</div>
+                    {foods.map((f,i) => {
+                      const vC = {optimal:'#5E8030',acceptable:'#B87820',inadvisable:'#B83828'}
+                      const vBg= {optimal:'#EAF3DC',acceptable:'#FDF8EC',inadvisable:'#FDF0EC'}
+                      const vI = {optimal:'✓',acceptable:'!',inadvisable:'✕'}
+                      return (
+                        <div key={f.id||i} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 0',borderBottom:'1px solid #EDE8E0'}}>
+                          <div style={{width:34,height:34,borderRadius:9,background:vBg[f.verdict]||'#FDF8EC',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,fontWeight:800,color:vC[f.verdict]||'#B87820',flexShrink:0}}>
+                            {vI[f.verdict]||'!'}
+                          </div>
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:13,fontWeight:600,color:'#1A2412'}}>{f.name||'Meal'}</div>
+                            <div style={{fontSize:11,color:'#8A9482'}}>{f.mealType||''}  {f.time ? '· '+f.time : ''}</div>
+                            {f.proteinEst > 0 && <div style={{fontSize:10,color:'#5E8030',marginTop:1}}>+{f.proteinEst}g protein est.</div>}
+                          </div>
+                          <div style={{fontSize:14,fontWeight:800,color:vC[f.verdict]||'#B87820',flexShrink:0}}>
+                            {f.score?`${f.score}/10`:''}
+                          </div>
+                        </div>
+                      )
+                    })}
+                    {foods.length === 0 && (
+                      <div style={{fontSize:13,color:'#A8B0A0',padding:'10px 0'}}>No food entries found for this day in the food tracker.</div>
+                    )}
+                  </div>
+                )}
+                {foods.length === 0 && (
+                  <div style={{marginBottom:14,padding:'12px 14px',background:'#FDF8EC',border:'1px solid rgba(184,120,32,0.2)',borderRadius:12,fontSize:12,color:'#8A7060'}}>
+                    🍽️ No food entries from the Food Tracker for this day. Use the Food Tracker to log meals with photos or by typing.
+                  </div>
+                )}
+
+                {/* ── Habits checklist ── */}
+                <div className="card" style={{marginBottom:14}}>
+                  <div className="card-title">✅ Daily Protocol — {doneHabits.length}/{HABITS_LIST.length} completed</div>
+                  {/* Done */}
+                  {doneHabits.length > 0 && (
+                    <div style={{marginBottom:10}}>
+                      <div style={{fontSize:11,fontWeight:700,color:'#5E8030',marginBottom:6}}>DONE</div>
+                      <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                        {doneHabits.map((h,i) => (
+                          <span key={i} style={{padding:'4px 10px',background:'#EAF3DC',border:'1px solid rgba(94,128,48,0.2)',borderRadius:20,fontSize:12,color:'#3C5A1E',fontWeight:500}}>✓ {h}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* Missed */}
+                  {missedHabits.length > 0 && (
+                    <div>
+                      <div style={{fontSize:11,fontWeight:700,color:'#B87820',marginBottom:6}}>MISSED / NOT CHECKED</div>
+                      <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                        {missedHabits.map((h,i) => (
+                          <span key={i} style={{padding:'4px 10px',background:'#FDF8EC',border:'1px solid rgba(184,120,32,0.18)',borderRadius:20,fontSize:12,color:'#8A7060'}}>✕ {h}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* ── Symptoms & Notes ── */}
+                {(L.symptoms || L.notes) && (
+                  <div className="card" style={{marginBottom:14}}>
+                    <div className="card-title">📝 Symptoms & Notes</div>
+                    {L.symptoms && (
+                      <div style={{marginBottom:10}}>
+                        <div style={{fontSize:11,fontWeight:700,color:'#8A9482',marginBottom:4}}>SYMPTOMS</div>
+                        <div style={{fontSize:13,color:'#2C3822',background:'#FDF0EC',padding:'10px 12px',borderRadius:9,border:'1px solid rgba(184,56,40,0.12)'}}>{L.symptoms}</div>
+                      </div>
+                    )}
+                    {L.notes && (
+                      <div>
+                        <div style={{fontSize:11,fontWeight:700,color:'#8A9482',marginBottom:4}}>NOTES</div>
+                        <div style={{fontSize:13,color:'#2C3822',background:'#F9F6F1',padding:'10px 12px',borderRadius:9,border:'1px solid #EDE8E0'}}>{L.notes}</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {(!L.symptoms && !L.notes) && (
+                  <div style={{marginBottom:14,padding:'10px 14px',background:'#F9F6F1',border:'1px solid #EDE8E0',borderRadius:12,fontSize:12,color:'#A8B0A0'}}>
+                    📝 No symptoms or notes recorded for this day.
+                  </div>
+                )}
+              </>
+            )
+          })()}
+        </div>
+      )}
+
+      {/* ── Period summary ── */}
+      {!selDay && logged.length > 0 && (
+        <>
+          {/* Score averages */}
+          <div className="stats-row" style={{marginBottom:14}}>
             {[
-              {k:"proteinG",     label:"Protein",     unit:"g",   target:80,   icon:"🥩"},
-              {k:"waterL",       label:"Water",        unit:"L",   target:2,    icon:"💧"},
-              {k:"healthDrinksMl",label:"Health Drinks",unit:"ml", target:400,  icon:"🍵"},
-              {k:"yogaMins",     label:"Yoga",         unit:"min", target:20,   icon:"🧘"},
-              {k:"pranayamaMins",label:"Pranayama",    unit:"min", target:15,   icon:"🌬️"},
-              {k:"walkingSteps", label:"Steps",        unit:"",    target:8000, icon:"🚶"},
-              {k:"sleepH",       label:"Sleep",        unit:"hrs", target:7.5,  icon:"😴"},
-              {k:"creonDoses",   label:"CREON",        unit:"x",   target:3,    icon:"💊"},
-            ].map(m=>{
-              const val = +latestLog[m.k]||0
-              const pct = m.target ? Math.min(100,Math.round(val/m.target*100)) : 100
-              const hit = m.target ? val >= m.target : val > 0
+              {l:'Overall',      v:avgScore('overall'),   c:scoreColor(avgScore('overall'))},
+              {l:'🍽️ Nutrition',  v:avgScore('nutrition'), c:'#5E8030'},
+              {l:'💧 Hydration',  v:avgScore('hydration'), c:'#4A7090'},
+              {l:'🧘 Mind & Body',v:avgScore('mindBody'),  c:'#B87820'},
+              {l:'💪 Exercise',   v:avgScore('exercise'),  c:'#5E8030'},
+            ].map(s => (
+              <div key={s.l} className="stat">
+                <div className="stat-lbl">{s.l}</div>
+                <div className="stat-val" style={{color:s.v>0?s.c:'#A8B0A0',fontSize:22}}>{s.v>0?s.v:'—'}</div>
+                <PBar value={s.v} color={s.c} height={3}/>
+              </div>
+            ))}
+          </div>
+
+          {/* Recovery target achievement */}
+          <div className="card">
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+              <div className="card-title" style={{marginBottom:0}}>Target Achievement — {period} Days</div>
+              <span style={{fontSize:11,color:'#8A9482'}}>{logged.length} days logged</span>
+            </div>
+            {ALL_METRICS.filter(m => m.target).map((m, i) => {
+              const daysHit = logged.filter(d => (+d.log?.[m.k]||0) >= m.target).length
+              const pctDays = Math.round(daysHit / Math.max(1, logged.length) * 100)
+              const avg     = avgVal(m.k)
+              const pctAvg  = Math.min(100, Math.round(avg / m.target * 100))
+              const good = pctDays >= 70; const fair = pctDays >= 40
+              const barC = good ? '#5E8030' : fair ? '#B87820' : '#B83828'
               return (
-                <div key={m.k} style={{padding:"10px 12px",background:hit?"rgba(16,185,129,0.1)":"rgba(255,255,255,0.04)",border:"1px solid "+(hit?"rgba(52,211,153,0.3)":"rgba(255,255,255,0.08)"),borderRadius:12}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
-                    <span style={{fontSize:11,color:"rgba(241,245,249,0.45)",fontWeight:600}}>{m.icon} {m.label}</span>
-                    <span style={{fontSize:10,fontWeight:800,color:hit?"#34D399":"#F87171"}}>{hit?"✓":"✕"}</span>
+                <div key={i} style={{marginBottom:12,padding:'12px 14px',background:'#FAFAF7',borderRadius:12,border:'1px solid #EDE8E0'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:7}}>
+                    <div>
+                      <div style={{fontSize:13,fontWeight:600,color:'#1A2412'}}>{m.icon} {m.label}</div>
+                      <div style={{fontSize:10,color:'#A8B0A0',marginTop:1}}>Target: {m.target}{m.unit}</div>
+                    </div>
+                    <div style={{textAlign:'right',flexShrink:0,marginLeft:10}}>
+                      <div style={{fontSize:14,fontWeight:800,color:barC}}>{daysHit}/{logged.length} days</div>
+                      <div style={{fontSize:10,color:'#A8B0A0'}}>{pctDays}% compliance</div>
+                    </div>
                   </div>
-                  <div style={{fontSize:18,fontWeight:800,color:hit?"#34D399":"#F1F5F9"}}>
-                    {val>0?`${val}${m.unit}`:"—"}
-                  </div>
-                  {m.target && <div style={{fontSize:10,color:"rgba(241,245,249,0.3)",marginTop:2}}>Target: {m.target}{m.unit}</div>}
-                  <div style={{marginTop:6}}>
-                    <PBar value={pct} color={hit?"#34D399":"#F87171"} height={3}/>
+                  <div style={{display:'flex',gap:10,alignItems:'center'}}>
+                    <div style={{flex:1}}>
+                      <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
+                        <span style={{fontSize:10,color:'#8A9482'}}>Avg logged</span>
+                        <span style={{fontSize:11,fontWeight:700,color:pctAvg>=100?m.color:'#657060'}}>{avg>0?`${avg}${m.unit}`:'—'}</span>
+                      </div>
+                      <PBar value={pctAvg} color={m.color} height={4}/>
+                    </div>
                   </div>
                 </div>
               )
             })}
           </div>
-        </div>
-      )}
 
-      {/* Target achievement — with actual averages shown */}
-      <div className="card">
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-          <div className="card-title" style={{marginBottom:0}}>Recovery Targets — {period}-Day Period</div>
-          <span style={{fontSize:11,color:"rgba(241,245,249,0.35)"}}>{logged.length} days logged</span>
-        </div>
-        {METRICS.filter(m=>m.target).map((m,i)=>{
-          const days_hit = logged.filter(d=>(+d.log?.[m.key]||0) >= m.target).length
-          const pct_days = Math.round(days_hit/Math.max(1,logged.length)*100)
-          const avg = avgVal(m.key)
-          const pct_avg = Math.min(100, Math.round(avg/m.target*100))
-          const isGood = pct_days >= 70
-          const isFair = pct_days >= 40
-          const barColor = isGood?"#34D399":isFair?"#FBBF24":"#F87171"
-          return (
-            <div key={i} style={{marginBottom:14,padding:"12px 14px",background:"rgba(255,255,255,0.03)",borderRadius:12,border:"1px solid rgba(255,255,255,0.06)"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+          {/* Day-by-day mini grid */}
+          <div className="card">
+            <div className="card-title">Day by Day (tap calendar above for full detail)</div>
+            <div style={{display:'grid',gridTemplateColumns:'60px 1fr 44px',gap:'4px 10px',marginBottom:8,fontSize:10,fontWeight:700,color:'#A8B0A0',textTransform:'uppercase',letterSpacing:0.5}}>
+              <span>Date</span>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}><span>🍽️</span><span>💧</span><span>🧘</span><span>💪</span></div>
+              <span style={{textAlign:'right'}}>Score</span>
+            </div>
+            {periodDays.map(day => (
+              <div key={day.ds} className={'day-row'+(!day.log?' no-data':'')}
+                style={{cursor:day.log?'pointer':'default'}}
+                onClick={() => day.log && setSelDay(day.ds)}>
                 <div>
-                  <div style={{fontSize:13,fontWeight:600,color:"#E2E8F0"}}>{m.label} {m.goal}</div>
-                  <div style={{fontSize:11,color:"rgba(241,245,249,0.35)",marginTop:1}}>{m.why}</div>
+                  <div style={{fontSize:11,fontWeight:700,color:day.isToday?'#B87820':'#657060'}}>{day.day}</div>
+                  <div style={{fontSize:11,color:day.isToday?'#C88A1E':'#A8B0A0'}}>{day.dateN} {day.mon}</div>
+                  {day.isToday&&<div style={{fontSize:9,color:'#5E8030',fontWeight:700}}>TODAY</div>}
                 </div>
-                <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
-                  <div style={{fontSize:14,fontWeight:800,color:barColor}}>{days_hit}/{logged.length}</div>
-                  <div style={{fontSize:10,color:"rgba(241,245,249,0.35)"}}>days hit</div>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}>
+                  {[{k:'nutrition',c:'#5E8030'},{k:'hydration',c:'#4A7090'},{k:'mindBody',c:'#B87820'},{k:'exercise',c:'#5E8030'}].map(p=>(
+                    <div key={p.k}>
+                      <PBar value={day[p.k]||0} color={p.c} height={5}/>
+                      <div style={{fontSize:9,color:day.log?p.c:'#EDE8E0',marginTop:2,fontWeight:700}}>{day.log?day[p.k]:'—'}</div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-              {/* Two bars: avg value vs target */}
-              <div style={{display:"flex",gap:12,alignItems:"center",marginBottom:4}}>
-                <div style={{flex:1}}>
-                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                    <span style={{fontSize:10,color:"rgba(241,245,249,0.4)"}}>Average logged</span>
-                    <span style={{fontSize:11,fontWeight:700,color:pct_avg>=100?m.color:"rgba(241,245,249,0.7)"}}>{avg>0?`${avg%1===0?avg:avg.toFixed(1)}${m.unit}`:"—"}</span>
-                  </div>
-                  <PBar value={pct_avg} color={m.color} height={5}/>
-                </div>
-                <div style={{width:50,textAlign:"center"}}>
-                  <div style={{fontSize:10,color:"rgba(241,245,249,0.35)"}}>% days</div>
-                  <div style={{fontSize:14,fontWeight:800,color:barColor}}>{pct_days}%</div>
+                <div style={{textAlign:'right'}}>
+                  {day.log
+                    ? <span style={{fontSize:15,fontWeight:800,color:scoreColor(day.overall)}}>{day.overall}</span>
+                    : <span style={{color:'#EDE8E0'}}>—</span>}
                 </div>
               </div>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Day-by-day grid */}
-      <div className="card">
-        <div className="card-title">Day by Day Breakdown</div>
-        <div style={{display:"grid",gridTemplateColumns:"60px 1fr 45px",gap:"4px 10px",marginBottom:8,fontSize:10,fontWeight:700,color:"rgba(241,245,249,0.3)",textTransform:"uppercase",letterSpacing:0.5}}>
-          <span>Date</span>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
-            <span>🍽️</span><span>💧</span><span>🧘</span><span>💪</span>
+            ))}
           </div>
-          <span style={{textAlign:"right"}}>Score</span>
-        </div>
-        {days.map(day=>(
-          <div key={day.ds} className={"day-row"+(!day.log?" no-data":"")}>
-            <div>
-              <div style={{fontSize:11,fontWeight:700,color:day.isToday?"#A78BFA":"rgba(241,245,249,0.55)"}}>{day.day}</div>
-              <div style={{fontSize:11,color:day.isToday?"#C4B5FD":"rgba(241,245,249,0.3)"}}>{day.dateN} {day.mon}</div>
-              {day.isToday&&<div style={{fontSize:9,color:"#34D399",fontWeight:700,letterSpacing:0.5}}>TODAY</div>}
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
-              {[{k:"nutrition",c:"#34D399"},{k:"hydration",c:"#60A5FA"},{k:"mindBody",c:"#FBBF24"},{k:"exercise",c:"#C4B5FD"}].map(p=>(
-                <div key={p.k}>
-                  <PBar value={day[p.k]||0} color={p.c} height={5}/>
-                  <div style={{fontSize:9,color:day.log?p.c:"rgba(255,255,255,0.1)",marginTop:2,fontWeight:700}}>{day.log?day[p.k]:"—"}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{textAlign:"right"}}>
-              {day.log
-                ?<span style={{fontSize:15,fontWeight:800,background:"linear-gradient(135deg,#10B981,#6366F1)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{day.overall}</span>
-                :<span style={{color:"rgba(255,255,255,0.1)"}}>—</span>}
-            </div>
-          </div>
-        ))}
-      </div>
+        </>
+      )}
     </div>
   )
 }
+
 
 // ─── DASHBOARD — FIX #2 (English names) FIX #3 (data reflects) ──────────────
 const PILLARS_DEF = [
@@ -2753,7 +3046,7 @@ export default function JarvisHealth({ user, onLogout }) {
             <Dashboard {...shared} setTab={handleTab} allLogs={allLogs}/>
           </div>
           {visited.has('log')   &&<div style={{display:tab==='log'?'block':'none'}}><LogTab {...shared}/></div>}
-          {visited.has('track') &&<div style={{display:tab==='track'?'block':'none'}}><TrackTab allLogs={allLogs}/></div>}
+          {visited.has('track') &&<div style={{display:tab==='track'?'block':'none'}}><TrackTab allLogs={allLogs} db={db}/></div>}
           {visited.has('food')  &&<div style={{display:tab==='food'?'block':'none'}}><FoodTab {...shared}/></div>}
           {visited.has('meds')  &&<div style={{display:tab==='meds'?'block':'none'}}><MedTab {...shared}/></div>}
           {visited.has('blood') &&<div style={{display:tab==='blood'?'block':'none'}}><BloodTab {...shared}/></div>}
