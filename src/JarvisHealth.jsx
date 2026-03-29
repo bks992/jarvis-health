@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import {
-  getFoodLogs, saveFoodLog, getBloodReports, saveBloodReport,
+  getFoodLogs, saveFoodLog, deleteFoodLog, getBloodReports, saveBloodReport,
   getMedicines, saveMedicine, deleteMedicine, getMedLog, saveMedLog,
   getHealthProfile, saveHealthProfile,
   getGuides, saveGuide, getPlans, savePlan,
@@ -715,11 +715,21 @@ const NAV = [
   { id:'prof',   label:'My Profile',           icon:I.user },
 ]
 const MOB = [
-  { id:'home',  label:'Home',   icon:I.home, badge:true },
-  { id:'log',   label:'Log',    icon:I.log,  badge:true },
-  { id:'super', label:'Supps',  icon:I.super },
-  { id:'plan',  label:'Routine',icon:I.plan },
-  { id:'ai',    label:'JARVIS', icon:I.ai },
+  { id:'home',    label:'Home',   icon:I.home, badge:true },
+  { id:'log',     label:'Log',    icon:I.log,  badge:true },
+  { id:'food',    label:'Food',   icon:I.food },
+  { id:'ai',      label:'JARVIS', icon:I.ai },
+  { id:'__more',  label:'More',   icon:null },
+]
+const MOB_MORE = [
+  { id:'track', label:'Progress',      icon:I.track },
+  { id:'meds',  label:'Medicines',     icon:I.meds },
+  { id:'super', label:'Superfoods',    icon:I.super },
+  { id:'plan',  label:'Routine',       icon:I.plan },
+  { id:'fit',   label:'Yoga & Gym',    icon:I.fit },
+  { id:'heal',  label:'Guides',        icon:I.heal },
+  { id:'blood', label:'Lab Reports',   icon:I.blood },
+  { id:'prof',  label:'My Profile',    icon:I.user },
 ]
 function Spin({ size = 18, color = '#4A7090' }) {
   return <div style={{ width:size, height:size, border:`2px solid ${color}22`, borderTop:`2px solid ${color}`, borderRadius:'50%', animation:'spin 0.8s linear infinite', flexShrink:0 }} />
@@ -768,6 +778,39 @@ function NumInput({ label, hint, value, onChange, placeholder, unit }) {
 }
 // ─── DAILY LOG TAB ─────────────────────────────────────────────────────────────
 // FIX #8: Yoga and Pranayama split | FIX #9: Water and Health Drinks split
+const FOOD_DB = [
+  {n:'Eggs (boiled/scrambled)', p:13, fi:0,  u:'eggs',  def:2},
+  {n:'Moong dal (cooked)',      p:7,  fi:8,  u:'bowl',  def:1},
+  {n:'Paneer',                  p:18, fi:0,  u:'g',     def:100},
+  {n:'Greek yogurt / curd',     p:12, fi:0,  u:'cup',   def:1},
+  {n:'Chicken (cooked)',        p:31, fi:0,  u:'g',     def:100},
+  {n:'Fish (rohu/pomfret)',     p:22, fi:0,  u:'g',     def:100},
+  {n:'Whey protein shake',      p:25, fi:1,  u:'scoop', def:1},
+  {n:'Dal (any, cooked)',       p:9,  fi:8,  u:'bowl',  def:1},
+  {n:'Roti / chapati',          p:3,  fi:2,  u:'piece', def:2},
+  {n:'Rice (cooked)',           p:3,  fi:1,  u:'cup',   def:0.5},
+  {n:'Moong dal khichdi',       p:8,  fi:5,  u:'bowl',  def:1},
+  {n:'Idli',                    p:2,  fi:1,  u:'piece', def:3},
+  {n:'Oats (cooked)',           p:5,  fi:4,  u:'bowl',  def:1},
+  {n:'Banana',                  p:1,  fi:3,  u:'piece', def:1},
+  {n:'Soaked almonds',          p:3,  fi:2,  u:'pieces',def:5},
+  {n:'Walnuts (soaked)',        p:2,  fi:1,  u:'pieces',def:5},
+  {n:'Peanut butter',           p:4,  fi:1,  u:'tbsp',  def:2},
+  {n:'Flaxseed (ground)',       p:1,  fi:3,  u:'tbsp',  def:1},
+  {n:'Spinach (cooked)',        p:3,  fi:2,  u:'cup',   def:1},
+  {n:'Broccoli (steamed)',      p:3,  fi:3,  u:'cup',   def:1},
+  {n:'Lauki / bottle gourd',    p:1,  fi:2,  u:'cup',   def:1},
+  {n:'Carrots (cooked)',        p:1,  fi:3,  u:'cup',   def:1},
+  {n:'Beetroot (steamed)',      p:2,  fi:2,  u:'cup',   def:0.5},
+  {n:'Sweet potato',            p:2,  fi:3,  u:'medium',def:1},
+  {n:'Mushrooms (cooked)',      p:3,  fi:1,  u:'cup',   def:1},
+  {n:'Milk (warm)',             p:8,  fi:0,  u:'cup',   def:1},
+  {n:'Golden milk',             p:8,  fi:0,  u:'cup',   def:1},
+  {n:'Protein smoothie',        p:20, fi:2,  u:'glass', def:1},
+  {n:'Makhana (roasted)',       p:3,  fi:1,  u:'cup',   def:0.5},
+  {n:'Peanuts / chana',         p:7,  fi:3,  u:'cup',   def:0.25},
+]
+const MEALS_OF_DAY = ['Breakfast','Mid-morning snack','Lunch','Evening snack','Dinner','Bedtime snack']
 const GYM_GROUPS = ['None today','Chest','Back','Legs','Shoulders','Arms','Full body','Cardio']
 const HABITS = [
   'Lemon water on waking','CREON with every meal','Ash gourd juice 200ml',
@@ -779,36 +822,73 @@ const HABITS = [
 function LogTab({ uid, db, setDb, showToast }) {
   const today = new Date().toISOString().slice(0, 10)
   const ex = db.todayLog || {}
+
+  // Section tabs for mobile
+  const [sec, setSec] = useState('food')
+
+  // Food items list (add/remove)
+  const [items, setItems] = useState(ex.foodItems || [])
+  const [showAdd, setShowAdd] = useState(false)
+  const [newFood, setNewFood] = useState({meal:'Breakfast', name:'', qty:'', unit:'', protein:'', fiber:''})
+  const [suggestions, setSuggestions] = useState([])
+
+  // Other fields
   const [f, sf] = useState({
     sleepH:'', energyAM:5, energyPM:5,
-    waterL:'',                 // FIX #9: plain water only
-    healthDrinksMl:'',         // FIX #9: lemon water, ash gourd, tulsi tea, golden milk etc
-    proteinG:'', fiberG:'', veggieServings:'',
+    waterL:'', healthDrinksMl:'',
     creonDoses:3, gasLevel:0, bloating:0, digestComfort:5,
-    yogaMins:'',               // FIX #8: physical yoga asanas only
-    pranayamaMins:'',          // FIX #8: breathing exercises only (Anulom Vilom, Bhramari)
+    yogaMins:'', pranayamaMins:'',
     walkingSteps:'', weightKg:'', gymGroup:'None today',
     symptoms:'', notes:'', habits:{},
     ...ex
   })
   const [saving, setSaving] = useState(false)
   const set = (k, v) => sf(p => ({ ...p, [k]: v }))
-  const sc = scorePillars(f, db.medLog)
+
+  // Auto-totals from food items
+  const totalProtein  = Math.round(items.reduce((s,i) => s + (+i.protein||0), 0))
+  const totalFiber    = Math.round(items.reduce((s,i) => s + (+i.fiber||0), 0))
+  const totalVeggies  = items.filter(i => /spinach|lauki|broccoli|carrot|beet|mushroom|gourd|veggie|vegetable|sabzi/i.test(i.name)).length
+  const totalFluid    = (+f.waterL||0) + (+f.healthDrinksMl||0)/1000
+
+  const logForScore = {...f, proteinG:totalProtein, fiberG:totalFiber, veggieServings:totalVeggies}
+  const sc = scorePillars(logForScore, db.medLog)
+
+  function searchFood(q) {
+    setSuggestions(q.trim() ? FOOD_DB.filter(d => d.n.toLowerCase().includes(q.toLowerCase())).slice(0,6) : [])
+  }
+  function pickSuggestion(item) {
+    setNewFood(p => ({...p, name:item.n, qty:String(item.def), unit:item.u,
+      protein:String(+(item.p * item.def).toFixed(1)),
+      fiber:String(+(item.fi * item.def).toFixed(1)) }))
+    setSuggestions([])
+  }
+  function addItem() {
+    if (!newFood.name.trim()) return
+    const it = {id:Date.now().toString(), meal:newFood.meal, name:newFood.name,
+      qty:newFood.qty, unit:newFood.unit,
+      protein:parseFloat(newFood.protein)||0, fiber:parseFloat(newFood.fiber)||0}
+    const next = [...items, it]
+    setItems(next)
+    setNewFood({meal:newFood.meal, name:'', qty:'', unit:'', protein:'', fiber:''})
+    setShowAdd(false); setSuggestions([])
+  }
+  function removeItem(id) { setItems(p => p.filter(i => i.id !== id)) }
 
   async function save() {
     setSaving(true)
-    const log = { ...f, date: today, ...sc }
+    const log = {...f, date:today, foodItems:items,
+      proteinG:totalProtein, fiberG:totalFiber, veggieServings:totalVeggies, ...sc}
     await saveDailyLog(uid, today, log)
-    // FIX #3: pass direct object so dbUpdate can update allLogs properly
-    setDb({ ...db, todayLog: log })
+    setDb({...db, todayLog:log})
     showToast('Log saved ✓')
     setSaving(false)
   }
 
-  function Slider({ label, k, min = 0, max = 10, color }) {
-    const v = +f[k] || 0
-    const pct = ((v - min) / (max - min)) * 100
-    const c = color || scoreColor(pct)
+  function Slider({ label, k, min=0, max=10, color }) {
+    const v = +f[k]||0
+    const pct = ((v-min)/(max-min))*100
+    const c = color||scoreColor(pct)
     return (
       <div className="fg">
         <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}>
@@ -817,154 +897,327 @@ function LogTab({ uid, db, setDb, showToast }) {
         </div>
         <input type="range" className="sl" min={min} max={max} step={1} value={v}
           onChange={e=>set(k,+e.target.value)}
-          style={{background:`linear-gradient(to right,${c} ${pct}%,#E2E8F0 ${pct}%)`}}
-          onInput={e=>{const pp=(+e.target.value-min)/(max-min)*100;e.target.style.background=`linear-gradient(to right,${c} ${pp}%,#E2E8F0 ${pp}%)`}}
+          style={{background:`linear-gradient(to right,${c} ${pct}%,#EDE8E0 ${pct}%)`}}
+          onInput={e=>{const pp=(+e.target.value-min)/(max-min)*100;e.target.style.background=`linear-gradient(to right,${c} ${pp}%,#EDE8E0 ${pp}%)`}}
         />
-        <div style={{display:'flex',justifyContent:'space-between',marginTop:2}}>
-          <span style={{fontSize:10,color:'#657060'}}>0</span>
-          <span style={{fontSize:10,color:'#657060'}}>{max}</span>
-        </div>
       </div>
     )
   }
 
-  const totalFluid = (+f.waterL||0) + (+f.healthDrinksMl||0)/1000
+  const SECS = [
+    {id:'food',  label:'🍽️ Food'},
+    {id:'water', label:'💧 Water'},
+    {id:'body',  label:'🧘 Body'},
+    {id:'habits',label:'✅ Habits'},
+    {id:'notes', label:'📝 Notes'},
+  ]
 
   return (
     <div className="fade-up">
-      {/* FIX #2: English names — Live pillar scores */}
-      <div className="stats-row" style={{marginBottom:18}}>
+      {/* Live score strip */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:14}}>
         {[
-          {l:'🍽️ Nutrition',  v:sc.nutrition,  c:'#5E8030'},
-          {l:'💧 Hydration',  v:sc.hydration,  c:'#4A7090'},
-          {l:'🧘 Mind & Body',v:sc.mindBody,   c:'#B87820'},
-          {l:'💪 Exercise',   v:sc.exercise,   c:'#5E8030'},
-          {l:'💊 Medicines',  v:sc.medicine,   c:'#B05878'},
-          {l:'⭐ Total',      v:sc.overall,    c:scoreColor(sc.overall)},
+          {l:'Nutrition', v:sc.nutrition,c:'#5E8030'},
+          {l:'Hydration', v:sc.hydration,c:'#4A7090'},
+          {l:'Mind+Body', v:sc.mindBody, c:'#B87820'},
+          {l:'Exercise',  v:sc.exercise, c:'#5E8030'},
+          {l:'Medicines', v:sc.medicine, c:'#B05878'},
+          {l:'⭐ Total',  v:sc.overall,  c:scoreColor(sc.overall)},
         ].map(s=>(
-          <div key={s.l} className="stat" style={{borderTop:`3px solid ${s.v>0?s.c:'#2A381A'}`}}>
-            <div className="stat-lbl">{s.l}</div>
-            <div className="stat-val" style={{color:s.v>0?s.c:'#657060',fontSize:20}}>{s.v>0?s.v:'—'}</div>
-            <PBar value={s.v} color={s.c} height={3}/>
+          <div key={s.l} className="stat" style={{borderTop:`3px solid ${s.v>0?s.c:'#EDE8E0'}`,padding:'10px 8px'}}>
+            <div className="stat-lbl" style={{fontSize:9}}>{s.l}</div>
+            <div className="stat-val" style={{color:s.v>0?s.c:'#A8B0A0',fontSize:18}}>{s.v>0?s.v:'—'}</div>
           </div>
         ))}
       </div>
 
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))',gap:14}}>
-        {/* Sleep */}
-        <div className="card">
-          <div className="card-title">😴 Sleep & Energy</div>
-          <NumInput label="Sleep hours" value={f.sleepH} onChange={v=>set('sleepH',v)} placeholder="7.5" unit="hrs" hint="Target: 7.5–8.5 hours" />
-          <Slider label={`Morning energy — ${f.energyAM}/10`} k="energyAM"/>
-          <Slider label={`Evening energy — ${f.energyPM}/10`} k="energyPM"/>
-        </div>
+      {/* Section pill tabs */}
+      <div style={{display:'flex',gap:5,overflowX:'auto',paddingBottom:12,scrollbarWidth:'none',WebkitOverflowScrolling:'touch'}}>
+        {SECS.map(s=>(
+          <button key={s.id} onClick={()=>setSec(s.id)} style={{
+            flexShrink:0,padding:'8px 16px',borderRadius:20,border:'none',
+            background:sec===s.id?'#5E8030':'#EDE8E0',
+            color:sec===s.id?'white':'#657060',
+            fontSize:13,fontWeight:700,cursor:'pointer',whiteSpace:'nowrap',
+          }}>{s.label}</button>
+        ))}
+      </div>
 
-        {/* Nutrition */}
-        <div className="card" style={{borderTop:'3px solid #10B981'}}>
-          <div className="card-title" style={{color:'#3C5A1E'}}>🍽️ Nutrition Tracking</div>
-          <div className="g2">
-            <NumInput label="Protein (g)" value={f.proteinG} onChange={v=>set('proteinG',v)} placeholder="80" hint="Target: 80g+" />
-            <NumInput label="Fiber (g)" value={f.fiberG} onChange={v=>set('fiberG',v)} placeholder="30" hint="Target: 30g" />
-            <NumInput label="Veggies (servings)" value={f.veggieServings} onChange={v=>set('veggieServings',v)} placeholder="5" hint="Target: 5 servings" />
+      {/* ── FOOD ── */}
+      {sec==='food' && (
+        <div className="fade-up">
+          {/* Totals */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:12}}>
+            {[
+              {l:'Protein',v:`${totalProtein}g`,  hit:totalProtein>=80, target:'80g'},
+              {l:'Fiber',  v:`${totalFiber}g`,    hit:totalFiber>=25,   target:'25g'},
+              {l:'Veggies',v:`${totalVeggies}`,   hit:totalVeggies>=3,  target:'3+ svgs'},
+            ].map(t=>(
+              <div key={t.l} style={{padding:'10px 8px',background:t.hit?'#EAF3DC':'white',
+                border:`1px solid ${t.hit?'rgba(94,128,48,0.3)':'#EDE8E0'}`,borderRadius:12,textAlign:'center'}}>
+                <div style={{fontSize:10,color:t.hit?'#3C5A1E':'#A8B0A0',fontWeight:700,marginBottom:2}}>{t.l}</div>
+                <div style={{fontSize:20,fontWeight:800,color:t.hit?'#3C5A1E':'#1A2412'}}>{t.v}</div>
+                <div style={{fontSize:9,color:'#A8B0A0'}}>need {t.target}</div>
+              </div>
+            ))}
           </div>
-          <MetricRow label="Protein progress" value={f.proteinG} target={80} unit="g" color="#10B981"/>
-          <div className="fg" style={{marginTop:4}}>
-            <label className="fl">CREON enzyme doses today <span style={{color:'#8A9482',fontWeight:400}}>(take with every meal)</span></label>
+
+          {/* CREON */}
+          <div className="card" style={{padding:'14px 16px',marginBottom:10}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+              <label className="fl" style={{marginBottom:0}}>💊 CREON doses today</label>
+              <span style={{fontSize:11,color:'#8A9482'}}>with every meal</span>
+            </div>
             <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
               {[0,1,2,3,4,5,6,7].map(n=>(
-                <button key={n} onClick={()=>set('creonDoses',n)} style={{width:36,height:36,borderRadius:8,border:`1.5px solid ${f.creonDoses===n?'#4A7090':'#2A381A'}`,background:f.creonDoses===n?'#F0F6FE':'white',color:f.creonDoses===n?'#4A7090':'#657060',fontSize:14,fontWeight:700,cursor:'pointer'}}>{n}</button>
+                <button key={n} onClick={()=>set('creonDoses',n)} style={{
+                  width:42,height:42,borderRadius:10,
+                  border:`2px solid ${f.creonDoses===n?'#4A7090':'#EDE8E0'}`,
+                  background:f.creonDoses===n?'#EAF3DC':'white',
+                  color:f.creonDoses===n?'#3A5878':'#657060',
+                  fontSize:16,fontWeight:800,cursor:'pointer'}}>{n}</button>
               ))}
             </div>
           </div>
-        </div>
 
-        {/* FIX #9: Water & Health Drinks — split */}
-        <div className="card" style={{borderTop:'3px solid #0EA5E9'}}>
-          <div className="card-title" style={{color:'#3A5878'}}>💧 Hydration Tracking</div>
-          <NumInput label="Plain Water (L)" value={f.waterL} onChange={v=>set('waterL',v)} placeholder="2.0" unit="L" hint="Target: 2+ litres of plain water" />
-          {(+f.waterL||0) > 0 && <PBar value={Math.min(100,(+f.waterL||0)/2*100)} color="#0EA5E9" height={6}/>}
-          <div style={{margin:'10px 0 14px',padding:'8px 12px',background:'#F0F9FF',borderRadius:8,border:'1px solid #A4CCE8',fontSize:12,color:'#2A5878'}}>
-            Medicinal drinks count separately (ash gourd juice, lemon water, tulsi tea, golden milk, ginger water, triphala)
-          </div>
-          <NumInput label="Medicinal / Health Drinks (ml)" value={f.healthDrinksMl} onChange={v=>set('healthDrinksMl',v)} placeholder="500" unit="ml" hint="Ash gourd 200ml + Lemon water 200ml + Golden milk 200ml = 600ml" />
-          {(+f.healthDrinksMl||0) > 0 && <PBar value={Math.min(100,(+f.healthDrinksMl||0)/600*100)} color="#7DD3FC" height={6}/>}
-          <div style={{marginTop:8,padding:'8px 12px',background:'#F0F6FE',borderRadius:8,fontSize:12,color:'#2A5878'}}>
-            Total fluid today: <strong>{totalFluid.toFixed(1)}L</strong> / 2.5L target
-          </div>
-        </div>
+          {/* Food items by meal */}
+          {MEALS_OF_DAY.map(meal => {
+            const mealItems = items.filter(i=>i.meal===meal)
+            if (!mealItems.length && !showAdd) return null
+            return (
+              <div key={meal} style={{marginBottom:8}}>
+                <div style={{fontSize:11,fontWeight:700,color:'#5E8030',marginBottom:5,
+                  padding:'3px 10px',background:'#EAF3DC',borderRadius:6,display:'inline-block'}}>
+                  {meal}
+                </div>
+                {mealItems.map(item=>(
+                  <div key={item.id} style={{display:'flex',alignItems:'center',gap:10,
+                    padding:'9px 12px',marginBottom:4,background:'white',
+                    border:'1px solid #EDE8E0',borderRadius:11}}>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:13,fontWeight:600,color:'#1A2412'}}>{item.name}</div>
+                      <div style={{fontSize:11,color:'#8A9482'}}>
+                        {item.qty}{item.unit}
+                        {item.protein>0 && <span style={{color:'#5E8030',marginLeft:6}}>+{item.protein}g protein</span>}
+                        {item.fiber>0 && <span style={{color:'#B87820',marginLeft:5}}>+{item.fiber}g fiber</span>}
+                      </div>
+                    </div>
+                    <button onClick={()=>removeItem(item.id)} style={{
+                      width:30,height:30,borderRadius:8,
+                      border:'1px solid #FECACA',background:'#FEF0EC',
+                      color:'#B83828',fontSize:18,cursor:'pointer',
+                      display:'flex',alignItems:'center',justifyContent:'center',
+                      fontWeight:700,flexShrink:0}}>×</button>
+                  </div>
+                ))}
+              </div>
+            )
+          })}
 
-        {/* Digestion */}
-        <div className="card">
-          <div className="card-title">🌿 Digestion & Gut</div>
-          <Slider label={`Gas level — ${f.gasLevel}/10 (lower is better)`} k="gasLevel" color="#EF4444"/>
-          <Slider label={`Bloating — ${f.bloating}/10 (lower is better)`} k="bloating" color="#F59E0B"/>
-          <Slider label={`Digestive comfort — ${f.digestComfort}/10`} k="digestComfort" color="#10B981"/>
-        </div>
+          {/* Add food form */}
+          {showAdd ? (
+            <div className="card fade-up" style={{marginBottom:10}}>
+              <div style={{fontSize:14,fontWeight:700,color:'#1A2412',marginBottom:12}}>Add Food Item</div>
 
-        {/* FIX #8: Yoga and Pranayama — split */}
-        <div className="card" style={{borderTop:'3px solid #F59E0B'}}>
-          <div className="card-title" style={{color:'#8A5010'}}>🧘 Mind & Body Practice</div>
-          <NumInput label="Yoga / Asanas (mins)" value={f.yogaMins} onChange={v=>set('yogaMins',v)} placeholder="25" unit="mins" hint="Physical yoga postures — Pawanmuktasana, Surya Namaskar, stretches" />
-          {(+f.yogaMins||0) > 0 && <PBar value={Math.min(100,(+f.yogaMins||0)/25*100)} color="#F59E0B" height={5}/>}
-          <div style={{margin:'12px 0 0'}}>
-            <NumInput label="Pranayama / Breathing (mins)" value={f.pranayamaMins} onChange={v=>set('pranayamaMins',v)} placeholder="20" unit="mins" hint="Anulom Vilom 10 min + Bhramari 5 min + Deep breathing 5 min = 20 min target" />
-            {(+f.pranayamaMins||0) > 0 && <PBar value={Math.min(100,(+f.pranayamaMins||0)/20*100)} color="#FCD34D" height={5}/>}
-          </div>
-          <div style={{marginTop:10,padding:'9px 11px',background:'#FDF8EC',borderRadius:8,border:'1px solid #E8D090',fontSize:12,color:'#7A4A10',lineHeight:1.6}}>
-            💡 Anulom Vilom 10 min → NK cell activity +30% · Bhramari 5 min → nitric oxide ×15 (anti-tumor)
-          </div>
-        </div>
+              {/* Meal picker */}
+              <div className="fg">
+                <label className="fl">Meal</label>
+                <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+                  {MEALS_OF_DAY.map(m=>(
+                    <button key={m} onClick={()=>setNewFood(p=>({...p,meal:m}))} style={{
+                      padding:'5px 10px',borderRadius:7,fontSize:11,fontWeight:600,cursor:'pointer',
+                      border:`1.5px solid ${newFood.meal===m?'#5E8030':'#EDE8E0'}`,
+                      background:newFood.meal===m?'#EAF3DC':'white',
+                      color:newFood.meal===m?'#3C5A1E':'#657060'}}>
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-        {/* Exercise */}
-        <div className="card" style={{borderTop:'3px solid #8B5CF6'}}>
-          <div className="card-title" style={{color:'#4A6A24'}}>💪 Exercise & Steps</div>
-          <div className="g2">
-            <NumInput label="Steps taken" value={f.walkingSteps} onChange={v=>set('walkingSteps',v)} placeholder="8000" hint="Target: 8000/day" />
-            <NumInput label="Body weight (kg)" value={f.weightKg} onChange={v=>set('weightKg',v)} placeholder="65.0" unit="kg" />
-          </div>
-          <div className="fg">
-            <label className="fl">Gym / strength session today</label>
-            <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
-              {GYM_GROUPS.map(g=>(
-                <button key={g} onClick={()=>set('gymGroup',g)} style={{padding:'6px 12px',borderRadius:7,border:`1.5px solid ${f.gymGroup===g?'#5E8030':'#2A381A'}`,background:f.gymGroup===g?'#EAF3DC':'white',color:f.gymGroup===g?'#4A6A24':'#657060',fontSize:12,fontWeight:500,cursor:'pointer'}}>{g}</button>
-              ))}
+              {/* Search */}
+              <div className="fg" style={{position:'relative'}}>
+                <label className="fl">What did you eat?</label>
+                <input type="text" className="fi"
+                  placeholder="Type to search (eggs, dal, roti…) or write anything"
+                  value={newFood.name}
+                  onChange={e=>{setNewFood(p=>({...p,name:e.target.value}));searchFood(e.target.value)}}
+                />
+                {suggestions.length>0 && (
+                  <div style={{position:'absolute',top:'100%',left:0,right:0,zIndex:200,
+                    background:'white',border:'1px solid #EDE8E0',borderRadius:12,
+                    boxShadow:'0 8px 24px rgba(0,0,0,0.12)',overflow:'hidden'}}>
+                    {suggestions.map((s,i)=>(
+                      <div key={i} onClick={()=>pickSuggestion(s)} style={{
+                        padding:'11px 14px',cursor:'pointer',
+                        borderBottom:i<suggestions.length-1?'1px solid #F5F0E8':'none',
+                        display:'flex',justifyContent:'space-between',alignItems:'center'}}
+                        onTouchStart={e=>e.currentTarget.style.background='#EAF3DC'}
+                        onTouchEnd={e=>e.currentTarget.style.background='white'}>
+                        <span style={{fontSize:13,color:'#1A2412',fontWeight:500}}>{s.n}</span>
+                        <span style={{fontSize:11,color:'#5E8030',fontWeight:700,flexShrink:0,marginLeft:8}}>~{s.p}g protein/{s.u}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Qty + unit */}
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
+                <div className="fg" style={{marginBottom:0}}>
+                  <label className="fl">Quantity</label>
+                  <input type="text" inputMode="decimal" className="fi" placeholder="2"
+                    value={newFood.qty} onChange={e=>setNewFood(p=>({...p,qty:e.target.value}))}/>
+                </div>
+                <div className="fg" style={{marginBottom:0}}>
+                  <label className="fl">Unit</label>
+                  <input type="text" className="fi" placeholder="eggs, cup, g…"
+                    value={newFood.unit} onChange={e=>setNewFood(p=>({...p,unit:e.target.value}))}/>
+                </div>
+              </div>
+
+              {/* Nutrition fields */}
+              <div style={{padding:'12px',background:'#EAF3DC',borderRadius:10,
+                border:'1px solid rgba(94,128,48,0.2)',marginBottom:12}}>
+                <div style={{fontSize:11,fontWeight:700,color:'#3C5A1E',marginBottom:8}}>
+                  Nutrition (auto-filled from database — edit if you know better)
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                  {[['Protein (g)','protein'],['Fiber (g)','fiber']].map(([l,k])=>(
+                    <div key={k}>
+                      <label className="fl" style={{color:'#5E8030',marginBottom:4}}>{l}</label>
+                      <input type="text" inputMode="decimal" className="fi" placeholder="0"
+                        value={newFood[k]} onChange={e=>setNewFood(p=>({...p,[k]:e.target.value}))}
+                        style={{background:'white'}}/>
+                    </div>
+                  ))}
+                </div>
+                <div style={{fontSize:10,color:'#657060',marginTop:6}}>
+                  Don't know the exact numbers? Our database auto-fills them. Just pick from the list above.
+                </div>
+              </div>
+
+              <div style={{display:'flex',gap:8}}>
+                <button className="btn btn-ou" style={{flexShrink:0}} onClick={()=>{setShowAdd(false);setSuggestions([])}}>Cancel</button>
+                <button className="btn btn-pr" style={{flex:1}} onClick={addItem} disabled={!newFood.name.trim()}>
+                  Add to Log
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button className="btn btn-ou btn-full" onClick={()=>setShowAdd(true)} style={{marginBottom:10}}>
+              + Add Food Item
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* ── WATER ── */}
+      {sec==='water' && (
+        <div className="fade-up">
+          <div className="card">
+            <div className="card-title" style={{color:'#3A5878'}}>💧 Hydration</div>
+            <NumInput label="Plain Water (L)" value={f.waterL} onChange={v=>set('waterL',v)} placeholder="2.0" unit="L" hint="Target: 2+ litres of plain water"/>
+            {(+f.waterL||0)>0 && <div style={{marginTop:6}}><PBar value={Math.min(100,(+f.waterL||0)/2*100)} color="#4A7090" height={7}/></div>}
+            <div style={{marginTop:14}}>
+              <NumInput label="Medicinal Drinks (ml)" value={f.healthDrinksMl} onChange={v=>set('healthDrinksMl',v)} placeholder="500" unit="ml" hint="Ash gourd 200ml + Lemon water 200ml + Golden milk 200ml = 600ml"/>
+              {(+f.healthDrinksMl||0)>0 && <div style={{marginTop:6}}><PBar value={Math.min(100,(+f.healthDrinksMl||0)/600*100)} color="#68B4D8" height={5}/></div>}
+            </div>
+            <div style={{marginTop:12,padding:'10px 12px',background:'#EAF3DC',borderRadius:10,border:'1px solid rgba(94,128,48,0.2)',fontSize:13,fontWeight:700,color:'#3C5A1E'}}>
+              Total fluid: {totalFluid.toFixed(1)}L / 2.5L target
             </div>
           </div>
-          <div style={{padding:'9px 11px',background:'#F2F8E8',borderRadius:8,border:'1px solid #D8ECBC',fontSize:12,color:'#6D28D9',lineHeight:1.6}}>
-            💡 Every 1000 steps = 8% recurrence reduction · Every 1% muscle gain = 4% lower cancer mortality
+        </div>
+      )}
+
+      {/* ── BODY ── */}
+      {sec==='body' && (
+        <div className="fade-up">
+          <div className="card">
+            <div className="card-title">😴 Sleep & Energy</div>
+            <NumInput label="Sleep hours" value={f.sleepH} onChange={v=>set('sleepH',v)} placeholder="7.5" unit="hrs" hint="Target: 7.5–8.5 hours"/>
+            <Slider label={`Morning energy — ${+f.energyAM||0}/10`} k="energyAM"/>
+            <Slider label={`Evening energy — ${+f.energyPM||0}/10`} k="energyPM"/>
+          </div>
+          <div className="card" style={{borderTop:'3px solid #B87820'}}>
+            <div className="card-title" style={{color:'#8A5010'}}>🧘 Mind & Body</div>
+            <NumInput label="Yoga / Asanas (mins)" value={f.yogaMins} onChange={v=>set('yogaMins',v)} placeholder="25" unit="mins" hint="Pawanmuktasana, Surya Namaskar, stretches"/>
+            {(+f.yogaMins||0)>0 && <div style={{marginTop:6}}><PBar value={Math.min(100,(+f.yogaMins||0)/25*100)} color="#B87820" height={5}/></div>}
+            <div style={{marginTop:12}}>
+              <NumInput label="Pranayama (mins)" value={f.pranayamaMins} onChange={v=>set('pranayamaMins',v)} placeholder="20" unit="mins" hint="Anulom Vilom 10 + Bhramari 5 + Deep breathing 5"/>
+              {(+f.pranayamaMins||0)>0 && <div style={{marginTop:6}}><PBar value={Math.min(100,(+f.pranayamaMins||0)/20*100)} color="#D4A030" height={5}/></div>}
+            </div>
+          </div>
+          <div className="card" style={{borderTop:'3px solid #5E8030'}}>
+            <div className="card-title" style={{color:'#3C5A1E'}}>💪 Exercise & Steps</div>
+            <div className="g2">
+              <NumInput label="Steps" value={f.walkingSteps} onChange={v=>set('walkingSteps',v)} placeholder="8000" hint="Target: 8000/day"/>
+              <NumInput label="Weight (kg)" value={f.weightKg} onChange={v=>set('weightKg',v)} placeholder="65.0" unit="kg"/>
+            </div>
+            <div className="fg">
+              <label className="fl">Gym / Strength session</label>
+              <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
+                {GYM_GROUPS.map(g=>(
+                  <button key={g} onClick={()=>set('gymGroup',g)} style={{
+                    padding:'7px 12px',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer',
+                    border:`1.5px solid ${f.gymGroup===g?'#5E8030':'#EDE8E0'}`,
+                    background:f.gymGroup===g?'#EAF3DC':'white',
+                    color:f.gymGroup===g?'#3C5A1E':'#657060'}}>{g}</button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="card">
+            <div className="card-title">🌿 Digestion</div>
+            <Slider label={`Gas level — ${+f.gasLevel||0}/10 (lower = better)`} k="gasLevel" color="#B83828"/>
+            <Slider label={`Bloating — ${+f.bloating||0}/10 (lower = better)`} k="bloating" color="#B87820"/>
+            <Slider label={`Digestive comfort — ${+f.digestComfort||0}/10`} k="digestComfort" color="#5E8030"/>
           </div>
         </div>
+      )}
 
-        {/* Habits */}
-        <div className="card">
-          <div className="card-title">✅ Daily Protocol Checklist</div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:5}}>
+      {/* ── HABITS ── */}
+      {sec==='habits' && (
+        <div className="fade-up">
+          <div className="card">
+            <div className="card-title">✅ Daily Protocol — tap to check off</div>
             {HABITS.map(h=>{
               const done=f.habits[h]
               return (
-                <div key={h} className={`habit-row${done?' done':''}`} onClick={()=>sf(p=>({...p,habits:{...p.habits,[h]:!p.habits[h]}}))}>
+                <div key={h} className={`habit-row${done?' done':''}`}
+                  onClick={()=>sf(p=>({...p,habits:{...p.habits,[h]:!p.habits[h]}}))}
+                  style={{marginBottom:6,padding:'11px 13px'}}>
                   <div className="habit-chk">{done?'✓':''}</div>
-                  <span style={{fontSize:11,color:done?'#3C5A1E':'#657060',lineHeight:1.3}}>{h}</span>
+                  <span style={{fontSize:13,color:done?'#3C5A1E':'#657060',lineHeight:1.4}}>{h}</span>
                 </div>
               )
             })}
           </div>
         </div>
+      )}
 
-        {/* Notes */}
-        <div className="card">
-          <div className="card-title">📝 Symptoms & Notes</div>
-          <TxtInput label="Symptoms today" value={f.symptoms} onChange={v=>set('symptoms',v)} placeholder="Nausea, fatigue, pain, bloating, gas..." rows={2}/>
-          <TxtInput label="Notes / observations" value={f.notes} onChange={v=>set('notes',v)} placeholder="How are you feeling overall..." rows={2}/>
+      {/* ── NOTES ── */}
+      {sec==='notes' && (
+        <div className="fade-up">
+          <div className="card">
+            <div className="card-title">📝 Symptoms & Notes</div>
+            <TxtInput label="Symptoms today" value={f.symptoms} onChange={v=>set('symptoms',v)} placeholder="Nausea, fatigue, bloating, gas, pain…" rows={3}/>
+            <TxtInput label="Notes / observations" value={f.notes} onChange={v=>set('notes',v)} placeholder="How are you feeling overall…" rows={3}/>
+          </div>
         </div>
-      </div>
+      )}
 
-      <button className="btn btn-gr btn-full" style={{marginTop:6,padding:'13px',fontSize:14}} onClick={save} disabled={saving}>
-        {saving?<><Spin size={16} color="white"/>Saving...</>:'💾 Save Today\'s Log'}
-      </button>
+      {/* Sticky save button */}
+      <div style={{position:'sticky',bottom:72,paddingTop:10,zIndex:10}}>
+        <button className="btn btn-gr btn-full" style={{padding:'14px',fontSize:14,
+          boxShadow:'0 4px 20px rgba(58,112,96,0.4)'}} onClick={save} disabled={saving}>
+          {saving?<><Spin size={16} color="white"/>Saving...</>:'💾 Save Today's Log'}
+        </button>
+      </div>
     </div>
   )
 }
+
 // ─── FOOD TAB — FIX #5 (typing works) FIX #7 (auto protein) FIX #10 (no auto-speak) ────────────
 const MEAL_TYPES = ['Breakfast','Mid-morning snack','Lunch','Evening snack','Dinner','Bedtime']
 
@@ -1179,14 +1432,27 @@ function FoodTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, showToast
       {(db.foodLogs||[]).length>0&&(
         <div className="card">
           <div className="card-title">Food History</div>
-          {(db.foodLogs||[]).slice(0,12).map(f=>(
-            <div key={f.id} className="food-row">
-              <div className="food-badge" style={{background:vBg[f.verdict]||'#FDF8EC',color:vC[f.verdict]||'#B87820',fontSize:13}}>{vI[f.verdict]||'!'}</div>
+          {(db.foodLogs||[]).slice(0,30).map(food=>(
+            <div key={food.id} className="food-row">
+              <div className="food-badge" style={{background:vBg[food.verdict]||'#FDF8EC',color:vC[food.verdict]||'#B87820',fontSize:13}}>{vI[food.verdict]||'!'}</div>
               <div style={{flex:1}}>
-                <div style={{fontSize:12,fontWeight:600,color:'#2C3822'}}>{f.name||'Meal'}</div>
-                <div style={{fontSize:11,color:'#8A9482'}}>{f.mealType} · {f.date} {f.time||''}</div>
+                <div style={{fontSize:12,fontWeight:600,color:'#1A2412'}}>{food.name||'Meal'}</div>
+                <div style={{fontSize:11,color:'#8A9482'}}>{food.mealType} · {food.date} {food.time||''}</div>
               </div>
-              <div style={{fontSize:13,fontWeight:700,color:vC[f.verdict]||'#B87820'}}>{f.score}/10</div>
+              <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
+                {food.score>0&&<div style={{fontSize:13,fontWeight:700,color:vC[food.verdict]||'#B87820'}}>{food.score}/10</div>}
+                <button onClick={async e=>{
+                  e.stopPropagation()
+                  try{
+                    await deleteFoodLog(uid,food.id)
+                    setDb({...db,foodLogs:(db.foodLogs||[]).filter(x=>x.id!==food.id)})
+                    showToast('Deleted ✓')
+                  }catch(err){showToast('Error: '+err.message)}
+                }} style={{width:28,height:28,borderRadius:8,border:'1px solid #FECACA',
+                  background:'#FEF0EC',color:'#B83828',fontSize:18,cursor:'pointer',
+                  display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,
+                  WebkitTapHighlightColor:'transparent'}} title="Delete entry">×</button>
+              </div>
             </div>
           ))}
         </div>
@@ -2901,6 +3167,7 @@ export default function JarvisHealth({ user, onLogout }) {
   const [voiceText, setVoiceText] = useState('')
   const [listening, setListening] = useState(false)
   const [visited, setVisited] = useState(new Set(['home']))
+  const [moreOpen, setMoreOpen] = useState(false)
   const recRef = useRef(null)
 
   useEffect(()=>{
@@ -3059,10 +3326,47 @@ export default function JarvisHealth({ user, onLogout }) {
         </div>
       </div>
 
+      {/* MOBILE MORE DRAWER */}
+      {moreOpen&&(
+        <div style={{position:'fixed',inset:0,zIndex:300,display:'flex',flexDirection:'column',justifyContent:'flex-end'}}
+          onClick={()=>setMoreOpen(false)}>
+          <div style={{position:'absolute',inset:0,background:'rgba(26,36,18,0.55)'}}/>
+          <div style={{position:'relative',background:'#FDFAF5',borderRadius:'22px 22px 0 0',
+            padding:'16px 16px 36px',boxShadow:'0 -4px 32px rgba(0,0,0,0.15)'}}
+            onClick={e=>e.stopPropagation()}>
+            <div style={{width:36,height:4,borderRadius:2,background:'#DDD8D0',margin:'0 auto 16px'}}/>
+            <div style={{fontSize:11,fontWeight:700,color:'#8A9482',letterSpacing:0.8,
+              textTransform:'uppercase',marginBottom:12}}>All Sections</div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
+              {MOB_MORE.map(t=>(
+                <button key={t.id} onClick={()=>{handleTab(t.id);setMoreOpen(false)}} style={{
+                  padding:'12px 6px',borderRadius:14,cursor:'pointer',
+                  border:`1.5px solid ${tab===t.id?'rgba(94,128,48,0.4)':'#EDE8E0'}`,
+                  background:tab===t.id?'#EAF3DC':'white',
+                  display:'flex',flexDirection:'column',alignItems:'center',gap:6,
+                  WebkitTapHighlightColor:'transparent'}}>
+                  <span style={{color:tab===t.id?'#5E8030':'#657060'}}>{t.icon}</span>
+                  <span style={{fontSize:10,fontWeight:600,
+                    color:tab===t.id?'#3C5A1E':'#657060',textAlign:'center',lineHeight:1.2}}>{t.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MOBILE NAV */}
       <nav className="mob-nav">
-        {MOB.map(t=>(
-          <button key={t.id} className={`mob-ni${tab===t.id?' on':''}`} onClick={()=>handleTab(t.id)} style={{position:'relative'}}>
+        {MOB.map(t=>t.id==='__more'?(
+          <button key="more" className="mob-ni" onClick={()=>setMoreOpen(true)}>
+            <svg viewBox="0 0 24 24" fill="currentColor" style={{width:22,height:22}}>
+              <circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>
+            </svg>
+            <span>More</span>
+          </button>
+        ):(
+          <button key={t.id} className={`mob-ni${tab===t.id?' on':''}`}
+            onClick={()=>handleTab(t.id)} style={{position:'relative'}}>
             {t.icon}<span>{t.label}</span>
             {t.badge&&hasNoLog&&<span className="mob-badge"/>}
           </button>

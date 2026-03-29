@@ -111,3 +111,6 @@ export const getDailyLog  = async (uid, date) => {
 
 // ── CONVERSATIONS (full AI sessions stored) ───────────────────────────────────
 export const saveConversation = (uid, data) => addDoc(col(uid, 'conversations'), { ...data, ts: ts() })
+
+export const deleteFoodLog = (uid, id) =>
+  import("firebase/firestore").then(({deleteDoc}) => deleteDoc(ref(uid, "foodLogs", id)))
