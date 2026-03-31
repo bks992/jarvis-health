@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import {
-  getFoodLogs, saveFoodLog, deleteFoodLog, getBloodReports, saveBloodReport,
+  getFoodLogs, saveFoodLog, getBloodReports, saveBloodReport,
   getMedicines, saveMedicine, deleteMedicine, getMedLog, saveMedLog,
   getHealthProfile, saveHealthProfile,
   getGuides, saveGuide, getPlans, savePlan,
@@ -86,49 +86,49 @@ Sperm regeneration = 74 days. Month 6-12 = significant recovery window.
 
 // ─── SUPERFOODS DATABASE (static, instant, no API) ───────────────────────────
 const SUPERFOODS = [
-  { name:'Amla (Indian Gooseberry)', emoji:'🫐', tag:'MUST HAVE', color:'#5E8030',
+  { name:'Amla (Indian Gooseberry)', emoji:'🫐', tag:'MUST HAVE', color:'#10B981',
     dose:'1–2 tsp powder or 15ml fresh juice', timing:'Morning, empty stomach before breakfast',
     why:'Highest natural Vitamin C source on earth. Liver regeneration after radiation. Directly reduces CA 19-9 via anti-inflammatory pathways. Immune system rebuilder.',
     science:'Emblicanin-A/B neutralise free radicals 50× more effectively than Vitamin C alone. Liver protective in multiple Indian clinical trials (AIIMS).',
     how:'Mix 1 tsp amla powder in warm water with lemon. Add to morning lemon water. Or fresh amla juice 15ml diluted 1:3 with water. Can also chew 1 fresh amla.',
     avoid:'Do not take with iron supplements within 1 hour (reduces iron absorption).' },
-  { name:'Turmeric + Black Pepper', emoji:'🟡', tag:'MUST HAVE', color:'#B87820',
+  { name:'Turmeric + Black Pepper', emoji:'🟡', tag:'MUST HAVE', color:'#F59E0B',
     dose:'1 tsp turmeric + pinch black pepper', timing:'Every meal + golden milk at bedtime',
     why:'Curcumin suppresses NF-kB — the master cancer cell survival switch. Reduces liver inflammation post-radiation. Direct anti-tumor compound.',
     science:'Piperine from black pepper increases curcumin absorption by 2000%. Without pepper, turmeric has <5% bioavailability. Golden milk delivers curcumin in fat — further boosting absorption.',
     how:'Add to dal, sabzi, scrambled eggs every single day. Bedtime golden milk: 1 cup warm full-fat milk + 1 tsp turmeric + pinch pepper + pinch cinnamon + 1 tsp honey.',
     avoid:'Very high doses may interact with blood thinners. Food quantities are always safe.' },
-  { name:'Ginger (Fresh)', emoji:'🫚', tag:'MUST HAVE', color:'#B87820',
+  { name:'Ginger (Fresh)', emoji:'🫚', tag:'MUST HAVE', color:'#F59E0B',
     dose:'2–3 cm fresh piece daily or 1 tsp powder', timing:'Ginger water 15 min before every meal',
     why:'6-Gingerol is directly cytotoxic to pancreatic cancer cells in multiple peer-reviewed studies. Stimulates digestive enzymes. Anti-nausea (critical post-chemo). Reduces bloating.',
     science:'Oncogene (2012): 6-Gingerol induced apoptosis in pancreatic cancer cells at dietary-achievable doses. Also inhibits COX-2 (cancer inflammation enzyme).',
     how:'Grate fresh ginger into warm water, steep 5 min, drink before meals. Add to dal, curry, tea. Daily immunity shot: ginger + honey + lemon + warm water.',
     avoid:'High medicinal doses may interact with blood thinners. Regular food amounts are always safe.' },
-  { name:'Ash Gourd (Winter Melon)', emoji:'🥒', tag:'MUST HAVE', color:'#5E8030',
+  { name:'Ash Gourd (Winter Melon)', emoji:'🥒', tag:'MUST HAVE', color:'#10B981',
     dose:'200ml fresh juice', timing:'Morning, 30 min before breakfast on empty stomach',
     why:'Heals gut lining destroyed by chemotherapy. Alkalises body pH (cancer thrives in acid). Blood sugar stabilisation. Traditional Ayurvedic liver and kidney tonic.',
     science:'Cucurbitacins and flavonoids directly repair intestinal epithelial tight junctions — the gut barrier damaged by chemo drugs.',
     how:'Blend fresh ash gourd with minimal water, strain through muslin, drink immediately. No sugar or salt. Start with 100ml if new to it.',
     avoid:'No known interactions. Best results on empty stomach.' },
-  { name:'Tulsi (Holy Basil)', emoji:'🌿', tag:'MUST HAVE', color:'#5E8030',
+  { name:'Tulsi (Holy Basil)', emoji:'🌿', tag:'MUST HAVE', color:'#10B981',
     dose:'7 fresh leaves or 1 cup tulsi tea', timing:'Morning (chew leaves) + afternoon (tea)',
     why:'Adaptogen — reduces cortisol (cortisol directly feeds cancer growth). Activates NK cells. Radioprotective — shields DNA from radiation damage. Liver support.',
     science:'Ursolic acid in tulsi directly inhibits mTOR (the cancer cell growth kinase). Proven radioprotective in double-blind studies at SGPGI Lucknow.',
     how:'Chew 7 fresh leaves on empty stomach morning. Or steep 10 leaves in hot water 5 min as tea. Do not boil vigorously (destroys volatile compounds).',
     avoid:'Avoid very large amounts during active blood-thinning medication.' },
-  { name:'Flaxseed (Ground)', emoji:'🌾', tag:'MUST HAVE', color:'#5E8030',
+  { name:'Flaxseed (Ground)', emoji:'🌾', tag:'MUST HAVE', color:'#8B5CF6',
     dose:'1–2 tbsp ground daily', timing:'Add to morning breakfast (oats, smoothie, roti dough)',
     why:'SDG lignans are converted by gut bacteria to enterolactone — one of the most potent natural anti-cancer compounds known. Reduces IGF-1 (insulin-like growth factor that fuels tumours). Omega-3 ALA. Gut fiber.',
     science:'Flaxseed lignans suppress tumour angiogenesis (blood supply to cancer cells) in studies specifically involving gastrointestinal cancers.',
     how:'MUST be ground — whole seeds pass undigested. Grind 1 week supply, store in fridge. Add to oatmeal, smoothie, or knead into roti dough. Never heat.',
     avoid:'Must drink adequate water. Start with 1 tsp and increase to 2 tbsp over 1 week to avoid bloating.' },
-  { name:'Walnuts (Soaked)', emoji:'🌰', tag:'HIGH', color:'#7A4A10',
+  { name:'Walnuts (Soaked)', emoji:'🌰', tag:'HIGH', color:'#92400E',
     dose:'5–7 walnuts (soaked overnight)', timing:'Mid-morning snack',
     why:'Ellagitannins → Urolithin A via gut bacteria = strongly anti-tumour. Omega-3 ALA. BDNF (brain repair, reverses chemo-brain). Reduces circulating insulin significantly.',
     science:'Walnut-derived Urolithin A induced autophagy (cancer cell self-destruction) in GI cancer cell studies. Also reduces fasting insulin by 8-12% in RCTs.',
     how:'Soak overnight in water. Peel the brown skin in morning (reduces phytates/tannins). Eat with 1 tsp soaked + peeled flaxseed for synergistic effect.',
     avoid:'No restrictions. 5-7 is the optimal dose — more is not better.' },
-  { name:'Beetroot (Steamed)', emoji:'🫀', tag:'HIGH', color:'#B83828',
+  { name:'Beetroot (Steamed)', emoji:'🫀', tag:'HIGH', color:'#EF4444',
     dose:'100–150g steamed or 100ml juice', timing:'With lunch, 3–4 times per week',
     why:'Betalains are the most powerful liver detox compounds in any vegetable. Stimulates bile flow (critical after pancreatectomy). Increases nitric oxide. Rebuilds blood post-chemo.',
     science:'Betaine in beetroot activates PEMT enzyme — essential for liver cell membrane repair after radiation and ablation.',
@@ -140,37 +140,37 @@ const SUPERFOODS = [
     science:'Lentinan (from shiitake) is an approved adjunct cancer therapy in Japan since 1985. Beta-glucans activate macrophages and NK cells within 24 hours of consumption.',
     how:'MUST be cooked (raw mushrooms contain agaritine — harmful). Sauté in ghee with garlic. Add to dal or soup. Reishi powder (1 tsp) in golden milk is excellent.',
     avoid:'No interactions at food doses. Reishi may mildly lower blood pressure — monitor if on antihypertensives.' },
-  { name:'Green Tea (2 cups)', emoji:'🍵', tag:'HIGH', color:'#5E8030',
+  { name:'Green Tea (2 cups)', emoji:'🍵', tag:'HIGH', color:'#10B981',
     dose:'2 cups, weak to medium brew', timing:'Mid-morning + early afternoon ONLY (not evening)',
     why:'EGCG (epigallocatechin gallate) induces apoptosis in cancer cells. Inhibits tumour angiogenesis. Anti-inflammatory. Blood sugar regulation. Over 1000 published studies.',
     science:'EGCG inhibits cancer cell invasion and metastasis at doses achievable with 2 cups/day. Specifically effective against pancreatic cancer cells in cell line studies.',
     how:'Brew at 80°C (not boiling — destroys catechins). Steep 2-3 min. No milk (casein binds catechins). Squeeze of lemon doubles EGCG absorption.',
     avoid:'No green tea after 3pm (caffeine). Avoid taking with iron supplements within 1 hour.' },
-  { name:'Pomegranate', emoji:'💥', tag:'HIGH', color:'#B83828',
+  { name:'Pomegranate', emoji:'💥', tag:'HIGH', color:'#EF4444',
     dose:'½ pomegranate arils (not juice)', timing:'Morning or with breakfast',
     why:'Punicalagins suppress pancreatic cancer cell proliferation directly. Ellagic acid. Anti-inflammatory. Liver protection. Unlike most sweet fruits, has clear anti-cancer evidence.',
     science:'Pomegranate extract reduced pancreatic cancer cell migration by 64% in International Journal of Oncology study.',
     how:'Eat whole fruit arils (not packaged juice — 3x more fiber, lower sugar spike). Mix into Greek yogurt with ground flaxseed for a perfect anti-cancer breakfast.',
     avoid:'No significant interactions at food doses.' },
-  { name:'Broccoli (Soft Cooked)', emoji:'🥦', tag:'HIGH', color:'#5E8030',
+  { name:'Broccoli (Soft Cooked)', emoji:'🥦', tag:'HIGH', color:'#10B981',
     dose:'80–100g, soft steamed', timing:'3–4 times/week with any meal',
     why:'Sulforaphane directly kills pancreatic cancer STEM cells (which are chemo-resistant). DIM for hormone balance. Liver detox enzyme activation. Most studied anti-cancer vegetable compound.',
     science:'Sulforaphane selectively targets cancer stem cells while leaving healthy cells intact — a unique mechanism confirmed in pancreatic cancer studies (Cancer Prevention Research).',
     how:'Steam exactly 5-7 min (soft, not crunchy). A pinch of mustard seeds with the meal multiplies sulforaphane 2-4x. Never eat raw post-pancreatectomy (hard to digest).',
     avoid:'Only well-cooked. Raw cruciferous vegetables cause significant gas and bloating post-surgery.' },
-  { name:'Ghee (Clarified Butter)', emoji:'🧈', tag:'MUST HAVE', color:'#B87820',
+  { name:'Ghee (Clarified Butter)', emoji:'🧈', tag:'MUST HAVE', color:'#F59E0B',
     dose:'½ tsp per meal (1–2 tsp total per day)', timing:'With every meal — on roti, rice, or in cooking',
     why:'Butyrate directly heals gut epithelial cells — the lining destroyed by chemo. Essential fat-soluble vitamin carrier (D3, K2, A, E cannot absorb without fat). Anti-inflammatory butyric acid.',
     science:'Butyric acid is the preferred fuel for colonocytes and the primary signal for tight junction restoration in the gut epithelium post-chemotherapy.',
     how:'Add ½ tsp on hot rice or roti. Sauté vegetables in ghee (very high smoke point — safe). Start with small amounts, increase as tolerance builds with PERT enzymes.',
     avoid:'No restrictions at recommended doses. Do not fear it — fat absorption is what PERT enzymes enable.' },
-  { name:'Moong Dal', emoji:'🫛', tag:'MUST HAVE', color:'#5E8030',
+  { name:'Moong Dal', emoji:'🫛', tag:'MUST HAVE', color:'#10B981',
     dose:'1 bowl (200g cooked)', timing:'Lunch or dinner — daily',
     why:'Most digestible legume — essential with partial pancreas. Complete amino acid profile for protein synthesis. Prebiotic fiber for gut microbiome rebuilding. Very low GI.',
     science:'Digestibility score 97% — highest of any legume. Resistant starch directly feeds Bifidobacterium longum — the gut bacteria most depleted by chemotherapy.',
     how:'Cook well-done (20-25 min, soft). Add ½ tsp ghee + cumin seeds + turmeric + ginger. Moong dal khichdi with rice + ghee = the ultimate post-surgery recovery meal.',
     avoid:'No restrictions. Should be a cornerstone of every single day.' },
-  { name:'Curd / Greek Yogurt', emoji:'🥛', tag:'MUST HAVE', color:'#4A7090',
+  { name:'Curd / Greek Yogurt', emoji:'🥛', tag:'MUST HAVE', color:'#0EA5E9',
     dose:'½ cup after lunch + ½ cup after dinner', timing:'With or after meals, room temperature',
     why:'Live cultures rebuild gut microbiome destroyed by chemo. 70% of immune function lives in gut. Protein source. Digestive aid post-PERT. Reduces gut inflammation.',
     science:'Lactobacillus strains produce short-chain fatty acids (SCFA) that reduce gut inflammation and strengthen the intestinal barrier damaged by cisplatin and oxaliplatin.',
@@ -180,30 +180,30 @@ const SUPERFOODS = [
 
 // ─── SUPPLEMENT STACK ─────────────────────────────────────────────────────────
 const SUPPLEMENT_STACK = [
-  { time:'🌅 Morning with Breakfast', color:'#B87820', items:[
+  { time:'🌅 Morning with Breakfast', color:'#F59E0B', items:[
     { name:'Vitamin D3 + K2', dose:'D3: 4000–5000 IU · K2: 100 mcg', why:'Low D3 is strongly linked to pancreatic cancer incidence and poor prognosis. D3 activates immune cells that kill cancer cells. K2 directs calcium to bones not arteries.', note:'Test serum D3 first — target 60–80 ng/mL. Take with fatty meal for best absorption.' },
     { name:'Omega-3 (Fish Oil / Algae)', dose:'2–3g EPA+DHA', why:'Most powerful natural anti-inflammatory. Directly reduces CA 19-9 via multiple anti-inflammatory pathways. Liver protection. Reverses chemo-brain. Sperm membrane quality.', note:'Enteric-coated prevents fishy burp. Algae-based if vegetarian. Take with food.' },
     { name:'B-Complex (Methylated only)', dose:'1 capsule — methylfolate + methylcobalamin form', why:'Post-chemo nerve repair (peripheral neuropathy). Energy production in every cell. DNA methylation and repair. Methylated form bypasses MTHFR gene mutation (common).', note:'Must say methylfolate + methylcobalamin on label — NOT folic acid + cyanocobalamin.' },
     { name:'Zinc', dose:'15–25 mg', why:'Hair regrowth. Sperm count and morphology. Immune cell production. Wound healing. Taste recovery after chemo. Deficiency is near-universal post-chemotherapy.', note:'Take with food to prevent nausea. Do not exceed 40mg/day. Do not take with copper within 2h.' },
   ]},
-  { time:'☀️ Mid-Morning (10:30am)', color:'#5E8030', items:[
+  { time:'☀️ Mid-Morning (10:30am)', color:'#10B981', items:[
     { name:'CoQ10', dose:'200mg (increase to 400–600mg for fertility)', why:'Mitochondrial fuel — rebuilds the cellular energy system destroyed by adriamycin/chemo drugs. Most evidence-backed supplement for sperm quality restoration post-chemo. Reduces cancer fatigue.', note:'Take with fat-containing food. Ubiquinol form is better absorbed over age 40.' },
     { name:'Modified Citrus Pectin (MCP)', dose:'5g powder in warm water', why:'Binds galectin-3 — the protein that allows cancer cells to stick together and metastasize. Studied specifically in pancreatic cancer as an anti-metastatic agent.', note:'Dissolve in warm water. Drink 30 min before or after meals. PectaSol-C is the researched brand.' },
   ]},
-  { time:'🍲 With Lunch', color:'#4A7090', items:[
+  { time:'🍲 With Lunch', color:'#0EA5E9', items:[
     { name:'Berberine', dose:'500mg, 30 min before meal', why:'Inhibits mTOR — the primary kinase that drives cancer cell growth. Blood sugar control equal to Metformin in RCTs. Reduces CA 19-9 via gut microbiome + blood sugar pathways.', note:'Take 30 min BEFORE meals for blood sugar effect. May cause mild GI discomfort for 1-2 weeks.' },
     { name:'Milk Thistle (Silymarin)', dose:'200–400mg', why:'Most evidence-backed liver regeneration herb. Your liver underwent radiation + ablation — active pharmacological support for hepatocyte repair is essential.', note:'Look for 70–80% silymarin standardized extract. Take with food for absorption.' },
   ]},
-  { time:'🌤️ Evening (4–5pm)', color:'#5E8030', items:[
+  { time:'🌤️ Evening (4–5pm)', color:'#8B5CF6', items:[
     { name:'Quercetin', dose:'500mg', why:'Flavonoid — anti-proliferative specifically in pancreatic cancer cell studies. Inhibits cancer cell adhesion and invasion. Anti-inflammatory. Blood sugar stability.', note:'Take with Vitamin C for 2-3x better absorption. Check with doctor if on quinolone antibiotics.' },
     { name:'Resveratrol', dose:'150–250mg', why:'Activates SIRT1 and SIRT3 longevity pathways. Anti-tumour via NF-kB inhibition. Cardiovascular protection. Anti-aging. Prevents insulin resistance and diabetes.', note:'Trans-resveratrol form only (most bioavailable). Take on empty stomach or with small meal.' },
   ]},
-  { time:'🌙 With Dinner', color:'#B83828', items:[
+  { time:'🌙 With Dinner', color:'#EF4444', items:[
     { name:'Ashwagandha KSM-66', dose:'600mg', why:'Reduces cortisol by 27% in RCTs (cortisol directly upregulates cancer cell survival pathways). Testosterone + sperm recovery. Thyroid support. Energy. Stress reduction.', note:'KSM-66 is the most clinically researched form. Evening timing supports sleep and growth hormone.' },
     { name:'NAC (N-Acetyl Cysteine)', dose:'600mg', why:'Precursor to glutathione — the master antioxidant the liver uses to process every toxin. Active liver cell regeneration. Heavy metal chelation post-chemo. Gut lining repair.', note:'Take away from copper supplements. Slight sulphur smell is normal. Can split into 2x300mg.' },
     { name:'L-Carnitine', dose:'2g (if fertility is a focus)', why:'Primary energy source for sperm motility (mitochondria in the sperm tail). Muscle recovery and lean mass gain. Mitochondrial fat burning. Brain repair post-chemo.', note:'Can be taken any time. Slight fishy odour possible at 2g — reduce to 1g if this occurs.' },
   ]},
-  { time:'🌛 Bedtime (30 min before sleep)', color:'#4A6A24', items:[
+  { time:'🌛 Bedtime (30 min before sleep)', color:'#7C3AED', items:[
     { name:'Probiotic', dose:'Lactobacillus rhamnosus GG + Bifidobacterium longum', why:'Chemotherapy wiped out your gut microbiome. 70% of immune function lives in the gut. Gut repair = immune repair = lower CA 19-9. This is one of the highest-yield interventions.', note:'Take on empty stomach or with small water only. Refrigerate. Introduce one strain at a time over 2 weeks.' },
     { name:'Melatonin', dose:'Start 3mg → increase to 10–20mg over 4 weeks', why:'Anti-tumour properties — direct inhibition of pancreatic cancer cells in multiple published studies. Master antioxidant. Deep sleep and growth hormone restoration. IL-6 (CA 19-9 driver) reduction.', note:'Start low. May cause vivid dreams initially — this normalises. Not habit-forming. Critical cancer recovery compound.' },
     { name:'Magnesium Glycinate', dose:'300–400mg', why:'Sleep quality via GABA activation. Muscle and liver recovery. Bowel regularity (critical post-surgery). Reduces anxiety and cortisol. Involved in 300+ enzymatic processes.', note:'Glycinate form only — gentlest on gut. Not citrate or oxide. Take with nothing else.' },
@@ -212,61 +212,61 @@ const SUPPLEMENT_STACK = [
 
 // ─── DAILY YOGA SEQUENCE (complete, specific, evidence-based) ─────────────────
 const YOGA_SEQUENCE = [
-  { id:'anulom', name:'Anulom Vilom', type:'Pranayama', mins:10, emoji:'🌬️', color:'#4A7090', step:1,
+  { id:'anulom', name:'Anulom Vilom', type:'Pranayama', mins:10, emoji:'🌬️', color:'#0EA5E9', step:1,
     when:'Always first. Morning preferred.',
     how:'Sit comfortably. Close right nostril with right thumb. Inhale slowly and deeply through left nostril (4 counts). Close both nostrils with thumb and ring finger (2 counts). Open right nostril, exhale fully (8 counts). Now inhale right (4), close both (2), exhale left (8). This is 1 round. Continue for 10 minutes. Eyes closed throughout.',
     benefit:'NK (Natural Killer) cell activity increases 30% after 10 min (AIIMS study). Cortisol normalisation. Nervous system balance. Maximum oxygen delivery to every organ. Brain hemisphere synchronisation.',
     science:'10 min of Anulom Vilom daily for 3 months reduced CRP (inflammation marker) by 35% and increased NK cells by 30% in an AIIMS double-blind study. These are the very cells that patrol for and destroy cancer cells.',
     caution:'Never force or strain the breath. If dizzy, breathe normally for 2 min then resume. Do not hold breath if uncomfortable.' },
-  { id:'bhramari', name:'Bhramari (Humming Bee)', type:'Pranayama', mins:5, emoji:'🐝', color:'#B87820', step:2,
+  { id:'bhramari', name:'Bhramari (Humming Bee)', type:'Pranayama', mins:5, emoji:'🐝', color:'#F59E0B', step:2,
     when:'After Anulom Vilom.',
     how:'Sit upright. Close ears with thumbs, cover eyes gently with fingers (Shanmukhi Mudra). Inhale deeply through nose. On exhale, make a continuous, gentle, low-pitched humming sound "mmmm" until breath is fully out. Feel the vibration in your skull, throat, and chest. This is 1 round. Do 5-7 rounds (about 5 minutes).',
     benefit:'Nitric oxide production increases 1500% — nitric oxide has confirmed direct anti-tumour properties. Activates the vagus nerve (controls inflammation). Lowers blood pressure. Reduces anxiety more effectively than any pharmaceutical in some studies.',
     science:'Humming increases nasal nitric oxide by 1500% (Karolinska Institute, 2002). Nitric oxide directly inhibits cancer cell proliferation and promotes apoptosis (cancer cell death).',
     caution:'Very gentle sound only. No forceful humming. Avoid if tinnitus is severe.' },
-  { id:'kapalbhati', name:'Kapalbhati (GENTLE version only)', type:'Pranayama', mins:3, emoji:'💨', color:'#5E8030', step:3,
+  { id:'kapalbhati', name:'Kapalbhati (GENTLE version only)', type:'Pranayama', mins:3, emoji:'💨', color:'#8B5CF6', step:3,
     when:'After Bhramari. ONLY the gentle, slow version.',
     how:'Sit comfortably. Normal passive inhale. Gentle, rhythmic short exhale contracting the lower abdomen (just the lower belly — not the full torso). Rate: 1 exhale per second maximum (60 per minute — NOT the fast version some teachers use). Only 3 minutes. If any discomfort, stop.',
     benefit:'Each gentle contraction directly massages the liver and stimulates hepatocyte activity. Digestive fire activation. Metabolic boost. Lung capacity improvement over time.',
     science:'Gentle intra-abdominal pressure changes from Kapalbhati activate the right lobe of the liver via mechanical stimulation — particularly relevant for a liver that underwent ablation.',
     caution:'⚠ IMPORTANT: NEVER do fast/forceful Kapalbhati post-surgery. Keep slow and gentle ALWAYS. Skip entirely for the first 3 months post-surgery. Stop at ANY abdominal discomfort.' },
-  { id:'deepbreath', name:'Deep Belly Breathing (Diaphragmatic)', type:'Pranayama', mins:3, emoji:'🫁', color:'#5E8030', step:4,
+  { id:'deepbreath', name:'Deep Belly Breathing (Diaphragmatic)', type:'Pranayama', mins:3, emoji:'🫁', color:'#10B981', step:4,
     when:'End of pranayama. Transition to asanas.',
     how:'Lie on back or sit. One hand on belly, one on chest. Inhale slowly — belly rises first, then chest. Exhale slowly — chest falls first, then belly falls last. Inhale 4 counts, exhale 6 counts. Complete, full breaths. 3 minutes.',
     benefit:'Vagus nerve activation — the vagus nerve controls 80% of the parasympathetic nervous system and directly regulates inflammatory cytokine production. Reduces IL-6 and TNF-alpha (which drive CA 19-9 elevation).',
     science:'Even 5 slow diaphragmatic breaths reduce heart rate variability and measurably lower plasma cortisol. 3 minutes produces clinically significant vagal tone increase.',
     caution:'None whatsoever. The safest and most fundamental breath practice.' },
-  { id:'pawanmukt', name:'Pawanmuktasana (Wind Relief Pose)', type:'Asana', mins:5, emoji:'🤸', color:'#5E8030', step:5,
+  { id:'pawanmukt', name:'Pawanmuktasana (Wind Relief Pose)', type:'Asana', mins:5, emoji:'🤸', color:'#10B981', step:5,
     when:'First asana. Lying down. The most important asana for you.',
     how:'Lie flat on back. Inhale. Exhale and bring both knees firmly to chest, interlace fingers around shins just below knees. Gently rock left and right 5 times. Hold still for 30-60 seconds, breathing slowly. Release. Repeat 5-8 times. Option: do one leg at a time alternating.',
     benefit:'Directly massages the liver, gallbladder, and the remaining pancreatic tissue through gentle intra-abdominal pressure. Relieves gas and bloating — your single most important daily digestive exercise. Stimulates peristalsis.',
     science:'Post-pancreatectomy patients doing Pawanmuktasana 2x daily reported 60% reduction in post-meal bloating in Indian oncological physiotherapy studies. Also directly stimulates the ileocecal valve.',
     caution:'Gentle pressure only. Skip first 6-8 weeks post-surgery unless cleared by your surgeon. No sharp pain ever.' },
-  { id:'supta-twist', name:'Supta Matsyendrasana (Supine Spinal Twist)', type:'Asana', mins:4, emoji:'🔄', color:'#4A7090', step:6,
+  { id:'supta-twist', name:'Supta Matsyendrasana (Supine Spinal Twist)', type:'Asana', mins:4, emoji:'🔄', color:'#0EA5E9', step:6,
     when:'After Pawanmuktasana. Lying down.',
     how:'Lie on back. Bring right knee to chest. Gently guide the right knee across your body to the left side. Extend right arm straight out to your right. Turn head gently to look right. Hold 30-45 seconds with slow steady breathing. Return to centre. Repeat on left side.',
     benefit:'Wrings out the liver and gut with a "squeeze and soak" mechanism — compresses on exhale, fresh blood floods on inhale. Spinal mobility. Kidney stimulation. Direct liver blood flow enhancement.',
     science:'Spinal twists increase portal blood flow to the liver by creating gentle intra-hepatic pressure differentials — particularly beneficial for liver regeneration after radiation and ablation.',
     caution:'No force. Work at 40-50% of your full range — the benefit comes from the squeeze, not the depth. If any lower back pain, reduce range.' },
-  { id:'setu-bandha', name:'Setu Bandha Sarvangasana (Bridge Pose)', type:'Asana', mins:4, emoji:'🌉', color:'#B87820', step:7,
+  { id:'setu-bandha', name:'Setu Bandha Sarvangasana (Bridge Pose)', type:'Asana', mins:4, emoji:'🌉', color:'#F59E0B', step:7,
     when:'After twists.',
     how:'Lie on back, knees bent, feet flat on floor hip-width apart, 12 inches from hips. Arms alongside body, palms flat. Inhale and press feet firmly into floor, lift hips. Hold 30-45 seconds, slow breathing. Exhale and lower slowly vertebra by vertebra. 5-8 repetitions. Progress to longer holds.',
     benefit:'Glute and hamstring strengthening (directly prevents sarcopenia — the muscle loss that worsens cancer outcomes). Thyroid stimulation (thyroid controls metabolism). Lymph drainage from lower body. Spinal decompression.',
     science:'Bridge pose activates the posterior chain with zero spinal loading — equivalent muscle activation to barbell hip thrusts at a fraction of the physiological stress. Ideal for post-surgical patients.',
     caution:'Keep knees hip-width throughout — do not let them fall outward. No neck pressure. If hips cannot lift, start with pelvic tilts and build over weeks.' },
-  { id:'viparita', name:'Viparita Karani (Legs Up The Wall)', type:'Asana', mins:8, emoji:'🦵', color:'#5E8030', step:8,
+  { id:'viparita', name:'Viparita Karani (Legs Up The Wall)', type:'Asana', mins:8, emoji:'🦵', color:'#8B5CF6', step:8,
     when:'Late in practice, before child\'s pose.',
     how:'Sit sideways with right hip touching the wall. Slowly lower your back down while swinging legs up the wall in one smooth motion. Back completely flat on floor. Legs vertical against wall. Arms relaxed by sides, palms facing up. Eyes closed. Hold 7-15 minutes.',
     benefit:'The single most powerful lymphatic drainage posture. Reverses the gravitational pooling of lymph fluid in legs. Reduces swelling and lymphoedema. Decompresses the vena cava. Adrenal rest. Complete nervous system reset.',
     science:'Gravity reversal of the legs improves lymphatic return to the cisterna chyli (the main lymph vessel near the pancreas area) by up to 300%, helping flush the lymph nodes involved in your cancer treatment.',
     caution:'Avoid if glaucoma or very high blood pressure. Place a folded blanket under the sacrum for extra comfort and deeper benefit.' },
-  { id:'balasana', name:'Balasana (Child\'s Pose)', type:'Asana', mins:3, emoji:'🙇', color:'#B05878', step:9,
+  { id:'balasana', name:'Balasana (Child\'s Pose)', type:'Asana', mins:3, emoji:'🙇', color:'#EC4899', step:9,
     when:'Just before Shavasana.',
     how:'Kneel on the floor. Bring big toes together, knees apart (about hip width or wider). Exhale and fold forward, lowering your torso between your thighs. Forehead rests on floor or on a pillow. Arms extended forward or by your sides. Breathe slowly and deeply. 3-5 minutes.',
     benefit:'Adrenal rest position — the adrenal glands sit directly above the kidneys and are gently stretched, signalling the HPA axis to reduce cortisol production. Deep parasympathetic activation. Spinal decompression.',
     science:'Child\'s pose activates the parasympathetic nervous system more powerfully than almost any other position, measurably reducing salivary cortisol within 90 seconds of entering the pose.',
     caution:'Use a pillow under thighs if knees are uncomfortable. Can do a seated forward fold as an alternative.' },
-  { id:'shavasana', name:'Shavasana (Corpse Pose) — NON-NEGOTIABLE', type:'Meditation', mins:20, emoji:'🧘', color:'#657060', step:10,
+  { id:'shavasana', name:'Shavasana (Corpse Pose) — NON-NEGOTIABLE', type:'Meditation', mins:20, emoji:'🧘', color:'#64748B', step:10,
     when:'Always the last 20 minutes. Never skip this.',
     how:'Lie completely flat on your back. Arms slightly away from the body, palms facing up. Legs slightly apart, feet falling open naturally. Eyes closed. Nothing to do, nowhere to go. Scan your body from toes to head, consciously releasing tension in each part. When thoughts come, observe them without following. Simply be.',
     benefit:'IL-6 (the inflammatory cytokine most responsible for CA 19-9 elevation) drops measurably after 20 minutes. Activates the same cellular repair genes as 7 hours of deep sleep. Growth hormone pulse. NK cell reconstitution.',
@@ -276,7 +276,7 @@ const YOGA_SEQUENCE = [
 
 // ─── GYM PROTOCOL (Phase-based) ───────────────────────────────────────────────
 const GYM_PHASES = [
-  { phase:1, label:'Phase 1 — Foundation', weeks:'Weeks 1–6', goal:'Restore energy, reawaken muscles, rebuild movement patterns safely', color:'#5E8030',
+  { phase:1, label:'Phase 1 — Foundation', weeks:'Weeks 1–6', goal:'Restore energy, reawaken muscles, rebuild movement patterns safely', color:'#10B981',
     cardio:'Morning walk 20–30 min daily. Week 1-2: 15 min if fatigued. Week 3-4: 25 min. Week 5-6: 30 min slightly brisk.',
     strength:'3 days/week (Mon/Wed/Fri) — 15-20 min only',
     exercises:[
@@ -289,7 +289,7 @@ const GYM_PHASES = [
     ],
     postWorkout:'⚡ Within 30 min: 1 glass warm milk + 1 boiled egg. OR 1 scoop whey in warm water + 1 banana. The 30-minute window is when muscle protein synthesis is highest.',
     caution:'No crunches, sit-ups, or planks yet (first 3 months post-surgery). Stop at any sharp abdominal pain. Always eat a small snack (banana or curd) before exercising.' },
-  { phase:2, label:'Phase 2 — Building', weeks:'Weeks 7–16', goal:'Build lean muscle, increase strength, improve insulin sensitivity and stamina', color:'#4A7090',
+  { phase:2, label:'Phase 2 — Building', weeks:'Weeks 7–16', goal:'Build lean muscle, increase strength, improve insulin sensitivity and stamina', color:'#0EA5E9',
     cardio:'30–45 min walk, 5-6 days/week. Introduce brisk intervals: walk fast 2 min, normal 3 min, repeat 5 cycles. Or: stationary cycling 20 min — excellent for legs without abdominal stress.',
     strength:'3 days/week on alternate days — 25-30 min',
     exercises:[
@@ -302,7 +302,7 @@ const GYM_PHASES = [
     ],
     postWorkout:'⚡ Within 30 min: 2 boiled eggs + 1 banana. OR Greek yogurt + walnuts + flaxseed + pomegranate. Total protein: 25-30g.',
     caution:'No crunches or sit-ups until Month 6 (post-surgical abdomen needs time). Only increase weight when completing ALL reps with perfect form. Never compromise form for weight.' },
-  { phase:3, label:'Phase 3 — Progressive', weeks:'Month 4 onwards', goal:'Lean muscle gain, peak metabolic health, cancer-proof body composition for life', color:'#5E8030',
+  { phase:3, label:'Phase 3 — Progressive', weeks:'Month 4 onwards', goal:'Lean muscle gain, peak metabolic health, cancer-proof body composition for life', color:'#8B5CF6',
     cardio:'45 min walks OR swimming (best cancer exercise — zero joint stress, full body, lymphatic pump). 5 days/week. Add swimming as the primary Phase 3 cardio if accessible.',
     strength:'4 days/week — Push / Pull / Legs / Rest split',
     exercises:[
@@ -321,55 +321,55 @@ const GYM_PHASES = [
 
 // ─── DAILY SCHEDULE ───────────────────────────────────────────────────────────
 const DAILY_SCHEDULE = [
-  { time:'6:00am', label:'Wake + Intentions', emoji:'🌄', color:'#B87820',
+  { time:'6:00am', label:'Wake + Intentions', emoji:'🌄', color:'#F59E0B',
     details:'Lie in bed 5 min. 3 deep slow breaths. One thought: "I am grateful to be in remission." Set 1 intention for the day.',
     why:'Morning cortisol is highest at 6-8am (the cortisol awakening response). How you respond to waking determines your inflammatory profile for the next 16 hours.' },
-  { time:'6:15am', label:'Morning Drinks (Empty Stomach)', emoji:'🍋', color:'#5E8030',
+  { time:'6:15am', label:'Morning Drinks (Empty Stomach)', emoji:'🍋', color:'#10B981',
     details:'① Copper vessel water 200ml. ② Warm lemon water + pinch turmeric + pinch black pepper. ③ Amla powder 1 tsp in warm water. ④ Ash gourd juice 200ml (if available). Total: 500-700ml.',
     why:'Liver begins its peak detox activity at 6am. These drinks provide substrate for glutathione synthesis, alkalise pH, activate bile flow, and deliver concentrated antioxidants before any food burden.' },
-  { time:'6:30am', label:'Pranayama + Yoga (45 min)', emoji:'🧘', color:'#4A7090',
+  { time:'6:30am', label:'Pranayama + Yoga (45 min)', emoji:'🧘', color:'#0EA5E9',
     details:'Full sequence: Anulom Vilom 10 min → Bhramari 5 min → Gentle Kapalbhati 3 min → Deep Breathing 3 min → Pawanmuktasana 5 min → Supine Twist 4 min → Bridge 4 min → Legs Up Wall 8 min → Child\'s Pose 3 min → Shavasana 20 min.',
     why:'This specific sequence targets NK cell activation, liver stimulation, gas relief, lymph drainage, cortisol reduction, and deep cellular repair — in the correct physiological order.' },
-  { time:'7:30am', label:'Breakfast + Morning Supplements', emoji:'🍳', color:'#5E8030',
+  { time:'7:30am', label:'Breakfast + Morning Supplements', emoji:'🍳', color:'#10B981',
     details:'CREON with first bite (non-negotiable). Best options: 2 soft scrambled eggs in ghee + 1 roti + 4 soaked almonds + 5 soaked walnuts. OR Oats + banana + 1 tbsp ground flaxseed + honey. OR Moong dal cheela + curd. After eating: D3+K2, Omega-3, B-Complex, Zinc.',
     why:'Protein at breakfast sets up muscle protein synthesis for the full day (leucine threshold activation). Enzymes MUST be taken at the first bite — not after.' },
-  { time:'8:00am', label:'Morning Walk (30–45 min)', emoji:'🚶', color:'#5E8030',
+  { time:'8:00am', label:'Morning Walk (30–45 min)', emoji:'🚶', color:'#8B5CF6',
     details:'Target 30-45 min at comfortable pace. Use this time for gratitude, birdsong, or gentle music. Track steps — goal is 8000+ total for the day. Sun on skin for 20 min = free Vitamin D.',
     why:'Post-breakfast walking blunts the glucose spike by 40-50% (NEJM study). Morning sun resets circadian rhythm, improving sleep quality and melatonin production at night. Lymph activation begins only with movement.' },
-  { time:'10:30am', label:'Mid-Morning Snack + Supplements', emoji:'🥛', color:'#B87820',
+  { time:'10:30am', label:'Mid-Morning Snack + Supplements', emoji:'🥛', color:'#F59E0B',
     details:'CREON if snack has fat or protein. Options: Protein smoothie (whey + banana + warm milk + pinch cinnamon). OR Greek yogurt + walnuts + pomegranate + flaxseed. OR 1 boiled egg + a few whole grain crackers. Supplements: CoQ10, Modified Citrus Pectin 5g.',
     why:'Second protein hit of the day. Maintains amino acid pool for continuous muscle protein synthesis. Blood sugar stability between breakfast and lunch prevents insulin spikes.' },
-  { time:'1:00pm', label:'Lunch + Midday Supplements', emoji:'🍲', color:'#5E8030',
+  { time:'1:00pm', label:'Lunch + Midday Supplements', emoji:'🍲', color:'#10B981',
     details:'LARGEST meal. CREON with first bite. Structure: protein (fish curry / dal / paneer / egg) + 1-2 rotis or ½ cup rice + soft cooked vegetables (lauki, spinach dal, carrot) + ½ tsp ghee + ½ cup curd after. Supplements: Berberine 500mg, Milk Thistle.',
     why:'Digestive fire is strongest 12-2pm. Largest meal here = maximum nutrient absorption. Curd after = probiotic support. Berberine taken now reduces post-lunch glucose spike — the most critical time for blood sugar.' },
-  { time:'2:00pm', label:'Short Rest (15-20 min max)', emoji:'😌', color:'#657060',
+  { time:'2:00pm', label:'Short Rest (15-20 min max)', emoji:'😌', color:'#64748B',
     details:'Lie down on left side (improves portal blood flow to liver). 15-20 min only — set a timer. Not deep sleep. Eyes closed, body still.',
     why:'Left-side lying increases blood flow through the portal vein to the liver by 15-20% — the optimal position for post-meal liver support after ablation and radiation treatment.' },
-  { time:'4:00pm', label:'Evening Snack + Supplements', emoji:'☕', color:'#4A7090',
+  { time:'4:00pm', label:'Evening Snack + Supplements', emoji:'☕', color:'#0EA5E9',
     details:'CREON if snack has fat/protein. Ginger + tulsi tea. One of: roasted makhana + peanut butter, OR banana + walnuts, OR small bowl curd + pomegranate. Supplement: Quercetin 500mg, Resveratrol.',
     why:'Keeping blood sugar stable between meals is the single most important daily action against CA 19-9 elevation. Every insulin spike is a direct signal for residual pancreatic tissue inflammation.' },
-  { time:'5:00pm', label:'Strength Training (Mon/Wed/Fri) or Steps', emoji:'💪', color:'#5E8030',
+  { time:'5:00pm', label:'Strength Training (Mon/Wed/Fri) or Steps', emoji:'💪', color:'#8B5CF6',
     details:'Phase 1: wall push-ups, chair squats, resistance bands — 15-20 min. Phase 2: dumbbell circuit — 25-30 min. Phase 3: Push/Pull/Legs — 35-40 min. Other days: 20 min walk to reach 8000 steps.',
     why:'5-6pm training window shows the greatest anabolic (muscle-building) hormonal response in recovery patients. Testosterone and IGF-1 (the beneficial muscle-building dose) peak here.' },
-  { time:'7:00pm', label:'Dinner + Evening Supplements', emoji:'🌙', color:'#B87820',
+  { time:'7:00pm', label:'Dinner + Evening Supplements', emoji:'🌙', color:'#F59E0B',
     details:'CREON with first bite. Keep lighter than lunch. Best options: Moong dal khichdi + ½ tsp ghee. OR Soft dal + 1 roti + soft cooked lauki or ridge gourd. OR Vegetable soup + 1 scrambled egg. Finish eating by 8pm. Supplements: Ashwagandha KSM-66, NAC, L-Carnitine.',
     why:'Light dinner allows the liver to focus on repair and regeneration during sleep. The liver\'s peak repair window is 11pm-3am (confirmed by chronobiology). Eating heavy at dinner competes with this.' },
-  { time:'9:00pm', label:'Blue Light OFF + Wind Down', emoji:'🌆', color:'#657060',
+  { time:'9:00pm', label:'Blue Light OFF + Wind Down', emoji:'🌆', color:'#64748B',
     details:'No screens after 9pm. Dim all lights. Read a book. Gentle stretching or breathing. Copper vessel water 200ml. This is the golden hour of melatonin production.',
     why:'Blue light from screens blocks melatonin production. 1 hour of phone screen = 1.5 hours of melatonin suppression. Melatonin is both your sleep hormone AND a proven anti-cancer compound. Protect it every night.' },
-  { time:'9:30pm', label:'Golden Milk + Bedtime Supplements', emoji:'✨', color:'#B87820',
+  { time:'9:30pm', label:'Golden Milk + Bedtime Supplements', emoji:'✨', color:'#F59E0B',
     details:'Golden milk: 1 cup warm full-fat milk + ½ tsp turmeric + pinch black pepper + pinch cinnamon + 1 tsp honey. Supplements: Probiotic, Melatonin 10-20mg, Magnesium Glycinate 300mg.',
     why:'Curcumin is fat-soluble — warm milk delivers it in the ideal fat matrix for maximum absorption. Melatonin needs 30-45 min to reach peak blood levels. Probiotics colonise most effectively during sleep when gut motility slows.' },
-  { time:'10:00pm', label:'SLEEP — Non-negotiable', emoji:'😴', color:'#4A6A24',
+  { time:'10:00pm', label:'SLEEP — Non-negotiable', emoji:'😴', color:'#7C3AED',
     details:'Lights out by 10pm. Room dark and cool (18-22°C). If mind is busy: 4-7-8 breathing (inhale 4, hold 7, exhale 8). Growth hormone peaks at 11pm. p53 tumour suppressor gene is most active 1-3am.',
     why:'Sleep before 11pm ensures you catch the growth hormone pulse (11pm-1am) and the p53 tumour suppressor activation window (1-3am). Missing these windows is the equivalent of skipping surgical recovery. Every night matters.' },
 ]
 // ─── SCORING ──────────────────────────────────────────────────────────────────
 function scoreColor(n) {
-  if (n >= 80) return '#4A7228'
-  if (n >= 60) return '#5E8030'
-  if (n >= 40) return '#B87820'
-  return '#B84838'
+  if (n >= 80) return '#10B981'
+  if (n >= 60) return '#0EA5E9'
+  if (n >= 40) return '#F59E0B'
+  return '#EF4444'
 }
 function scoreLabel(n) {
   if (n >= 80) return 'Excellent'
@@ -409,275 +409,132 @@ const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;-webkit-text-size-adjust:100%}
-body{
-  background:#F0EAE0;
-  color:#1A2412;
-  font-family:'DM Sans',system-ui,sans-serif;
-  font-size:14px;line-height:1.5;
-  -webkit-font-smoothing:antialiased;
-  min-height:100vh;
-  position:relative;
-}
-body::before{
-  content:'';position:fixed;top:-80px;left:-80px;
-  width:500px;height:500px;border-radius:50%;
-  background:radial-gradient(circle,rgba(100,135,60,0.18) 0%,transparent 65%);
-  filter:blur(30px);pointer-events:none;z-index:0;
-}
-body::after{
-  content:'';position:fixed;bottom:-60px;right:-60px;
-  width:360px;height:360px;border-radius:50%;
-  background:radial-gradient(circle,rgba(200,140,70,0.12) 0%,transparent 65%);
-  filter:blur(30px);pointer-events:none;z-index:0;
-}
+body{background:#EEF2F7;color:#0F172A;font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
 ::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-thumb{background:rgba(100,135,60,0.22);border-radius:4px}
+::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:2px}
 input,textarea,select,button{font-family:inherit}
-input::placeholder,textarea::placeholder{color:#A8B0A0}
+input::placeholder,textarea::placeholder{color:#94A3B8}
 input[type=text],input[type=number]{-webkit-appearance:none;appearance:none}
-select option{background:#FFFFFF;color:#1A2412}
+select option{background:white}
 textarea{resize:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+@keyframes ripple{0%{transform:scale(1);opacity:0.5}100%{transform:scale(2.6);opacity:0}}
+.fade-up{animation:fadeUp 0.22s ease forwards}
+.pulse{animation:pulse 2s ease infinite}
 
-@keyframes spin    {to{transform:rotate(360deg)}}
-@keyframes fadeUp  {from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-@keyframes pulse   {0%,100%{opacity:1}50%{opacity:0.4}}
-@keyframes ripple  {0%{transform:scale(1);opacity:0.5}100%{transform:scale(2.6);opacity:0}}
-@keyframes sway    {0%,100%{transform:rotate(-1.5deg)}50%{transform:rotate(1.5deg)}}
-.fade-up{animation:fadeUp 0.22s cubic-bezier(0.16,1,0.3,1) forwards}
-.pulse{animation:pulse 2.5s ease infinite}
-
-/* ── Layout ── */
-.shell{display:flex;min-height:100vh;position:relative;z-index:1}
-.sidebar{
-  width:230px;flex-shrink:0;
-  background:#FDFAF5;
-  border-right:1px solid rgba(100,135,60,0.1);
-  display:flex;flex-direction:column;
-  position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto;
-  box-shadow:2px 0 20px rgba(0,0,0,0.04);
-}
-.main{margin-left:230px;flex:1;display:flex;flex-direction:column;min-height:100vh}
-.topbar{
-  height:58px;background:rgba(240,234,224,0.94);
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  border-bottom:1px solid rgba(100,135,60,0.1);
-  padding:0 24px;display:flex;align-items:center;gap:12px;
-  position:sticky;top:0;z-index:50;
-  box-shadow:0 1px 10px rgba(0,0,0,0.04);
-}
-.page{padding:24px;max-width:1100px;flex:1}
-
-/* ── Sidebar ── */
-.sb-brand{padding:22px 20px 16px;border-bottom:1px solid rgba(100,135,60,0.08)}
-.sb-logo-row{display:flex;align-items:center;gap:11px}
-.sb-icon{
-  width:42px;height:42px;border-radius:14px;
-  background:linear-gradient(135deg,#5E8030,#82AA4E);
-  display:flex;align-items:center;justify-content:center;
-  font-size:20px;flex-shrink:0;
-  box-shadow:0 4px 16px rgba(94,128,48,0.32);
-  animation:sway 5s ease-in-out infinite;
-}
-.sb-name{font-size:15px;font-weight:800;color:#1A2412;letter-spacing:-0.3px}
-.sb-sub{font-size:10px;color:#8A9482;margin-top:1px;font-weight:500}
-.sb-status{
-  display:flex;align-items:center;gap:7px;margin-top:10px;
-  padding:7px 11px;background:#EAF3DC;
-  border:1px solid rgba(94,128,48,0.2);border-radius:10px;
-  font-size:11px;font-weight:700;color:#3C5A1E;
-}
-.sb-dot{width:7px;height:7px;border-radius:50%;background:#5E8030;flex-shrink:0;box-shadow:0 0 0 3px rgba(94,128,48,0.18)}
-.sec-lbl{padding:16px 20px 5px;font-size:10px;font-weight:700;letter-spacing:0.9px;color:#A8B0A0;text-transform:uppercase}
-.nav-item{
-  display:flex;align-items:center;gap:10px;padding:10px 14px;
-  cursor:pointer;font-size:13px;font-weight:500;color:#657060;
-  border-radius:12px;margin:2px 8px;transition:all 0.14s;text-decoration:none;
-}
-.nav-item:hover{background:#EDF3E4;color:#1A2412}
-.nav-item.active{
-  background:linear-gradient(135deg,#EAF3DC,#DFF0CC);
-  color:#3C5A1E;font-weight:700;
-  border:1px solid rgba(94,128,48,0.18);
-  box-shadow:0 2px 8px rgba(94,128,48,0.1);
-  position:relative;
-}
-.nav-item.active::before{
-  content:'';position:absolute;left:0;top:25%;bottom:25%;
-  width:3px;border-radius:0 2px 2px 0;
-  background:linear-gradient(to bottom,#5E8030,#82AA4E);
-}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:224px;flex-shrink:0;background:white;border-right:1px solid #E8EEF4;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto}
+.main{margin-left:224px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{height:56px;background:white;border-bottom:1px solid #E8EEF4;padding:0 22px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.page{padding:22px;max-width:1080px;flex:1}
+.sb-brand{padding:18px 18px 14px;border-bottom:1px solid #F1F5F9}
+.sb-logo-row{display:flex;align-items:center;gap:10px}
+.sb-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#10B981,#0EA5E9);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;box-shadow:0 3px 10px rgba(16,185,129,0.25)}
+.sb-name{font-size:15px;font-weight:800;color:#0F172A;letter-spacing:-0.3px}
+.sb-sub{font-size:10px;color:#94A3B8;margin-top:1px;font-weight:500}
+.sb-status{display:flex;align-items:center;gap:6px;margin-top:10px;padding:7px 10px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:7px;font-size:11px;font-weight:600;color:#059669}
+.sb-dot{width:6px;height:6px;border-radius:50%;background:#10B981;flex-shrink:0}
+.sec-lbl{padding:14px 18px 4px;font-size:10px;font-weight:700;letter-spacing:0.8px;color:#94A3B8;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 12px;cursor:pointer;font-size:13px;font-weight:500;color:#64748B;border-radius:9px;margin:1px 7px;transition:all 0.12s;text-decoration:none}
+.nav-item:hover{background:#F8FAFC;color:#0F172A}
+.nav-item.active{background:#EFF6FF;color:#0EA5E9;font-weight:600}
 .nav-item svg{width:16px;height:16px;flex-shrink:0}
-.nav-badge{width:7px;height:7px;border-radius:50%;background:#D4881E;margin-left:auto;flex-shrink:0}
-.sb-footer{margin-top:auto;padding:16px 20px;border-top:1px solid rgba(100,135,60,0.08)}
-.sb-ca199{
-  background:linear-gradient(135deg,#EAF3DC,#E2EECF);
-  border:1px solid rgba(94,128,48,0.18);
-  border-radius:14px;padding:12px 14px;margin-bottom:11px;
-}
-.sb-ca199-lbl{font-size:10px;font-weight:700;color:#5E8030;letter-spacing:0.5px;margin-bottom:2px}
-.sb-ca199-val{font-size:24px;font-weight:800;color:#3C5A1E;letter-spacing:-0.5px}
-
-/* ── Cards ── */
-.card{
-  background:#FFFFFF;border:1px solid rgba(100,135,60,0.09);
-  border-radius:20px;padding:20px;margin-bottom:14px;
-  box-shadow:0 2px 18px rgba(0,0,0,0.05),0 0 0 1px rgba(0,0,0,0.02);
-  transition:box-shadow 0.18s,transform 0.18s;
-}
-.card:hover{box-shadow:0 6px 28px rgba(0,0,0,0.08);transform:translateY(-1px)}
-.card-title{font-size:11px;font-weight:700;letter-spacing:0.7px;color:#A8B0A0;text-transform:uppercase;margin-bottom:16px}
-
-/* ── Stats ── */
+.nav-badge{width:7px;height:7px;border-radius:50%;background:#F59E0B;margin-left:auto;flex-shrink:0}
+.sb-footer{margin-top:auto;padding:14px 18px;border-top:1px solid #F1F5F9}
+.sb-ca199{background:#EFF6FF;border-radius:10px;padding:10px 12px;margin-bottom:10px}
+.sb-ca199-lbl{font-size:10px;font-weight:700;color:#0EA5E9;letter-spacing:0.5px;margin-bottom:2px}
+.sb-ca199-val{font-size:22px;font-weight:800;color:#0EA5E9;letter-spacing:-0.5px}
+.card{background:white;border:1px solid #E8EEF4;border-radius:14px;padding:20px;margin-bottom:14px;box-shadow:0 1px 4px rgba(15,23,42,0.05)}
+.card-title{font-size:11px;font-weight:700;letter-spacing:0.6px;color:#64748B;text-transform:uppercase;margin-bottom:15px}
 .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px}
-.stat{
-  background:#FFFFFF;border:1px solid rgba(100,135,60,0.09);
-  border-radius:16px;padding:15px;text-align:center;
-  box-shadow:0 2px 12px rgba(0,0,0,0.04);transition:all 0.18s;
-}
-.stat:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.08)}
+.stat{background:white;border:1px solid #E8EEF4;border-radius:12px;padding:14px;text-align:center;box-shadow:0 1px 4px rgba(15,23,42,0.05)}
 .stat-val{font-size:26px;font-weight:800;margin:3px 0 2px;letter-spacing:-1px}
-.stat-lbl{font-size:10px;font-weight:700;color:#A8B0A0;text-transform:uppercase;letter-spacing:0.5px}
-
-/* ── Pillar cards ── */
-.pillar-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:12px;margin-bottom:18px}
-.pillar-card{
-  background:#FFFFFF;border:1.5px solid rgba(100,135,60,0.1);
-  border-radius:18px;padding:16px;cursor:pointer;
-  transition:all 0.18s;box-shadow:0 2px 14px rgba(0,0,0,0.04);
-}
-.pillar-card:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(0,0,0,0.08);border-color:rgba(94,128,48,0.22)}
-.pillar-card.open{border-color:rgba(94,128,48,0.35);box-shadow:0 4px 20px rgba(94,128,48,0.12)}
-.pillar-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.stat-lbl{font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.5px}
+.pillar-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:10px;margin-bottom:18px}
+.pillar-card{background:white;border:1.5px solid #E8EEF4;border-radius:13px;padding:15px;cursor:pointer;transition:all 0.15s;box-shadow:0 1px 4px rgba(15,23,42,0.05)}
+.pillar-card:hover{box-shadow:0 4px 14px rgba(15,23,42,0.09);transform:translateY(-1px)}
+.pillar-card.open{border-color:var(--pc,#0EA5E9)}
+.pillar-top{display:flex;align-items:center;gap:10px;margin-bottom:11px}
 .pillar-emoji{font-size:22px;line-height:1}
-.pillar-name{font-size:13px;font-weight:700;color:#1A2412}
-.pillar-sub{font-size:11px;color:#8A9482;margin-top:1px}
+.pillar-name{font-size:13px;font-weight:700;color:#0F172A}
+.pillar-sub{font-size:11px;color:#94A3B8;margin-top:1px}
 .pillar-score{font-size:24px;font-weight:800;margin-left:auto}
-.pillar-bar-bg{height:5px;background:#EDE8E0;border-radius:3px;overflow:hidden;margin-bottom:7px}
-.pillar-bar-fill{height:100%;border-radius:3px;transition:width 0.9s cubic-bezier(0.16,1,0.3,1)}
+.pillar-bar-bg{height:5px;background:#F1F5F9;border-radius:3px;overflow:hidden;margin-bottom:7px}
+.pillar-bar-fill{height:100%;border-radius:3px;transition:width 0.9s ease}
 .pillar-status{font-size:11px;font-weight:600}
-
-/* ── Progress ── */
-.prog{height:5px;background:#EDE8E0;border-radius:3px;overflow:hidden}
-.prog-fill{height:100%;border-radius:3px;transition:width 0.8s cubic-bezier(0.16,1,0.3,1)}
-
-/* ── Forms ── */
+.prog{height:5px;background:#F1F5F9;border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px;transition:width 0.8s ease}
 .fg{margin-bottom:14px}
-.fl{display:block;font-size:12px;font-weight:600;color:#657060;margin-bottom:7px}
-.fh{font-size:11px;color:#A8B0A0;margin-top:4px}
-.fi{
-  width:100%;padding:11px 14px;
-  background:#FDFAF5;border:1.5px solid #E2DDD6;
-  border-radius:12px;color:#1A2412;font-size:14px;outline:none;
-  transition:border-color 0.15s,box-shadow 0.15s;
-  -webkit-appearance:none;appearance:none;
-}
-.fi:focus{border-color:#5E8030;box-shadow:0 0 0 4px rgba(94,128,48,0.1)}
-.fi::placeholder{color:#A8B0A0}
+.fl{display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:6px;letter-spacing:0.1px}
+.fh{font-size:11px;color:#94A3B8;margin-top:4px}
+.fi{width:100%;padding:10px 13px;background:white;border:1.5px solid #E2E8F0;border-radius:9px;color:#0F172A;font-size:14px;outline:none;transition:border-color 0.15s,box-shadow 0.15s;-webkit-appearance:none;appearance:none}
+.fi:focus{border-color:#0EA5E9;box-shadow:0 0 0 3px rgba(14,165,233,0.1)}
+.fi::placeholder{color:#94A3B8}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 .sl{flex:1;-webkit-appearance:none;appearance:none;height:5px;border-radius:3px;outline:none;cursor:pointer}
-.sl::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;cursor:pointer;background:white;border:2.5px solid #5E8030;box-shadow:0 2px 8px rgba(94,128,48,0.3)}
-
-/* ── Buttons ── */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 20px;border-radius:12px;border:none;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s;-webkit-tap-highlight-color:transparent}
-.btn-pr{background:linear-gradient(135deg,#5E8030,#78A042);color:white;box-shadow:0 4px 14px rgba(94,128,48,0.32)}
-.btn-pr:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(94,128,48,0.42)}
-.btn-pr:active{transform:translateY(0)}
-.btn-pr:disabled{background:#E2DDD6;color:#A8B0A0;box-shadow:none;cursor:not-allowed;transform:none}
-.btn-gr{background:linear-gradient(135deg,#3A7060,#4E9282);color:white;box-shadow:0 4px 14px rgba(58,112,96,0.3)}
-.btn-gr:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(58,112,96,0.4)}
-.btn-gr:disabled{background:#E2DDD6;color:#A8B0A0;box-shadow:none;cursor:not-allowed;transform:none}
-.btn-ou{background:transparent;color:#657060;border:1.5px solid #DDD8D0}
-.btn-ou:hover{background:#EDF3E4;color:#1A2412;border-color:#B8C8A8}
+.sl::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;cursor:pointer;border:2.5px solid white;box-shadow:0 1px 5px rgba(0,0,0,0.18)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 18px;border-radius:9px;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.13s;-webkit-tap-highlight-color:transparent}
+.btn-pr{background:#0EA5E9;color:white}.btn-pr:hover{background:#0284C7}.btn-pr:disabled{background:#E2E8F0;color:#94A3B8;cursor:not-allowed}
+.btn-gr{background:#10B981;color:white}.btn-gr:hover{background:#059669}.btn-gr:disabled{background:#E2E8F0;color:#94A3B8;cursor:not-allowed}
+.btn-ou{background:transparent;color:#64748B;border:1.5px solid #E2E8F0}.btn-ou:hover{background:#F8FAFC;color:#0F172A;border-color:#CBD5E1}
 .btn-full{width:100%}
-.btn-sm{padding:7px 13px;font-size:12px;border-radius:9px}
-.btn-xs{padding:4px 10px;font-size:11px;border-radius:7px}
-
-/* ── Tabs ── */
-.tabs{display:flex;gap:2px;padding:4px;background:#EDE8E0;border-radius:14px;margin-bottom:18px}
-.tab{padding:8px 14px;background:none;border:none;font-size:13px;font-weight:500;color:#8A9482;cursor:pointer;border-radius:10px;transition:all 0.14s;flex:1;text-align:center}
-.tab.on{background:#FFFFFF;color:#3C5A1E;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,0.07)}
-.tab:hover:not(.on){background:rgba(255,255,255,0.6);color:#4A6A28}
-
-/* ── Upload ── */
-.upload-z{border:2px dashed #D4CFC8;border-radius:16px;padding:28px 16px;text-align:center;cursor:pointer;transition:all 0.15s;background:#F9F6F1}
-.upload-z:hover{border-color:#5E8030;background:#EAF3DC}
-.upload-z.has-img{padding:0;overflow:hidden;border-style:solid;border-color:#DDD8D0}
+.btn-sm{padding:7px 12px;font-size:12px;border-radius:7px}
+.btn-xs{padding:4px 10px;font-size:11px;border-radius:6px}
+.tabs{display:flex;gap:0;border-bottom:1.5px solid #E8EEF4;margin-bottom:17px}
+.tab{padding:9px 15px;background:none;border:none;font-size:13px;font-weight:500;color:#94A3B8;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1.5px;transition:all 0.12s}
+.tab.on{color:#0EA5E9;border-bottom-color:#0EA5E9;font-weight:600}
+.tab:hover:not(.on){color:#64748B}
+.upload-z{border:2px dashed #E2E8F0;border-radius:12px;padding:28px 16px;text-align:center;cursor:pointer;transition:all 0.15s;background:#F8FAFC}
+.upload-z:hover{border-color:#0EA5E9;background:#EFF6FF}
+.upload-z.has-img{padding:0;overflow:hidden;border-style:solid;border-color:#E2E8F0}
 .upload-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
-.upload-lbl{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;border-radius:11px;border:1.5px solid #DDD8D0;background:white;color:#657060;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s}
-.upload-lbl:hover{border-color:#5E8030;color:#3C5A1E;background:#EAF3DC}
-
-/* ── Food list ── */
-.food-row{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid #EDE8E0}
-.food-badge{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0}
-
-/* ── Medicine ── */
-.med-row{display:flex;align-items:center;gap:11px;padding:11px 14px;border-radius:13px;border:1.5px solid #EDE8E0;background:#FDFAF5;margin-bottom:7px;transition:all 0.12s}
-.med-row.taken{background:#EAF3DC;border-color:rgba(94,128,48,0.25)}
-.med-chk{width:24px;height:24px;border-radius:7px;border:2px solid #D4CFC8;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:12px;color:#5E8030;transition:all 0.15s}
-.med-row.taken .med-chk{background:#5E8030;border-color:#5E8030;color:white}
-
-/* ── Habit ── */
-.habit-row{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:10px;border:1.5px solid #EDE8E0;background:white;cursor:pointer;transition:all 0.12s}
-.habit-row.done{background:#EAF3DC;border-color:rgba(94,128,48,0.22)}
-.habit-chk{width:17px;height:17px;border-radius:5px;border:1.5px solid #D4CFC8;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;color:#5E8030;transition:all 0.15s}
-.habit-row.done .habit-chk{background:#5E8030;border-color:#5E8030;color:white}
-
-/* ── Chat ── */
-.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 104px);min-height:400px}
-.chat-msgs{flex:1;overflow-y:auto;padding:4px 0 10px;display:flex;flex-direction:column;gap:12px}
-.chat-row{display:flex;gap:9px;align-items:flex-end}
+.upload-lbl{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:9px;border:1.5px solid #E2E8F0;background:white;color:#64748B;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.12s}
+.upload-lbl:hover{border-color:#0EA5E9;color:#0EA5E9;background:#EFF6FF}
+.food-row{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid #F1F5F9}
+.food-badge{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0}
+.med-row{display:flex;align-items:center;gap:11px;padding:11px 14px;border-radius:10px;border:1.5px solid #E8EEF4;background:white;margin-bottom:7px;transition:all 0.12s}
+.med-row.taken{background:#F0FDF4;border-color:#BBF7D0}
+.med-chk{width:22px;height:22px;border-radius:6px;border:2px solid #E2E8F0;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:11px;color:#10B981;transition:all 0.12s}
+.med-row.taken .med-chk{background:#10B981;border-color:#10B981;color:white}
+.habit-row{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:8px;border:1.5px solid #E8EEF4;background:white;cursor:pointer;transition:all 0.12s}
+.habit-row.done{background:#F0FDF4;border-color:#BBF7D0}
+.habit-chk{width:16px;height:16px;border-radius:4px;border:1.5px solid #E2E8F0;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;color:#10B981;transition:all 0.12s}
+.habit-row.done .habit-chk{background:#10B981;border-color:#10B981;color:white}
+.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 100px);min-height:400px}
+.chat-msgs{flex:1;overflow-y:auto;padding:4px 0 10px;display:flex;flex-direction:column;gap:10px}
+.chat-row{display:flex;gap:8px;align-items:flex-end}
 .chat-row.user{flex-direction:row-reverse}
-.chat-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#5E8030,#82AA4E);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;box-shadow:0 2px 10px rgba(94,128,48,0.28)}
-.bubble{max-width:78%;padding:12px 16px;font-size:13px;line-height:1.7;white-space:pre-wrap}
-.bubble.ai{background:#FFFFFF;border:1px solid #EDE8E0;border-radius:18px 18px 18px 4px;color:#1A2412;box-shadow:0 2px 10px rgba(0,0,0,0.05)}
-.bubble.user{background:linear-gradient(135deg,#5E8030,#78A042);color:white;border-radius:18px 18px 4px 18px;box-shadow:0 3px 12px rgba(94,128,48,0.28)}
-.chat-chips{display:flex;gap:6px;overflow-x:auto;padding:8px 0 5px;scrollbar-width:none}
-.chip{flex-shrink:0;padding:7px 13px;border-radius:20px;border:1.5px solid #E2DDD6;background:white;color:#657060;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all 0.15s}
-.chip:hover{border-color:#5E8030;color:#3C5A1E;background:#EAF3DC}
-.chat-in-row{display:flex;gap:8px;padding-top:10px;border-top:1px solid #EDE8E0;margin-top:4px}
-.chat-in{flex:1;background:#FDFAF5;border:1.5px solid #E2DDD6;border-radius:14px;padding:11px 15px;color:#1A2412;font-size:14px;outline:none;line-height:1.4;transition:all 0.15s;min-height:42px;max-height:100px}
-.chat-in:focus{border-color:#5E8030;box-shadow:0 0 0 4px rgba(94,128,48,0.1)}
-
-/* ── Toast ── */
-.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#1A2412;color:white;padding:10px 20px;border-radius:14px;font-size:13px;font-weight:600;z-index:9999;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,0.18);pointer-events:none;animation:fadeUp 0.2s ease}
-
-/* ── Voice ── */
-.voice-btn{position:relative;width:40px;height:40px;border-radius:50%;border:1.5px solid #D4CFC8;background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;transition:all 0.15s;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
-.voice-btn:hover{background:#EAF3DC;border-color:#5E8030}
-.voice-btn.active{background:#EAF3DC;border-color:#5E8030;box-shadow:0 0 0 5px rgba(94,128,48,0.14)}
-.voice-rip{position:absolute;inset:-6px;border-radius:50%;border:2px solid rgba(94,128,48,0.4);animation:ripple 1.5s ease infinite}
-
-/* ── Day row ── */
-.day-row{display:grid;grid-template-columns:58px 1fr 42px;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid #EDE8E0}
-.day-row.no-data{opacity:0.28}
-
-/* ── Heal topic btn ── */
-.heal-btn{padding:15px 13px;border-radius:16px;border:1.5px solid #EDE8E0;background:white;cursor:pointer;text-align:left;transition:all 0.18s;box-shadow:0 2px 8px rgba(0,0,0,0.04)}
-.heal-btn:hover{box-shadow:0 6px 20px rgba(0,0,0,0.08);transform:translateY(-2px);border-color:rgba(94,128,48,0.25)}
-.heal-btn.sel{border-color:rgba(94,128,48,0.4);background:#EAF3DC}
-
-/* ── Mobile ── */
+.chat-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#0EA5E9,#7C3AED);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.bubble{max-width:78%;padding:11px 15px;font-size:13px;line-height:1.68;white-space:pre-wrap}
+.bubble.ai{background:white;border:1px solid #E8EEF4;border-radius:14px 14px 14px 3px;color:#0F172A;box-shadow:0 1px 4px rgba(15,23,42,0.05)}
+.bubble.user{background:#0EA5E9;color:white;border-radius:14px 14px 3px 14px}
+.chat-chips{display:flex;gap:6px;overflow-x:auto;padding:7px 0 4px;scrollbar-width:none}
+.chip{flex-shrink:0;padding:6px 12px;border-radius:20px;border:1.5px solid #E2E8F0;background:white;color:#64748B;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all 0.12s}
+.chip:hover{border-color:#0EA5E9;color:#0EA5E9;background:#EFF6FF}
+.chat-in-row{display:flex;gap:8px;padding-top:8px;border-top:1px solid #F1F5F9;margin-top:4px}
+.chat-in{flex:1;background:white;border:1.5px solid #E2E8F0;border-radius:11px;padding:10px 14px;color:#0F172A;font-size:14px;outline:none;line-height:1.4;transition:border-color 0.15s;min-height:42px;max-height:100px}
+.chat-in:focus{border-color:#0EA5E9;box-shadow:0 0 0 3px rgba(14,165,233,0.1)}
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#0F172A;color:white;padding:8px 18px;border-radius:10px;font-size:13px;font-weight:500;z-index:9999;white-space:nowrap;box-shadow:0 4px 16px rgba(15,23,42,0.2);pointer-events:none;animation:fadeUp 0.2s ease}
+.voice-btn{position:relative;width:38px;height:38px;border-radius:50%;border:1.5px solid #E2E8F0;background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:all 0.15s;flex-shrink:0;box-shadow:0 1px 4px rgba(15,23,42,0.06)}
+.voice-btn.active{background:#0EA5E9;border-color:#0EA5E9;box-shadow:0 0 0 4px rgba(14,165,233,0.18)}
+.voice-rip{position:absolute;inset:-5px;border-radius:50%;border:2px solid #0EA5E9;animation:ripple 1.5s ease infinite}
+.day-row{display:grid;grid-template-columns:58px 1fr 42px;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid #F8FAFC}
+.day-row.no-data{opacity:0.3}
+.heal-btn{padding:14px 12px;border-radius:12px;border:1.5px solid #E8EEF4;background:white;cursor:pointer;text-align:left;transition:all 0.15s;box-shadow:0 1px 3px rgba(15,23,42,0.04)}
+.heal-btn:hover{box-shadow:0 3px 10px rgba(15,23,42,0.08);transform:translateY(-1px)}
+.heal-btn.sel{border-color:var(--hc,#0EA5E9)}
 @media(max-width:768px){
-  .sidebar{display:none}.main{margin-left:0}.page{padding:14px 12px 90px}
-  .topbar{padding:0 14px;height:56px}
-  .stats-row{grid-template-columns:repeat(2,1fr);gap:8px}
+  .sidebar{display:none}.main{margin-left:0}.page{padding:12px 12px 86px}
+  .topbar{padding:0 12px}.stats-row{grid-template-columns:repeat(2,1fr);gap:8px}
   .g2{grid-template-columns:1fr}.g3{grid-template-columns:1fr 1fr}
-  .pillar-grid{grid-template-columns:1fr 1fr;gap:9px}
-  .card{padding:16px;border-radius:16px}
-  .mob-nav{
-    position:fixed;bottom:0;left:0;right:0;
-    background:rgba(253,250,245,0.97);
-    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-    border-top:1px solid rgba(94,128,48,0.1);
-    display:flex;z-index:100;
-    padding-bottom:env(safe-area-inset-bottom,6px);
-    box-shadow:0 -2px 16px rgba(0,0,0,0.07);
-  }
-  .mob-ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 5px;cursor:pointer;border:none;background:none;color:#A8B0A0;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;transition:color 0.14s;-webkit-tap-highlight-color:transparent;position:relative}
-  .mob-ni.on{color:#5E8030}
-  .mob-ni svg{width:22px;height:22px}
-  .mob-badge{position:absolute;top:5px;right:calc(50% - 16px);width:7px;height:7px;border-radius:50%;background:#D4881E}
+  .pillar-grid{grid-template-columns:1fr 1fr;gap:8px}.card{padding:15px;border-radius:12px}
+  .mob-nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #E8EEF4;display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom,6px);box-shadow:0 -2px 12px rgba(15,23,42,0.07)}
+  .mob-ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px 5px;cursor:pointer;border:none;background:none;color:#94A3B8;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;transition:color 0.12s;-webkit-tap-highlight-color:transparent;position:relative}
+  .mob-ni.on{color:#0EA5E9}.mob-ni svg{width:21px;height:21px}
+  .mob-badge{position:absolute;top:5px;right:calc(50% - 16px);width:7px;height:7px;border-radius:50%;background:#F59E0B}
 }
 @media(min-width:769px){.mob-nav{display:none}}
 `
@@ -715,35 +572,25 @@ const NAV = [
   { id:'prof',   label:'My Profile',           icon:I.user },
 ]
 const MOB = [
-  { id:'home',    label:'Home',   icon:I.home, badge:true },
-  { id:'log',     label:'Log',    icon:I.log,  badge:true },
-  { id:'food',    label:'Food',   icon:I.food },
-  { id:'ai',      label:'JARVIS', icon:I.ai },
-  { id:'__more',  label:'More',   icon:null },
+  { id:'home',  label:'Home',   icon:I.home, badge:true },
+  { id:'log',   label:'Log',    icon:I.log,  badge:true },
+  { id:'super', label:'Supps',  icon:I.super },
+  { id:'plan',  label:'Routine',icon:I.plan },
+  { id:'ai',    label:'JARVIS', icon:I.ai },
 ]
-const MOB_MORE = [
-  { id:'track', label:'Progress',      icon:I.track },
-  { id:'meds',  label:'Medicines',     icon:I.meds },
-  { id:'super', label:'Superfoods',    icon:I.super },
-  { id:'plan',  label:'Routine',       icon:I.plan },
-  { id:'fit',   label:'Yoga & Gym',    icon:I.fit },
-  { id:'heal',  label:'Guides',        icon:I.heal },
-  { id:'blood', label:'Lab Reports',   icon:I.blood },
-  { id:'prof',  label:'My Profile',    icon:I.user },
-]
-function Spin({ size = 18, color = '#4A7090' }) {
+function Spin({ size = 18, color = '#0EA5E9' }) {
   return <div style={{ width:size, height:size, border:`2px solid ${color}22`, borderTop:`2px solid ${color}`, borderRadius:'50%', animation:'spin 0.8s linear infinite', flexShrink:0 }} />
 }
 function PBar({ value, color, height = 5 }) {
-  return <div className="prog" style={{height}}><div className="prog-fill" style={{width:`${Math.min(100,value||0)}%`, background:value>0?color:'#2A381A'}}/></div>
+  return <div className="prog" style={{height}}><div className="prog-fill" style={{width:`${Math.min(100,value||0)}%`, background:value>0?color:'#E2E8F0'}}/></div>
 }
 function MetricRow({ label, value, target, unit, color }) {
   const pct = Math.min(100, Math.round((+value||0)/target*100))
   return (
     <div style={{marginBottom:12}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:5}}>
-        <span style={{fontSize:13,color:'#657060'}}>{label}</span>
-        <span style={{fontSize:13,fontWeight:700,color:pct>0?(pct>=100?color:scoreColor(pct)):'#657060'}}>{(+value||0)}{unit} <span style={{fontWeight:400,color:'#8A9482',fontSize:11}}>/ {target}{unit}</span></span>
+        <span style={{fontSize:13,color:'#64748B'}}>{label}</span>
+        <span style={{fontSize:13,fontWeight:700,color:pct>0?(pct>=100?color:scoreColor(pct)):'#CBD5E1'}}>{(+value||0)}{unit} <span style={{fontWeight:400,color:'#94A3B8',fontSize:11}}>/ {target}{unit}</span></span>
       </div>
       <PBar value={pct} color={color} />
     </div>
@@ -768,7 +615,7 @@ function TxtInput({ label, hint, value, onChange, placeholder, rows }) {
 function NumInput({ label, hint, value, onChange, placeholder, unit }) {
   return (
     <div className="fg">
-      {label && <label className="fl">{label}{unit && <span style={{color:'#8A9482',fontWeight:400,marginLeft:4}}>{unit}</span>}</label>}
+      {label && <label className="fl">{label}{unit && <span style={{color:'#94A3B8',fontWeight:400,marginLeft:4}}>{unit}</span>}</label>}
       <input type="text" inputMode="decimal" pattern="[0-9.]*" className="fi" placeholder={placeholder} value={value||''}
         onChange={e => { const v=e.target.value; if(v===''||/^\d*\.?\d*$/.test(v)) onChange(v) }}
         onFocus={e=>e.target.select()} />
@@ -778,39 +625,6 @@ function NumInput({ label, hint, value, onChange, placeholder, unit }) {
 }
 // ─── DAILY LOG TAB ─────────────────────────────────────────────────────────────
 // FIX #8: Yoga and Pranayama split | FIX #9: Water and Health Drinks split
-const FOOD_DB = [
-  {n:'Eggs (boiled/scrambled)', p:13, fi:0,  u:'eggs',  def:2},
-  {n:'Moong dal (cooked)',      p:7,  fi:8,  u:'bowl',  def:1},
-  {n:'Paneer',                  p:18, fi:0,  u:'g',     def:100},
-  {n:'Greek yogurt / curd',     p:12, fi:0,  u:'cup',   def:1},
-  {n:'Chicken (cooked)',        p:31, fi:0,  u:'g',     def:100},
-  {n:'Fish (rohu/pomfret)',     p:22, fi:0,  u:'g',     def:100},
-  {n:'Whey protein shake',      p:25, fi:1,  u:'scoop', def:1},
-  {n:'Dal (any, cooked)',       p:9,  fi:8,  u:'bowl',  def:1},
-  {n:'Roti / chapati',          p:3,  fi:2,  u:'piece', def:2},
-  {n:'Rice (cooked)',           p:3,  fi:1,  u:'cup',   def:0.5},
-  {n:'Moong dal khichdi',       p:8,  fi:5,  u:'bowl',  def:1},
-  {n:'Idli',                    p:2,  fi:1,  u:'piece', def:3},
-  {n:'Oats (cooked)',           p:5,  fi:4,  u:'bowl',  def:1},
-  {n:'Banana',                  p:1,  fi:3,  u:'piece', def:1},
-  {n:'Soaked almonds',          p:3,  fi:2,  u:'pieces',def:5},
-  {n:'Walnuts (soaked)',        p:2,  fi:1,  u:'pieces',def:5},
-  {n:'Peanut butter',           p:4,  fi:1,  u:'tbsp',  def:2},
-  {n:'Flaxseed (ground)',       p:1,  fi:3,  u:'tbsp',  def:1},
-  {n:'Spinach (cooked)',        p:3,  fi:2,  u:'cup',   def:1},
-  {n:'Broccoli (steamed)',      p:3,  fi:3,  u:'cup',   def:1},
-  {n:'Lauki / bottle gourd',    p:1,  fi:2,  u:'cup',   def:1},
-  {n:'Carrots (cooked)',        p:1,  fi:3,  u:'cup',   def:1},
-  {n:'Beetroot (steamed)',      p:2,  fi:2,  u:'cup',   def:0.5},
-  {n:'Sweet potato',            p:2,  fi:3,  u:'medium',def:1},
-  {n:'Mushrooms (cooked)',      p:3,  fi:1,  u:'cup',   def:1},
-  {n:'Milk (warm)',             p:8,  fi:0,  u:'cup',   def:1},
-  {n:'Golden milk',             p:8,  fi:0,  u:'cup',   def:1},
-  {n:'Protein smoothie',        p:20, fi:2,  u:'glass', def:1},
-  {n:'Makhana (roasted)',       p:3,  fi:1,  u:'cup',   def:0.5},
-  {n:'Peanuts / chana',         p:7,  fi:3,  u:'cup',   def:0.25},
-]
-const MEALS_OF_DAY = ['Breakfast','Mid-morning snack','Lunch','Evening snack','Dinner','Bedtime snack']
 const GYM_GROUPS = ['None today','Chest','Back','Legs','Shoulders','Arms','Full body','Cardio']
 const HABITS = [
   'Lemon water on waking','CREON with every meal','Ash gourd juice 200ml',
@@ -822,73 +636,36 @@ const HABITS = [
 function LogTab({ uid, db, setDb, showToast }) {
   const today = new Date().toISOString().slice(0, 10)
   const ex = db.todayLog || {}
-
-  // Section tabs for mobile
-  const [sec, setSec] = useState('food')
-
-  // Food items list (add/remove)
-  const [items, setItems] = useState(ex.foodItems || [])
-  const [showAdd, setShowAdd] = useState(false)
-  const [newFood, setNewFood] = useState({meal:'Breakfast', name:'', qty:'', unit:'', protein:'', fiber:''})
-  const [suggestions, setSuggestions] = useState([])
-
-  // Other fields
   const [f, sf] = useState({
     sleepH:'', energyAM:5, energyPM:5,
-    waterL:'', healthDrinksMl:'',
+    waterL:'',                 // FIX #9: plain water only
+    healthDrinksMl:'',         // FIX #9: lemon water, ash gourd, tulsi tea, golden milk etc
+    proteinG:'', fiberG:'', veggieServings:'',
     creonDoses:3, gasLevel:0, bloating:0, digestComfort:5,
-    yogaMins:'', pranayamaMins:'',
+    yogaMins:'',               // FIX #8: physical yoga asanas only
+    pranayamaMins:'',          // FIX #8: breathing exercises only (Anulom Vilom, Bhramari)
     walkingSteps:'', weightKg:'', gymGroup:'None today',
     symptoms:'', notes:'', habits:{},
     ...ex
   })
   const [saving, setSaving] = useState(false)
   const set = (k, v) => sf(p => ({ ...p, [k]: v }))
-
-  // Auto-totals from food items
-  const totalProtein  = Math.round(items.reduce((s,i) => s + (+i.protein||0), 0))
-  const totalFiber    = Math.round(items.reduce((s,i) => s + (+i.fiber||0), 0))
-  const totalVeggies  = items.filter(i => /spinach|lauki|broccoli|carrot|beet|mushroom|gourd|veggie|vegetable|sabzi/i.test(i.name)).length
-  const totalFluid    = (+f.waterL||0) + (+f.healthDrinksMl||0)/1000
-
-  const logForScore = {...f, proteinG:totalProtein, fiberG:totalFiber, veggieServings:totalVeggies}
-  const sc = scorePillars(logForScore, db.medLog)
-
-  function searchFood(q) {
-    setSuggestions(q.trim() ? FOOD_DB.filter(d => d.n.toLowerCase().includes(q.toLowerCase())).slice(0,6) : [])
-  }
-  function pickSuggestion(item) {
-    setNewFood(p => ({...p, name:item.n, qty:String(item.def), unit:item.u,
-      protein:String(+(item.p * item.def).toFixed(1)),
-      fiber:String(+(item.fi * item.def).toFixed(1)) }))
-    setSuggestions([])
-  }
-  function addItem() {
-    if (!newFood.name.trim()) return
-    const it = {id:Date.now().toString(), meal:newFood.meal, name:newFood.name,
-      qty:newFood.qty, unit:newFood.unit,
-      protein:parseFloat(newFood.protein)||0, fiber:parseFloat(newFood.fiber)||0}
-    const next = [...items, it]
-    setItems(next)
-    setNewFood({meal:newFood.meal, name:'', qty:'', unit:'', protein:'', fiber:''})
-    setShowAdd(false); setSuggestions([])
-  }
-  function removeItem(id) { setItems(p => p.filter(i => i.id !== id)) }
+  const sc = scorePillars(f, db.medLog)
 
   async function save() {
     setSaving(true)
-    const log = {...f, date:today, foodItems:items,
-      proteinG:totalProtein, fiberG:totalFiber, veggieServings:totalVeggies, ...sc}
+    const log = { ...f, date: today, ...sc }
     await saveDailyLog(uid, today, log)
-    setDb({...db, todayLog:log})
+    // FIX #3: pass direct object so dbUpdate can update allLogs properly
+    setDb({ ...db, todayLog: log })
     showToast('Log saved ✓')
     setSaving(false)
   }
 
-  function Slider({ label, k, min=0, max=10, color }) {
-    const v = +f[k]||0
-    const pct = ((v-min)/(max-min))*100
-    const c = color||scoreColor(pct)
+  function Slider({ label, k, min = 0, max = 10, color }) {
+    const v = +f[k] || 0
+    const pct = ((v - min) / (max - min)) * 100
+    const c = color || scoreColor(pct)
     return (
       <div className="fg">
         <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}>
@@ -897,327 +674,154 @@ function LogTab({ uid, db, setDb, showToast }) {
         </div>
         <input type="range" className="sl" min={min} max={max} step={1} value={v}
           onChange={e=>set(k,+e.target.value)}
-          style={{background:`linear-gradient(to right,${c} ${pct}%,#EDE8E0 ${pct}%)`}}
-          onInput={e=>{const pp=(+e.target.value-min)/(max-min)*100;e.target.style.background=`linear-gradient(to right,${c} ${pp}%,#EDE8E0 ${pp}%)`}}
+          style={{background:`linear-gradient(to right,${c} ${pct}%,#E2E8F0 ${pct}%)`}}
+          onInput={e=>{const pp=(+e.target.value-min)/(max-min)*100;e.target.style.background=`linear-gradient(to right,${c} ${pp}%,#E2E8F0 ${pp}%)`}}
         />
+        <div style={{display:'flex',justifyContent:'space-between',marginTop:2}}>
+          <span style={{fontSize:10,color:'#CBD5E1'}}>0</span>
+          <span style={{fontSize:10,color:'#CBD5E1'}}>{max}</span>
+        </div>
       </div>
     )
   }
 
-  const SECS = [
-    {id:'food',  label:'🍽️ Food'},
-    {id:'water', label:'💧 Water'},
-    {id:'body',  label:'🧘 Body'},
-    {id:'habits',label:'✅ Habits'},
-    {id:'notes', label:'📝 Notes'},
-  ]
+  const totalFluid = (+f.waterL||0) + (+f.healthDrinksMl||0)/1000
 
   return (
     <div className="fade-up">
-      {/* Live score strip */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:14}}>
+      {/* FIX #2: English names — Live pillar scores */}
+      <div className="stats-row" style={{marginBottom:18}}>
         {[
-          {l:'Nutrition', v:sc.nutrition,c:'#5E8030'},
-          {l:'Hydration', v:sc.hydration,c:'#4A7090'},
-          {l:'Mind+Body', v:sc.mindBody, c:'#B87820'},
-          {l:'Exercise',  v:sc.exercise, c:'#5E8030'},
-          {l:'Medicines', v:sc.medicine, c:'#B05878'},
-          {l:'⭐ Total',  v:sc.overall,  c:scoreColor(sc.overall)},
+          {l:'🍽️ Nutrition',  v:sc.nutrition,  c:'#10B981'},
+          {l:'💧 Hydration',  v:sc.hydration,  c:'#0EA5E9'},
+          {l:'🧘 Mind & Body',v:sc.mindBody,   c:'#F59E0B'},
+          {l:'💪 Exercise',   v:sc.exercise,   c:'#8B5CF6'},
+          {l:'💊 Medicines',  v:sc.medicine,   c:'#EC4899'},
+          {l:'⭐ Total',      v:sc.overall,    c:scoreColor(sc.overall)},
         ].map(s=>(
-          <div key={s.l} className="stat" style={{borderTop:`3px solid ${s.v>0?s.c:'#EDE8E0'}`,padding:'10px 8px'}}>
-            <div className="stat-lbl" style={{fontSize:9}}>{s.l}</div>
-            <div className="stat-val" style={{color:s.v>0?s.c:'#A8B0A0',fontSize:18}}>{s.v>0?s.v:'—'}</div>
+          <div key={s.l} className="stat" style={{borderTop:`3px solid ${s.v>0?s.c:'#E2E8F0'}`}}>
+            <div className="stat-lbl">{s.l}</div>
+            <div className="stat-val" style={{color:s.v>0?s.c:'#CBD5E1',fontSize:20}}>{s.v>0?s.v:'—'}</div>
+            <PBar value={s.v} color={s.c} height={3}/>
           </div>
         ))}
       </div>
 
-      {/* Section pill tabs */}
-      <div style={{display:'flex',gap:5,overflowX:'auto',paddingBottom:12,scrollbarWidth:'none',WebkitOverflowScrolling:'touch'}}>
-        {SECS.map(s=>(
-          <button key={s.id} onClick={()=>setSec(s.id)} style={{
-            flexShrink:0,padding:'8px 16px',borderRadius:20,border:'none',
-            background:sec===s.id?'#5E8030':'#EDE8E0',
-            color:sec===s.id?'white':'#657060',
-            fontSize:13,fontWeight:700,cursor:'pointer',whiteSpace:'nowrap',
-          }}>{s.label}</button>
-        ))}
-      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))',gap:14}}>
+        {/* Sleep */}
+        <div className="card">
+          <div className="card-title">😴 Sleep & Energy</div>
+          <NumInput label="Sleep hours" value={f.sleepH} onChange={v=>set('sleepH',v)} placeholder="7.5" unit="hrs" hint="Target: 7.5–8.5 hours" />
+          <Slider label={`Morning energy — ${f.energyAM}/10`} k="energyAM"/>
+          <Slider label={`Evening energy — ${f.energyPM}/10`} k="energyPM"/>
+        </div>
 
-      {/* ── FOOD ── */}
-      {sec==='food' && (
-        <div className="fade-up">
-          {/* Totals */}
-          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:12}}>
-            {[
-              {l:'Protein',v:`${totalProtein}g`,  hit:totalProtein>=80, target:'80g'},
-              {l:'Fiber',  v:`${totalFiber}g`,    hit:totalFiber>=25,   target:'25g'},
-              {l:'Veggies',v:`${totalVeggies}`,   hit:totalVeggies>=3,  target:'3+ svgs'},
-            ].map(t=>(
-              <div key={t.l} style={{padding:'10px 8px',background:t.hit?'#EAF3DC':'white',
-                border:`1px solid ${t.hit?'rgba(94,128,48,0.3)':'#EDE8E0'}`,borderRadius:12,textAlign:'center'}}>
-                <div style={{fontSize:10,color:t.hit?'#3C5A1E':'#A8B0A0',fontWeight:700,marginBottom:2}}>{t.l}</div>
-                <div style={{fontSize:20,fontWeight:800,color:t.hit?'#3C5A1E':'#1A2412'}}>{t.v}</div>
-                <div style={{fontSize:9,color:'#A8B0A0'}}>need {t.target}</div>
-              </div>
-            ))}
+        {/* Nutrition */}
+        <div className="card" style={{borderTop:'3px solid #10B981'}}>
+          <div className="card-title" style={{color:'#059669'}}>🍽️ Nutrition Tracking</div>
+          <div className="g2">
+            <NumInput label="Protein (g)" value={f.proteinG} onChange={v=>set('proteinG',v)} placeholder="80" hint="Target: 80g+" />
+            <NumInput label="Fiber (g)" value={f.fiberG} onChange={v=>set('fiberG',v)} placeholder="30" hint="Target: 30g" />
+            <NumInput label="Veggies (servings)" value={f.veggieServings} onChange={v=>set('veggieServings',v)} placeholder="5" hint="Target: 5 servings" />
           </div>
-
-          {/* CREON */}
-          <div className="card" style={{padding:'14px 16px',marginBottom:10}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-              <label className="fl" style={{marginBottom:0}}>💊 CREON doses today</label>
-              <span style={{fontSize:11,color:'#8A9482'}}>with every meal</span>
-            </div>
+          <MetricRow label="Protein progress" value={f.proteinG} target={80} unit="g" color="#10B981"/>
+          <div className="fg" style={{marginTop:4}}>
+            <label className="fl">CREON enzyme doses today <span style={{color:'#94A3B8',fontWeight:400}}>(take with every meal)</span></label>
             <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
               {[0,1,2,3,4,5,6,7].map(n=>(
-                <button key={n} onClick={()=>set('creonDoses',n)} style={{
-                  width:42,height:42,borderRadius:10,
-                  border:`2px solid ${f.creonDoses===n?'#4A7090':'#EDE8E0'}`,
-                  background:f.creonDoses===n?'#EAF3DC':'white',
-                  color:f.creonDoses===n?'#3A5878':'#657060',
-                  fontSize:16,fontWeight:800,cursor:'pointer'}}>{n}</button>
+                <button key={n} onClick={()=>set('creonDoses',n)} style={{width:36,height:36,borderRadius:8,border:`1.5px solid ${f.creonDoses===n?'#0EA5E9':'#E2E8F0'}`,background:f.creonDoses===n?'#EFF6FF':'white',color:f.creonDoses===n?'#0EA5E9':'#64748B',fontSize:14,fontWeight:700,cursor:'pointer'}}>{n}</button>
               ))}
             </div>
           </div>
-
-          {/* Food items by meal */}
-          {MEALS_OF_DAY.map(meal => {
-            const mealItems = items.filter(i=>i.meal===meal)
-            if (!mealItems.length && !showAdd) return null
-            return (
-              <div key={meal} style={{marginBottom:8}}>
-                <div style={{fontSize:11,fontWeight:700,color:'#5E8030',marginBottom:5,
-                  padding:'3px 10px',background:'#EAF3DC',borderRadius:6,display:'inline-block'}}>
-                  {meal}
-                </div>
-                {mealItems.map(item=>(
-                  <div key={item.id} style={{display:'flex',alignItems:'center',gap:10,
-                    padding:'9px 12px',marginBottom:4,background:'white',
-                    border:'1px solid #EDE8E0',borderRadius:11}}>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:13,fontWeight:600,color:'#1A2412'}}>{item.name}</div>
-                      <div style={{fontSize:11,color:'#8A9482'}}>
-                        {item.qty}{item.unit}
-                        {item.protein>0 && <span style={{color:'#5E8030',marginLeft:6}}>+{item.protein}g protein</span>}
-                        {item.fiber>0 && <span style={{color:'#B87820',marginLeft:5}}>+{item.fiber}g fiber</span>}
-                      </div>
-                    </div>
-                    <button onClick={()=>removeItem(item.id)} style={{
-                      width:30,height:30,borderRadius:8,
-                      border:'1px solid #FECACA',background:'#FEF0EC',
-                      color:'#B83828',fontSize:18,cursor:'pointer',
-                      display:'flex',alignItems:'center',justifyContent:'center',
-                      fontWeight:700,flexShrink:0}}>×</button>
-                  </div>
-                ))}
-              </div>
-            )
-          })}
-
-          {/* Add food form */}
-          {showAdd ? (
-            <div className="card fade-up" style={{marginBottom:10}}>
-              <div style={{fontSize:14,fontWeight:700,color:'#1A2412',marginBottom:12}}>Add Food Item</div>
-
-              {/* Meal picker */}
-              <div className="fg">
-                <label className="fl">Meal</label>
-                <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
-                  {MEALS_OF_DAY.map(m=>(
-                    <button key={m} onClick={()=>setNewFood(p=>({...p,meal:m}))} style={{
-                      padding:'5px 10px',borderRadius:7,fontSize:11,fontWeight:600,cursor:'pointer',
-                      border:`1.5px solid ${newFood.meal===m?'#5E8030':'#EDE8E0'}`,
-                      background:newFood.meal===m?'#EAF3DC':'white',
-                      color:newFood.meal===m?'#3C5A1E':'#657060'}}>
-                      {m}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Search */}
-              <div className="fg" style={{position:'relative'}}>
-                <label className="fl">What did you eat?</label>
-                <input type="text" className="fi"
-                  placeholder="Type to search (eggs, dal, roti…) or write anything"
-                  value={newFood.name}
-                  onChange={e=>{setNewFood(p=>({...p,name:e.target.value}));searchFood(e.target.value)}}
-                />
-                {suggestions.length>0 && (
-                  <div style={{position:'absolute',top:'100%',left:0,right:0,zIndex:200,
-                    background:'white',border:'1px solid #EDE8E0',borderRadius:12,
-                    boxShadow:'0 8px 24px rgba(0,0,0,0.12)',overflow:'hidden'}}>
-                    {suggestions.map((s,i)=>(
-                      <div key={i} onClick={()=>pickSuggestion(s)} style={{
-                        padding:'11px 14px',cursor:'pointer',
-                        borderBottom:i<suggestions.length-1?'1px solid #F5F0E8':'none',
-                        display:'flex',justifyContent:'space-between',alignItems:'center'}}
-                        onTouchStart={e=>e.currentTarget.style.background='#EAF3DC'}
-                        onTouchEnd={e=>e.currentTarget.style.background='white'}>
-                        <span style={{fontSize:13,color:'#1A2412',fontWeight:500}}>{s.n}</span>
-                        <span style={{fontSize:11,color:'#5E8030',fontWeight:700,flexShrink:0,marginLeft:8}}>~{s.p}g protein/{s.u}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Qty + unit */}
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
-                <div className="fg" style={{marginBottom:0}}>
-                  <label className="fl">Quantity</label>
-                  <input type="text" inputMode="decimal" className="fi" placeholder="2"
-                    value={newFood.qty} onChange={e=>setNewFood(p=>({...p,qty:e.target.value}))}/>
-                </div>
-                <div className="fg" style={{marginBottom:0}}>
-                  <label className="fl">Unit</label>
-                  <input type="text" className="fi" placeholder="eggs, cup, g…"
-                    value={newFood.unit} onChange={e=>setNewFood(p=>({...p,unit:e.target.value}))}/>
-                </div>
-              </div>
-
-              {/* Nutrition fields */}
-              <div style={{padding:'12px',background:'#EAF3DC',borderRadius:10,
-                border:'1px solid rgba(94,128,48,0.2)',marginBottom:12}}>
-                <div style={{fontSize:11,fontWeight:700,color:'#3C5A1E',marginBottom:8}}>
-                  Nutrition (auto-filled from database — edit if you know better)
-                </div>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
-                  {[['Protein (g)','protein'],['Fiber (g)','fiber']].map(([l,k])=>(
-                    <div key={k}>
-                      <label className="fl" style={{color:'#5E8030',marginBottom:4}}>{l}</label>
-                      <input type="text" inputMode="decimal" className="fi" placeholder="0"
-                        value={newFood[k]} onChange={e=>setNewFood(p=>({...p,[k]:e.target.value}))}
-                        style={{background:'white'}}/>
-                    </div>
-                  ))}
-                </div>
-                <div style={{fontSize:10,color:'#657060',marginTop:6}}>
-                  Don't know the exact numbers? Our database auto-fills them. Just pick from the list above.
-                </div>
-              </div>
-
-              <div style={{display:'flex',gap:8}}>
-                <button className="btn btn-ou" style={{flexShrink:0}} onClick={()=>{setShowAdd(false);setSuggestions([])}}>Cancel</button>
-                <button className="btn btn-pr" style={{flex:1}} onClick={addItem} disabled={!newFood.name.trim()}>
-                  Add to Log
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button className="btn btn-ou btn-full" onClick={()=>setShowAdd(true)} style={{marginBottom:10}}>
-              + Add Food Item
-            </button>
-          )}
         </div>
-      )}
 
-      {/* ── WATER ── */}
-      {sec==='water' && (
-        <div className="fade-up">
-          <div className="card">
-            <div className="card-title" style={{color:'#3A5878'}}>💧 Hydration</div>
-            <NumInput label="Plain Water (L)" value={f.waterL} onChange={v=>set('waterL',v)} placeholder="2.0" unit="L" hint="Target: 2+ litres of plain water"/>
-            {(+f.waterL||0)>0 && <div style={{marginTop:6}}><PBar value={Math.min(100,(+f.waterL||0)/2*100)} color="#4A7090" height={7}/></div>}
-            <div style={{marginTop:14}}>
-              <NumInput label="Medicinal Drinks (ml)" value={f.healthDrinksMl} onChange={v=>set('healthDrinksMl',v)} placeholder="500" unit="ml" hint="Ash gourd 200ml + Lemon water 200ml + Golden milk 200ml = 600ml"/>
-              {(+f.healthDrinksMl||0)>0 && <div style={{marginTop:6}}><PBar value={Math.min(100,(+f.healthDrinksMl||0)/600*100)} color="#68B4D8" height={5}/></div>}
-            </div>
-            <div style={{marginTop:12,padding:'10px 12px',background:'#EAF3DC',borderRadius:10,border:'1px solid rgba(94,128,48,0.2)',fontSize:13,fontWeight:700,color:'#3C5A1E'}}>
-              Total fluid: {totalFluid.toFixed(1)}L / 2.5L target
-            </div>
+        {/* FIX #9: Water & Health Drinks — split */}
+        <div className="card" style={{borderTop:'3px solid #0EA5E9'}}>
+          <div className="card-title" style={{color:'#0284C7'}}>💧 Hydration Tracking</div>
+          <NumInput label="Plain Water (L)" value={f.waterL} onChange={v=>set('waterL',v)} placeholder="2.0" unit="L" hint="Target: 2+ litres of plain water" />
+          {(+f.waterL||0) > 0 && <PBar value={Math.min(100,(+f.waterL||0)/2*100)} color="#0EA5E9" height={6}/>}
+          <div style={{margin:'10px 0 14px',padding:'8px 12px',background:'#F0F9FF',borderRadius:8,border:'1px solid #BAE6FD',fontSize:12,color:'#0369A1'}}>
+            Medicinal drinks count separately (ash gourd juice, lemon water, tulsi tea, golden milk, ginger water, triphala)
+          </div>
+          <NumInput label="Medicinal / Health Drinks (ml)" value={f.healthDrinksMl} onChange={v=>set('healthDrinksMl',v)} placeholder="500" unit="ml" hint="Ash gourd 200ml + Lemon water 200ml + Golden milk 200ml = 600ml" />
+          {(+f.healthDrinksMl||0) > 0 && <PBar value={Math.min(100,(+f.healthDrinksMl||0)/600*100)} color="#7DD3FC" height={6}/>}
+          <div style={{marginTop:8,padding:'8px 12px',background:'#EFF6FF',borderRadius:8,fontSize:12,color:'#0369A1'}}>
+            Total fluid today: <strong>{totalFluid.toFixed(1)}L</strong> / 2.5L target
           </div>
         </div>
-      )}
 
-      {/* ── BODY ── */}
-      {sec==='body' && (
-        <div className="fade-up">
-          <div className="card">
-            <div className="card-title">😴 Sleep & Energy</div>
-            <NumInput label="Sleep hours" value={f.sleepH} onChange={v=>set('sleepH',v)} placeholder="7.5" unit="hrs" hint="Target: 7.5–8.5 hours"/>
-            <Slider label={`Morning energy — ${+f.energyAM||0}/10`} k="energyAM"/>
-            <Slider label={`Evening energy — ${+f.energyPM||0}/10`} k="energyPM"/>
+        {/* Digestion */}
+        <div className="card">
+          <div className="card-title">🌿 Digestion & Gut</div>
+          <Slider label={`Gas level — ${f.gasLevel}/10 (lower is better)`} k="gasLevel" color="#EF4444"/>
+          <Slider label={`Bloating — ${f.bloating}/10 (lower is better)`} k="bloating" color="#F59E0B"/>
+          <Slider label={`Digestive comfort — ${f.digestComfort}/10`} k="digestComfort" color="#10B981"/>
+        </div>
+
+        {/* FIX #8: Yoga and Pranayama — split */}
+        <div className="card" style={{borderTop:'3px solid #F59E0B'}}>
+          <div className="card-title" style={{color:'#B45309'}}>🧘 Mind & Body Practice</div>
+          <NumInput label="Yoga / Asanas (mins)" value={f.yogaMins} onChange={v=>set('yogaMins',v)} placeholder="25" unit="mins" hint="Physical yoga postures — Pawanmuktasana, Surya Namaskar, stretches" />
+          {(+f.yogaMins||0) > 0 && <PBar value={Math.min(100,(+f.yogaMins||0)/25*100)} color="#F59E0B" height={5}/>}
+          <div style={{margin:'12px 0 0'}}>
+            <NumInput label="Pranayama / Breathing (mins)" value={f.pranayamaMins} onChange={v=>set('pranayamaMins',v)} placeholder="20" unit="mins" hint="Anulom Vilom 10 min + Bhramari 5 min + Deep breathing 5 min = 20 min target" />
+            {(+f.pranayamaMins||0) > 0 && <PBar value={Math.min(100,(+f.pranayamaMins||0)/20*100)} color="#FCD34D" height={5}/>}
           </div>
-          <div className="card" style={{borderTop:'3px solid #B87820'}}>
-            <div className="card-title" style={{color:'#8A5010'}}>🧘 Mind & Body</div>
-            <NumInput label="Yoga / Asanas (mins)" value={f.yogaMins} onChange={v=>set('yogaMins',v)} placeholder="25" unit="mins" hint="Pawanmuktasana, Surya Namaskar, stretches"/>
-            {(+f.yogaMins||0)>0 && <div style={{marginTop:6}}><PBar value={Math.min(100,(+f.yogaMins||0)/25*100)} color="#B87820" height={5}/></div>}
-            <div style={{marginTop:12}}>
-              <NumInput label="Pranayama (mins)" value={f.pranayamaMins} onChange={v=>set('pranayamaMins',v)} placeholder="20" unit="mins" hint="Anulom Vilom 10 + Bhramari 5 + Deep breathing 5"/>
-              {(+f.pranayamaMins||0)>0 && <div style={{marginTop:6}}><PBar value={Math.min(100,(+f.pranayamaMins||0)/20*100)} color="#D4A030" height={5}/></div>}
-            </div>
-          </div>
-          <div className="card" style={{borderTop:'3px solid #5E8030'}}>
-            <div className="card-title" style={{color:'#3C5A1E'}}>💪 Exercise & Steps</div>
-            <div className="g2">
-              <NumInput label="Steps" value={f.walkingSteps} onChange={v=>set('walkingSteps',v)} placeholder="8000" hint="Target: 8000/day"/>
-              <NumInput label="Weight (kg)" value={f.weightKg} onChange={v=>set('weightKg',v)} placeholder="65.0" unit="kg"/>
-            </div>
-            <div className="fg">
-              <label className="fl">Gym / Strength session</label>
-              <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
-                {GYM_GROUPS.map(g=>(
-                  <button key={g} onClick={()=>set('gymGroup',g)} style={{
-                    padding:'7px 12px',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer',
-                    border:`1.5px solid ${f.gymGroup===g?'#5E8030':'#EDE8E0'}`,
-                    background:f.gymGroup===g?'#EAF3DC':'white',
-                    color:f.gymGroup===g?'#3C5A1E':'#657060'}}>{g}</button>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="card">
-            <div className="card-title">🌿 Digestion</div>
-            <Slider label={`Gas level — ${+f.gasLevel||0}/10 (lower = better)`} k="gasLevel" color="#B83828"/>
-            <Slider label={`Bloating — ${+f.bloating||0}/10 (lower = better)`} k="bloating" color="#B87820"/>
-            <Slider label={`Digestive comfort — ${+f.digestComfort||0}/10`} k="digestComfort" color="#5E8030"/>
+          <div style={{marginTop:10,padding:'9px 11px',background:'#FFFBEB',borderRadius:8,border:'1px solid #FDE68A',fontSize:12,color:'#92400E',lineHeight:1.6}}>
+            💡 Anulom Vilom 10 min → NK cell activity +30% · Bhramari 5 min → nitric oxide ×15 (anti-tumor)
           </div>
         </div>
-      )}
 
-      {/* ── HABITS ── */}
-      {sec==='habits' && (
-        <div className="fade-up">
-          <div className="card">
-            <div className="card-title">✅ Daily Protocol — tap to check off</div>
+        {/* Exercise */}
+        <div className="card" style={{borderTop:'3px solid #8B5CF6'}}>
+          <div className="card-title" style={{color:'#7C3AED'}}>💪 Exercise & Steps</div>
+          <div className="g2">
+            <NumInput label="Steps taken" value={f.walkingSteps} onChange={v=>set('walkingSteps',v)} placeholder="8000" hint="Target: 8000/day" />
+            <NumInput label="Body weight (kg)" value={f.weightKg} onChange={v=>set('weightKg',v)} placeholder="65.0" unit="kg" />
+          </div>
+          <div className="fg">
+            <label className="fl">Gym / strength session today</label>
+            <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
+              {GYM_GROUPS.map(g=>(
+                <button key={g} onClick={()=>set('gymGroup',g)} style={{padding:'6px 12px',borderRadius:7,border:`1.5px solid ${f.gymGroup===g?'#8B5CF6':'#E2E8F0'}`,background:f.gymGroup===g?'#EDE9FE':'white',color:f.gymGroup===g?'#7C3AED':'#64748B',fontSize:12,fontWeight:500,cursor:'pointer'}}>{g}</button>
+              ))}
+            </div>
+          </div>
+          <div style={{padding:'9px 11px',background:'#F5F3FF',borderRadius:8,border:'1px solid #DDD6FE',fontSize:12,color:'#6D28D9',lineHeight:1.6}}>
+            💡 Every 1000 steps = 8% recurrence reduction · Every 1% muscle gain = 4% lower cancer mortality
+          </div>
+        </div>
+
+        {/* Habits */}
+        <div className="card">
+          <div className="card-title">✅ Daily Protocol Checklist</div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:5}}>
             {HABITS.map(h=>{
               const done=f.habits[h]
               return (
-                <div key={h} className={`habit-row${done?' done':''}`}
-                  onClick={()=>sf(p=>({...p,habits:{...p.habits,[h]:!p.habits[h]}}))}
-                  style={{marginBottom:6,padding:'11px 13px'}}>
+                <div key={h} className={`habit-row${done?' done':''}`} onClick={()=>sf(p=>({...p,habits:{...p.habits,[h]:!p.habits[h]}}))}>
                   <div className="habit-chk">{done?'✓':''}</div>
-                  <span style={{fontSize:13,color:done?'#3C5A1E':'#657060',lineHeight:1.4}}>{h}</span>
+                  <span style={{fontSize:11,color:done?'#059669':'#64748B',lineHeight:1.3}}>{h}</span>
                 </div>
               )
             })}
           </div>
         </div>
-      )}
 
-      {/* ── NOTES ── */}
-      {sec==='notes' && (
-        <div className="fade-up">
-          <div className="card">
-            <div className="card-title">📝 Symptoms & Notes</div>
-            <TxtInput label="Symptoms today" value={f.symptoms} onChange={v=>set('symptoms',v)} placeholder="Nausea, fatigue, bloating, gas, pain…" rows={3}/>
-            <TxtInput label="Notes / observations" value={f.notes} onChange={v=>set('notes',v)} placeholder="How are you feeling overall…" rows={3}/>
-          </div>
+        {/* Notes */}
+        <div className="card">
+          <div className="card-title">📝 Symptoms & Notes</div>
+          <TxtInput label="Symptoms today" value={f.symptoms} onChange={v=>set('symptoms',v)} placeholder="Nausea, fatigue, pain, bloating, gas..." rows={2}/>
+          <TxtInput label="Notes / observations" value={f.notes} onChange={v=>set('notes',v)} placeholder="How are you feeling overall..." rows={2}/>
         </div>
-      )}
-
-      {/* Sticky save button */}
-      <div style={{position:'sticky',bottom:72,paddingTop:10,zIndex:10}}>
-        <button className="btn btn-gr btn-full" style={{padding:'14px',fontSize:14,
-          boxShadow:'0 4px 20px rgba(58,112,96,0.4)'}} onClick={save} disabled={saving}>
-          {saving?<><Spin size={16} color="white"/>Saving...</>:'💾 Save Today's Log'}
-        </button>
       </div>
+
+      <button className="btn btn-gr btn-full" style={{marginTop:6,padding:'13px',fontSize:14}} onClick={save} disabled={saving}>
+        {saving?<><Spin size={16} color="white"/>Saving...</>:'💾 Save Today\'s Log'}
+      </button>
     </div>
   )
 }
-
 // ─── FOOD TAB — FIX #5 (typing works) FIX #7 (auto protein) FIX #10 (no auto-speak) ────────────
 const MEAL_TYPES = ['Breakfast','Mid-morning snack','Lunch','Evening snack','Dinner','Bedtime']
 
@@ -1316,9 +920,9 @@ function FoodTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, showToast
     setAddingToLog(false)
   }
 
-  const vC={optimal:'#5E8030',acceptable:'#B87820',inadvisable:'#B83828'}
+  const vC={optimal:'#10B981',acceptable:'#F59E0B',inadvisable:'#EF4444'}
   const vI={optimal:'✓',acceptable:'!',inadvisable:'✕'}
-  const vBg={optimal:'#F0FDF4',acceptable:'#FDF8EC',inadvisable:'#FDF0EC'}
+  const vBg={optimal:'#F0FDF4',acceptable:'#FFFBEB',inadvisable:'#FEF2F2'}
 
   return (
     <div className="fade-up">
@@ -1327,12 +931,12 @@ function FoodTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, showToast
           <div className="card-title">Today's Food Log</div>
           {todayFoods.map(f=>(
             <div key={f.id} className="food-row">
-              <div className="food-badge" style={{background:vBg[f.verdict]||'#FDF8EC',color:vC[f.verdict]||'#B87820'}}>{vI[f.verdict]||'!'}</div>
+              <div className="food-badge" style={{background:vBg[f.verdict]||'#FFFBEB',color:vC[f.verdict]||'#F59E0B'}}>{vI[f.verdict]||'!'}</div>
               <div style={{flex:1}}>
-                <div style={{fontSize:13,fontWeight:600,color:'#1A2412'}}>{f.name}</div>
-                <div style={{fontSize:11,color:'#8A9482'}}>{f.mealType} · {f.time||f.date}{f.proteinEst>0&&<span style={{marginLeft:6,color:'#5E8030'}}>+{f.proteinEst}g protein</span>}</div>
+                <div style={{fontSize:13,fontWeight:600,color:'#0F172A'}}>{f.name}</div>
+                <div style={{fontSize:11,color:'#94A3B8'}}>{f.mealType} · {f.time||f.date}{f.proteinEst>0&&<span style={{marginLeft:6,color:'#10B981'}}>+{f.proteinEst}g protein</span>}</div>
               </div>
-              <div style={{fontSize:14,fontWeight:700,color:vC[f.verdict]||'#B87820'}}>{f.score}/10</div>
+              <div style={{fontSize:14,fontWeight:700,color:vC[f.verdict]||'#F59E0B'}}>{f.score}/10</div>
             </div>
           ))}
         </div>
@@ -1344,7 +948,7 @@ function FoodTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, showToast
           <label className="fl">Meal type</label>
           <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
             {MEAL_TYPES.map(m=>(
-              <button key={m} onClick={()=>setMealType(m)} style={{padding:'5px 11px',borderRadius:7,border:`1.5px solid ${mealType===m?'#4A7090':'#2A381A'}`,background:mealType===m?'#F0F6FE':'white',color:mealType===m?'#4A7090':'#657060',fontSize:12,fontWeight:500,cursor:'pointer'}}>{m}</button>
+              <button key={m} onClick={()=>setMealType(m)} style={{padding:'5px 11px',borderRadius:7,border:`1.5px solid ${mealType===m?'#0EA5E9':'#E2E8F0'}`,background:mealType===m?'#EFF6FF':'white',color:mealType===m?'#0EA5E9':'#64748B',fontSize:12,fontWeight:500,cursor:'pointer'}}>{m}</button>
             ))}
           </div>
         </div>
@@ -1357,9 +961,9 @@ function FoodTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, showToast
           <>
             <div className={`upload-z${img?' has-img':''}`} onClick={()=>!img&&fileRef.current.click()}>
               {img?<img src={img} alt="meal" style={{width:'100%',maxHeight:220,objectFit:'cover'}}/>
-                :(<><div style={{fontSize:36,marginBottom:8}}>📷</div><div style={{fontSize:14,fontWeight:600,color:'#657060'}}>Photograph your meal</div><div style={{fontSize:12,color:'#8A9482',marginTop:4}}>Any size · JARVIS analyzes it for recovery</div></>)}
+                :(<><div style={{fontSize:36,marginBottom:8}}>📷</div><div style={{fontSize:14,fontWeight:600,color:'#64748B'}}>Photograph your meal</div><div style={{fontSize:12,color:'#94A3B8',marginTop:4}}>Any size · JARVIS analyzes it for recovery</div></>)}
             </div>
-            {imgErr&&<p style={{color:'#B83828',fontSize:12,marginTop:6}}>⚠ {imgErr}</p>}
+            {imgErr&&<p style={{color:'#EF4444',fontSize:12,marginTop:6}}>⚠ {imgErr}</p>}
             <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={e=>handleFile(e.target.files[0])}/>
             <div className="upload-btns">
               <label className="upload-lbl">📷 Take Photo<input type="file" accept="image/*" capture="environment" style={{display:'none'}} onChange={e=>handleFile(e.target.files[0])}/></label>
@@ -1394,13 +998,13 @@ function FoodTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, showToast
       </div>
 
       {result&&(
-        <div className="card fade-up" style={{borderTop:`3px solid ${vC[result.verdict]||'#B87820'}`,background:vBg[result.verdict]||'white'}}>
-          {result.error?<p style={{color:'#B83828'}}>Error: {result.error}</p>:(
+        <div className="card fade-up" style={{borderTop:`3px solid ${vC[result.verdict]||'#F59E0B'}`,background:vBg[result.verdict]||'white'}}>
+          {result.error?<p style={{color:'#EF4444'}}>Error: {result.error}</p>:(
             <>
               <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:14}}>
                 <div style={{width:48,height:48,borderRadius:12,background:`${vC[result.verdict]}18`,border:`1.5px solid ${vC[result.verdict]}35`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,fontWeight:800,color:vC[result.verdict],flexShrink:0}}>{vI[result.verdict]}</div>
                 <div style={{flex:1}}>
-                  <div style={{fontSize:16,fontWeight:700,color:'#1A2412'}}>{result.name}</div>
+                  <div style={{fontSize:16,fontWeight:700,color:'#0F172A'}}>{result.name}</div>
                   <div style={{fontSize:12,fontWeight:600,color:vC[result.verdict],marginTop:1}}>{result.verdict?.toUpperCase()} · {result.score}/10</div>
                 </div>
                 {/* FIX #10: Voice only on button press */}
@@ -1408,20 +1012,20 @@ function FoodTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, showToast
               </div>
               {/* FIX #7: Show auto-extracted nutrition + add to log button */}
               {result.proteinEst>0&&(
-                <div style={{display:'flex',gap:12,flexWrap:'wrap',padding:'10px 12px',background:'#EAF3DC',borderRadius:8,border:'1px solid #C8DDA8',marginBottom:12}}>
-                  <div style={{fontSize:12,fontWeight:600,color:'#3C5A1E',flex:1}}>
+                <div style={{display:'flex',gap:12,flexWrap:'wrap',padding:'10px 12px',background:'#F0FDF4',borderRadius:8,border:'1px solid #BBF7D0',marginBottom:12}}>
+                  <div style={{fontSize:12,fontWeight:600,color:'#059669',flex:1}}>
                     Estimated: <strong>{result.proteinEst}g protein</strong> · {result.carbsEst}g carbs · {result.fatEst}g fat · {result.fiberEst}g fiber
                   </div>
-                  <button className="btn btn-sm" onClick={addNutritionToLog} disabled={addingToLog} style={{background:'#5E8030',color:'white',border:'none',borderRadius:7,padding:'5px 12px',fontSize:12,cursor:'pointer',flexShrink:0}}>
+                  <button className="btn btn-sm" onClick={addNutritionToLog} disabled={addingToLog} style={{background:'#10B981',color:'white',border:'none',borderRadius:7,padding:'5px 12px',fontSize:12,cursor:'pointer',flexShrink:0}}>
                     {addingToLog?'Adding...':'+ Add to Today\'s Log'}
                   </button>
                 </div>
               )}
-              <div style={{fontSize:13,color:'#2C3822',lineHeight:1.75,whiteSpace:'pre-wrap'}}>{result.analysis}</div>
+              <div style={{fontSize:13,color:'#374151',lineHeight:1.75,whiteSpace:'pre-wrap'}}>{result.analysis}</div>
               {result.flagged?.length>0&&(
-                <div style={{marginTop:12,padding:'10px 12px',background:'#FDF0EC',border:'1px solid #F4C8C0',borderRadius:8}}>
-                  <div style={{fontSize:12,fontWeight:600,color:'#A82818',marginBottom:5}}>⚠ Intolerance detected — saved to your list</div>
-                  <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>{result.flagged.map(fl=><span key={fl} style={{background:'#FDE8E4',color:'#A82818',padding:'2px 8px',borderRadius:4,fontSize:12}}>{fl}</span>)}</div>
+                <div style={{marginTop:12,padding:'10px 12px',background:'#FEF2F2',border:'1px solid #FECACA',borderRadius:8}}>
+                  <div style={{fontSize:12,fontWeight:600,color:'#DC2626',marginBottom:5}}>⚠ Intolerance detected — saved to your list</div>
+                  <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>{result.flagged.map(fl=><span key={fl} style={{background:'#FEE2E2',color:'#DC2626',padding:'2px 8px',borderRadius:4,fontSize:12}}>{fl}</span>)}</div>
                 </div>
               )}
             </>
@@ -1432,27 +1036,14 @@ function FoodTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, showToast
       {(db.foodLogs||[]).length>0&&(
         <div className="card">
           <div className="card-title">Food History</div>
-          {(db.foodLogs||[]).slice(0,30).map(food=>(
-            <div key={food.id} className="food-row">
-              <div className="food-badge" style={{background:vBg[food.verdict]||'#FDF8EC',color:vC[food.verdict]||'#B87820',fontSize:13}}>{vI[food.verdict]||'!'}</div>
+          {(db.foodLogs||[]).slice(0,12).map(f=>(
+            <div key={f.id} className="food-row">
+              <div className="food-badge" style={{background:vBg[f.verdict]||'#FFFBEB',color:vC[f.verdict]||'#F59E0B',fontSize:13}}>{vI[f.verdict]||'!'}</div>
               <div style={{flex:1}}>
-                <div style={{fontSize:12,fontWeight:600,color:'#1A2412'}}>{food.name||'Meal'}</div>
-                <div style={{fontSize:11,color:'#8A9482'}}>{food.mealType} · {food.date} {food.time||''}</div>
+                <div style={{fontSize:12,fontWeight:600,color:'#374151'}}>{f.name||'Meal'}</div>
+                <div style={{fontSize:11,color:'#94A3B8'}}>{f.mealType} · {f.date} {f.time||''}</div>
               </div>
-              <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
-                {food.score>0&&<div style={{fontSize:13,fontWeight:700,color:vC[food.verdict]||'#B87820'}}>{food.score}/10</div>}
-                <button onClick={async e=>{
-                  e.stopPropagation()
-                  try{
-                    await deleteFoodLog(uid,food.id)
-                    setDb({...db,foodLogs:(db.foodLogs||[]).filter(x=>x.id!==food.id)})
-                    showToast('Deleted ✓')
-                  }catch(err){showToast('Error: '+err.message)}
-                }} style={{width:28,height:28,borderRadius:8,border:'1px solid #FECACA',
-                  background:'#FEF0EC',color:'#B83828',fontSize:18,cursor:'pointer',
-                  display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,
-                  WebkitTapHighlightColor:'transparent'}} title="Delete entry">×</button>
-              </div>
+              <div style={{fontSize:13,fontWeight:700,color:vC[f.verdict]||'#F59E0B'}}>{f.score}/10</div>
             </div>
           ))}
         </div>
@@ -1498,28 +1089,28 @@ function MedTab({ uid, db, setDb, showToast }) {
 
   return (
     <div className="fade-up">
-      <div style={{padding:'14px 16px',background:'#F0F6FE',border:'1px solid #A8CCEC',borderRadius:12,marginBottom:14}}>
-        <div style={{fontSize:14,fontWeight:700,color:'#2E5080',marginBottom:4}}>💊 CREON — Most Critical Medicine</div>
-        <div style={{fontSize:13,color:'#2A4070',lineHeight:1.6}}>Take CREON with the <strong>first bite</strong> of every meal/snack containing fat or protein. Without enzymes, nutrients cannot be absorbed — recovery stalls. This is non-negotiable.</div>
+      <div style={{padding:'14px 16px',background:'#EFF6FF',border:'1px solid #BFDBFE',borderRadius:12,marginBottom:14}}>
+        <div style={{fontSize:14,fontWeight:700,color:'#1D4ED8',marginBottom:4}}>💊 CREON — Most Critical Medicine</div>
+        <div style={{fontSize:13,color:'#3730A3',lineHeight:1.6}}>Take CREON with the <strong>first bite</strong> of every meal/snack containing fat or protein. Without enzymes, nutrients cannot be absorbed — recovery stalls. This is non-negotiable.</div>
       </div>
 
       {meds.length>0&&(
-        <div className="card" style={{borderTop:`3px solid ${takenN===meds.length?'#5E8030':'#B87820'}`}}>
+        <div className="card" style={{borderTop:`3px solid ${takenN===meds.length?'#10B981':'#F59E0B'}`}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
             <div>
-              <div style={{fontSize:15,fontWeight:700,color:'#1A2412'}}>Today's Medicines</div>
-              <div style={{fontSize:12,color:'#657060',marginTop:1}}>{takenN} of {meds.length} taken</div>
+              <div style={{fontSize:15,fontWeight:700,color:'#0F172A'}}>Today's Medicines</div>
+              <div style={{fontSize:12,color:'#64748B',marginTop:1}}>{takenN} of {meds.length} taken</div>
             </div>
-            <div style={{fontSize:24,fontWeight:800,color:takenN===meds.length?'#5E8030':'#B87820'}}>{Math.round(takenN/Math.max(1,meds.length)*100)}%</div>
+            <div style={{fontSize:24,fontWeight:800,color:takenN===meds.length?'#10B981':'#F59E0B'}}>{Math.round(takenN/Math.max(1,meds.length)*100)}%</div>
           </div>
-          <PBar value={(takenN/Math.max(1,meds.length))*100} color={takenN===meds.length?'#5E8030':'#B87820'} height={6}/>
+          <PBar value={(takenN/Math.max(1,meds.length))*100} color={takenN===meds.length?'#10B981':'#F59E0B'} height={6}/>
           <div style={{marginTop:14}}>
             {meds.map(med=>(
               <div key={med.id} className={`med-row${taken[med.id]?' taken':''}`}>
                 <div style={{flex:1}}>
-                  <div style={{fontSize:13,fontWeight:600,color:'#1A2412'}}>{med.name}</div>
-                  <div style={{fontSize:11,color:'#657060'}}>{[med.dose,med.timing,med.type].filter(Boolean).join(' · ')}</div>
-                  {med.notes&&<div style={{fontSize:11,color:'#8A9482',marginTop:1}}>{med.notes}</div>}
+                  <div style={{fontSize:13,fontWeight:600,color:'#0F172A'}}>{med.name}</div>
+                  <div style={{fontSize:11,color:'#64748B'}}>{[med.dose,med.timing,med.type].filter(Boolean).join(' · ')}</div>
+                  {med.notes&&<div style={{fontSize:11,color:'#94A3B8',marginTop:1}}>{med.notes}</div>}
                 </div>
                 <div className="med-chk" onClick={()=>toggleTaken(med.id)}>{taken[med.id]?'✓':''}</div>
               </div>
@@ -1548,7 +1139,7 @@ function MedTab({ uid, db, setDb, showToast }) {
             <label className="fl">When to take</label>
             <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
               {['With food','Before food','After food','Empty stomach','Bedtime','As needed'].map(t=>(
-                <button key={t} onClick={()=>sNm(p=>({...p,timing:t}))} style={{padding:'5px 10px',borderRadius:7,border:`1.5px solid ${nm.timing===t?'#4A7090':'#2A381A'}`,background:nm.timing===t?'#F0F6FE':'white',color:nm.timing===t?'#4A7090':'#657060',fontSize:12,cursor:'pointer'}}>{t}</button>
+                <button key={t} onClick={()=>sNm(p=>({...p,timing:t}))} style={{padding:'5px 10px',borderRadius:7,border:`1.5px solid ${nm.timing===t?'#0EA5E9':'#E2E8F0'}`,background:nm.timing===t?'#EFF6FF':'white',color:nm.timing===t?'#0EA5E9':'#64748B',fontSize:12,cursor:'pointer'}}>{t}</button>
               ))}
             </div>
           </div>
@@ -1567,11 +1158,11 @@ function MedTab({ uid, db, setDb, showToast }) {
           {meds.map(med=>(
             <div key={med.id} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 0',borderBottom:'1px solid #F1F5F9'}}>
               <div style={{flex:1}}>
-                <div style={{fontSize:13,fontWeight:600,color:'#1A2412'}}>{med.name}</div>
-                <div style={{fontSize:11,color:'#657060'}}>{[med.dose,med.timing].filter(Boolean).join(' · ')}</div>
-                {med.notes&&<div style={{fontSize:11,color:'#8A9482'}}>{med.notes}</div>}
+                <div style={{fontSize:13,fontWeight:600,color:'#0F172A'}}>{med.name}</div>
+                <div style={{fontSize:11,color:'#64748B'}}>{[med.dose,med.timing].filter(Boolean).join(' · ')}</div>
+                {med.notes&&<div style={{fontSize:11,color:'#94A3B8'}}>{med.notes}</div>}
               </div>
-              <button className="btn btn-xs" onClick={()=>removeMed(med.id)} style={{background:'#FDF0EC',color:'#B83828',border:'1px solid #F4C8C0',borderRadius:6}}>Remove</button>
+              <button className="btn btn-xs" onClick={()=>removeMed(med.id)} style={{background:'#FEF2F2',color:'#EF4444',border:'1px solid #FECACA',borderRadius:6}}>Remove</button>
             </div>
           ))}
         </div>
@@ -1580,527 +1171,122 @@ function MedTab({ uid, db, setDb, showToast }) {
   )
 }
 // ─── TRACK TAB — FIX #2 (English names) FIX #6 (correct data) ───────────────
-function TrackTab({ allLogs, db }) {
-  const [period,  setPeriod]  = useState(7)
-  const [selDay,  setSelDay]  = useState(null) // selected day ISO string
-  const [view,    setView]    = useState('calendar') // calendar | summary
-
-  // ── Build day array ────────────────────────────────────────────────────────
+function TrackTab({ allLogs }) {
+  const [period, setPeriod] = useState(7)
   const days = useMemo(() => {
     const today = new Date(); const result = []
-    for (let i = 29; i >= 0; i--) {
-      const d = new Date(today); d.setDate(d.getDate() - i)
-      const ds = d.toISOString().slice(0, 10)
+    for (let i = period-1; i>=0; i--) {
+      const d = new Date(today); d.setDate(d.getDate()-i)
+      const ds = d.toISOString().slice(0,10)
       const log = allLogs.find(l => l.date === ds) || null
-      const sc  = scorePillars(log)
-      result.push({
-        ds,
-        day:  d.toLocaleDateString('en-IN', { weekday: 'short' }),
-        dayFull: d.toLocaleDateString('en-IN', { weekday: 'long' }),
-        dateN: d.getDate(),
-        mon:  d.toLocaleDateString('en-IN', { month: 'short' }),
-        monFull: d.toLocaleDateString('en-IN', { month: 'long' }),
-        year: d.getFullYear(),
-        isToday: i === 0,
-        log, ...sc,
-      })
+      const sc = scorePillars(log)
+      result.push({ds, day:d.toLocaleDateString('en-IN',{weekday:'short'}), dateN:d.getDate(), mon:d.toLocaleDateString('en-IN',{month:'short'}), isToday:i===0, log, ...sc})
     }
     return result
-  }, [allLogs])
+  }, [allLogs, period])
+  const logged = days.filter(d => d.log)
+  let streak=0; for(let i=days.length-1;i>=0;i--){if(days[i].log&&days[i].overall>=40)streak++;else break}
+  const avg = k => logged.length ? Math.round(logged.reduce((s,d)=>s+(d[k]||0),0)/logged.length) : 0
 
-  // Days within selected period
-  const periodDays   = days.slice(days.length - period)
-  const logged       = periodDays.filter(d => d.log)
-  let streak = 0
-  for (let i = days.length - 1; i >= 0; i--) {
-    if (days[i].log && days[i].overall >= 40) streak++; else break
-  }
-  const avgScore = k => logged.length ? Math.round(logged.reduce((s,d) => s + (d[k]||0), 0) / logged.length) : 0
-  const avgVal   = k => logged.length ? +(logged.reduce((s,d) => s + (+d.log?.[k]||0), 0) / logged.length).toFixed(1) : 0
-
-  // ── Selected day ──────────────────────────────────────────────────────────
-  const selDayData = selDay ? days.find(d => d.ds === selDay) : null
-
-  // Food logs for selected day
-  const foodsForDay = (date) => {
-    if (!db?.foodLogs || !date) return []
-    const d = new Date(date)
-    const localStr = d.toLocaleDateString('en-IN')
-    return (db.foodLogs || []).filter(f => f.date === localStr)
-  }
-
-  // All METRICS definitions
-  const ALL_METRICS = [
-    { k:'proteinG',      label:'Protein',           unit:'g',   target:80,   icon:'🥩', color:'#5E8030' },
-    { k:'waterL',        label:'Plain Water',         unit:'L',   target:2,    icon:'💧', color:'#4A7090' },
-    { k:'healthDrinksMl',label:'Medicinal Drinks',    unit:'ml',  target:400,  icon:'🍵', color:'#4A7090' },
-    { k:'yogaMins',      label:'Yoga Asanas',         unit:'min', target:20,   icon:'🧘', color:'#B87820' },
-    { k:'pranayamaMins', label:'Pranayama',            unit:'min', target:15,   icon:'🌬️', color:'#B87820' },
-    { k:'walkingSteps',  label:'Steps',               unit:'',    target:8000, icon:'🚶', color:'#5E8030' },
-    { k:'sleepH',        label:'Sleep',               unit:'hrs', target:7.5,  icon:'😴', color:'#B05878' },
-    { k:'fiberG',        label:'Fiber',               unit:'g',   target:30,   icon:'🌾', color:'#5E8030' },
-    { k:'creonDoses',    label:'CREON doses',         unit:'x',   target:3,    icon:'💊', color:'#4A7090' },
-    { k:'veggieServings',label:'Veggie servings',     unit:'',    target:5,    icon:'🥦', color:'#5E8030' },
-    { k:'weightKg',      label:'Body Weight',         unit:'kg',  target:null, icon:'⚖️', color:'#8A7060' },
-  ]
-
-  const HABITS_LIST = [
-    'Lemon water on waking','CREON with every meal','Ash gourd juice 200ml',
-    'Amla powder 1 tsp','Tulsi / ginger tea','Golden milk before bed',
-    'No refined sugar','No fried food','In bed by 10pm',
-    'Anulom Vilom 10 mins','Morning walk done','Protein at every meal',
-  ]
-
-  if (!selDay && days.filter(d => d.log).length === 0) return (
+  if (logged.length===0) return (
     <div className="fade-up">
-      <div className="card" style={{textAlign:'center',padding:'48px 24px'}}>
-        <div style={{fontSize:52,marginBottom:14}}>📅</div>
-        <div style={{fontSize:17,fontWeight:800,color:'#1A2412',marginBottom:8}}>No logs yet</div>
-        <div style={{fontSize:13,color:'#8A9482',marginBottom:20}}>Start logging in Daily Log — tap any past day here to see your full journal for that day.</div>
+      <div style={{display:'flex',gap:8,marginBottom:16}}>
+        {[7,15,30].map(p=><button key={p} className={`btn btn-sm ${period===p?'btn-pr':'btn-ou'}`} onClick={()=>setPeriod(p)}>{p} Days</button>)}
+      </div>
+      <div className="card" style={{textAlign:'center',padding:'40px 20px'}}>
+        <div style={{fontSize:40,marginBottom:12}}>📊</div>
+        <div style={{fontSize:16,fontWeight:700,color:'#64748B',marginBottom:6}}>No data yet</div>
+        <div style={{fontSize:13,color:'#94A3B8'}}>Start logging daily to see your progress</div>
       </div>
     </div>
   )
 
   return (
     <div className="fade-up">
-      {/* ── Streak + period ── */}
-      <div style={{display:'flex',gap:8,marginBottom:16,alignItems:'center',flexWrap:'wrap'}}>
-        {[7,15,30].map(p => (
-          <button key={p} className={'btn btn-sm ' + (period===p?'btn-pr':'btn-ou')} onClick={() => { setPeriod(p); setSelDay(null) }}>{p} Days</button>
+      <div style={{display:'flex',gap:8,marginBottom:14,alignItems:'center'}}>
+        {[7,15,30].map(p=><button key={p} className={`btn btn-sm ${period===p?'btn-pr':'btn-ou'}`} onClick={()=>setPeriod(p)}>{p} Days</button>)}
+        <span style={{marginLeft:'auto',fontSize:13,color:'#64748B',fontWeight:600}}>🔥 {streak} day streak</span>
+      </div>
+
+      {/* FIX #2: English names | FIX #6: use correct score keys */}
+      <div className="stats-row">
+        {[
+          {l:'Overall',    v:avg('overall'),   c:scoreColor(avg('overall'))},
+          {l:'🍽️ Nutrition', v:avg('nutrition'), c:'#10B981'},
+          {l:'💧 Hydration', v:avg('hydration'), c:'#0EA5E9'},
+          {l:'🧘 Mind & Body',v:avg('mindBody'),  c:'#F59E0B'},
+          {l:'💪 Exercise',  v:avg('exercise'),  c:'#8B5CF6'},
+        ].map(s=>(
+          <div key={s.l} className="stat"><div className="stat-lbl">{s.l}</div><div className="stat-val" style={{color:s.v>0?s.c:'#CBD5E1',fontSize:20}}>{s.v>0?s.v:'—'}</div><PBar value={s.v} color={s.c} height={3}/></div>
         ))}
-        <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:8}}>
-          <span style={{fontSize:18}}>🔥</span>
-          <span style={{fontSize:15,fontWeight:800,color:'#B87820'}}>{streak}</span>
-          <span style={{fontSize:12,color:'#8A9482'}}>day streak</span>
-          <span style={{fontSize:11,color:'#A8B0A0',marginLeft:4}}>({logged.length}/{period} logged)</span>
-        </div>
       </div>
 
-      {/* ── 30-day calendar heatmap ── */}
-      <div className="card" style={{marginBottom:14}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
-          <div className="card-title" style={{marginBottom:0}}>Tap any day to see your full journal</div>
-          <div style={{display:'flex',gap:8,alignItems:'center',fontSize:10,color:'#8A9482'}}>
-            <span style={{display:'inline-block',width:10,height:10,borderRadius:3,background:'#EDE8E0'}}/>No log
-            <span style={{display:'inline-block',width:10,height:10,borderRadius:3,background:'#C8DDA8'}}/>Fair
-            <span style={{display:'inline-block',width:10,height:10,borderRadius:3,background:'#5E8030'}}/>Good
-          </div>
-        </div>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:5}}>
-          {days.map(day => {
-            const isSel = selDay === day.ds
-            const bgColor = !day.log ? '#EDE8E0'
-              : day.overall >= 80 ? '#3C5A1E'
-              : day.overall >= 60 ? '#5E8030'
-              : day.overall >= 40 ? '#9AB85E'
-              : '#C8DDA8'
-            const textColor = !day.log ? '#A8B0A0' : day.overall >= 60 ? 'white' : '#3C5A1E'
-            return (
-              <div key={day.ds}
-                onClick={() => setSelDay(isSel ? null : day.ds)}
-                style={{
-                  background: bgColor,
-                  border: isSel ? '2px solid #1A2412' : day.isToday ? '2px solid #B87820' : '2px solid transparent',
-                  borderRadius: 10, padding: '7px 4px', textAlign: 'center', cursor: 'pointer',
-                  transition: 'all 0.12s', transform: isSel ? 'scale(1.1)' : 'scale(1)',
-                  boxShadow: isSel ? '0 4px 12px rgba(0,0,0,0.18)' : 'none',
-                }}>
-                <div style={{fontSize:9,fontWeight:700,color:textColor,opacity:0.7,lineHeight:1}}>{day.day}</div>
-                <div style={{fontSize:13,fontWeight:800,color:textColor,margin:'2px 0'}}>{day.dateN}</div>
-                {day.log && (
-                  <div style={{fontSize:9,fontWeight:700,color:textColor,opacity:0.85}}>{day.overall}</div>
-                )}
-                {day.isToday && !day.log && (
-                  <div style={{fontSize:7,color:'#B87820',fontWeight:800,marginTop:1}}>LOG</div>
-                )}
+      <div className="card">
+        <div className="card-title">Recovery Target Achievement — {logged.length} days logged</div>
+        {[
+          {l:'Protein ≥ 80g/day',        n:logged.filter(d=>(+d.log?.proteinG||0)>=80).length,          c:'#10B981', why:'Rebuilds muscle — your cancer armor'},
+          {l:'Plain Water ≥ 2L/day',      n:logged.filter(d=>(+d.log?.waterL||0)>=2).length,             c:'#0EA5E9', why:'Liver flush post-radiation'},
+          {l:'Health Drinks ≥ 400ml/day', n:logged.filter(d=>(+d.log?.healthDrinksMl||0)>=400).length,   c:'#7DD3FC', why:'Medicinal hydration (lemon water, ash gourd, tulsi)'},
+          {l:'Yoga ≥ 20 mins/day',        n:logged.filter(d=>(+d.log?.yogaMins||0)>=20).length,          c:'#F59E0B', why:'Physical postures for lymphatic flow'},
+          {l:'Pranayama ≥ 15 mins/day',   n:logged.filter(d=>(+d.log?.pranayamaMins||0)>=15).length,     c:'#FCD34D', why:'NK cell boost +30% (Anulom Vilom)'},
+          {l:'Steps ≥ 8000/day',          n:logged.filter(d=>(+d.log?.walkingSteps||0)>=8000).length,    c:'#8B5CF6', why:'8% cancer recurrence reduction per 1000 steps'},
+          {l:'Sleep ≥ 7.5 hours/night',   n:logged.filter(d=>(+d.log?.sleepH||0)>=7.5).length,          c:'#EC4899', why:'Growth hormone + tumor suppressor activation'},
+          {l:'CREON ≥ 3 doses/day',       n:logged.filter(d=>(+d.log?.creonDoses||0)>=3).length,         c:'#0EA5E9', why:'Enzyme compliance = nutrition absorption'},
+        ].map((g,i)=>{
+          const pct = Math.round((g.n/Math.max(1,logged.length))*100)
+          return (
+            <div key={i} style={{marginBottom:12}}>
+              <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
+                <div><div style={{fontSize:13,color:'#374151'}}>{g.l}</div><div style={{fontSize:10,color:'#94A3B8'}}>{g.why}</div></div>
+                <span style={{fontSize:13,fontWeight:700,color:scoreColor(pct),flexShrink:0,marginLeft:8}}>{g.n}/{logged.length}</span>
               </div>
-            )
-          })}
-        </div>
+              <PBar value={pct} color={g.c}/>
+            </div>
+          )
+        })}
       </div>
 
-      {/* ── SELECTED DAY FULL DETAIL ── */}
-      {selDayData && (
-        <div className="fade-up">
-          {/* Day header */}
-          <div style={{
-            padding:'16px 20px',
-            background: selDayData.log
-              ? 'linear-gradient(135deg,#EAF3DC,#E2EECF)'
-              : '#FDF8EC',
-            border: `1.5px solid ${selDayData.log ? 'rgba(94,128,48,0.25)' : '#E8D090'}`,
-            borderRadius:16,marginBottom:14,
-            display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10,
-          }}>
+      <div className="card">
+        <div className="card-title">Day by Day</div>
+        <div style={{display:'grid',gridTemplateColumns:'58px 1fr 40px',gap:'4px 10px',marginBottom:6,fontSize:10,fontWeight:700,color:'#94A3B8',textTransform:'uppercase',letterSpacing:0.5}}>
+          <span>Date</span>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}><span>🍽️</span><span>💧</span><span>🧘</span><span>💪</span></div>
+          <span style={{textAlign:'right'}}>Score</span>
+        </div>
+        {days.map(day=>(
+          <div key={day.ds} className={`day-row${!day.log?' no-data':''}`}>
             <div>
-              <div style={{fontSize:18,fontWeight:800,color:'#1A2412'}}>
-                {selDayData.dayFull}, {selDayData.dateN} {selDayData.monFull} {selDayData.year}
-                {selDayData.isToday && <span style={{marginLeft:8,fontSize:11,fontWeight:700,color:'#B87820',background:'#FDF8EC',padding:'2px 8px',borderRadius:6}}>TODAY</span>}
-              </div>
-              <div style={{fontSize:12,color:'#657060',marginTop:3}}>
-                {selDayData.log ? 'Log found — full journal below' : '⚠ No log for this day — nothing was saved'}
-              </div>
+              <div style={{fontSize:11,fontWeight:700,color:day.isToday?'#0EA5E9':'#64748B'}}>{day.day}</div>
+              <div style={{fontSize:12,color:day.isToday?'#0EA5E9':'#94A3B8'}}>{day.dateN} {day.mon}</div>
+              {day.isToday&&<div style={{fontSize:9,color:'#10B981',fontWeight:700}}>TODAY</div>}
             </div>
-            {selDayData.log && (
-              <div style={{textAlign:'center',padding:'10px 16px',background:'white',borderRadius:12,border:'1px solid rgba(94,128,48,0.2)'}}>
-                <div style={{fontSize:10,fontWeight:700,color:'#8A9482'}}>DAILY SCORE</div>
-                <div style={{fontSize:30,fontWeight:800,color:scoreColor(selDayData.overall)}}>{selDayData.overall}</div>
-                <div style={{fontSize:10,color:'#8A9482'}}>{scoreLabel(selDayData.overall)}</div>
-              </div>
-            )}
-          </div>
-
-          {!selDayData.log ? (
-            <div className="card" style={{textAlign:'center',padding:'36px 20px'}}>
-              <div style={{fontSize:36,marginBottom:10}}>📋</div>
-              <div style={{fontSize:15,fontWeight:700,color:'#1A2412',marginBottom:6}}>No data logged for this day</div>
-              <div style={{fontSize:13,color:'#8A9482'}}>You didn't log this day, or the data wasn't saved. Go to Daily Log to log today's data.</div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}>
+              {[{k:'nutrition',c:'#10B981'},{k:'hydration',c:'#0EA5E9'},{k:'mindBody',c:'#F59E0B'},{k:'exercise',c:'#8B5CF6'}].map(p=>(
+                <div key={p.k}><PBar value={day[p.k]||0} color={p.c}/><div style={{fontSize:9,color:day.log?p.c:'#E2E8F0',marginTop:2,fontWeight:600}}>{day.log?day[p.k]:'—'}</div></div>
+              ))}
             </div>
-          ) : (() => {
-            const L = selDayData.log
-
-            // What was hit vs missed
-            const metrics = ALL_METRICS.filter(m => m.target)
-            const hit    = metrics.filter(m => (+L[m.k]||0) >= m.target)
-            const missed = metrics.filter(m => (+L[m.k]||0) < m.target)
-
-            const foods = foodsForDay(selDayData.ds)
-            const habits = L.habits || {}
-            const doneHabits   = HABITS_LIST.filter(h => habits[h])
-            const missedHabits = HABITS_LIST.filter(h => !habits[h])
-
-            return (
-              <>
-                {/* ── 5-pillar score cards ── */}
-                <div className="stats-row" style={{marginBottom:14}}>
-                  {[
-                    {l:'🍽️ Nutrition', v:selDayData.nutrition, c:'#5E8030'},
-                    {l:'💧 Hydration',  v:selDayData.hydration, c:'#4A7090'},
-                    {l:'🧘 Mind & Body',v:selDayData.mindBody,  c:'#B87820'},
-                    {l:'💪 Exercise',   v:selDayData.exercise,  c:'#5E8030'},
-                    {l:'💊 Medicines',  v:selDayData.medicine,  c:'#B05878'},
-                  ].map(s => (
-                    <div key={s.l} className="stat" style={{borderTop:`3px solid ${s.v>0?s.c:'#EDE8E0'}`}}>
-                      <div className="stat-lbl">{s.l}</div>
-                      <div className="stat-val" style={{color:s.v>0?s.c:'#A8B0A0',fontSize:20}}>{s.v>0?s.v:'—'}</div>
-                      <PBar value={s.v} color={s.c} height={3}/>
-                    </div>
-                  ))}
-                </div>
-
-                {/* ── Sleep & Energy ── */}
-                <div className="card" style={{marginBottom:14}}>
-                  <div className="card-title">😴 Sleep & Energy</div>
-                  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:10}}>
-                    {[
-                      {label:'Sleep',    val:+L.sleepH||0,    unit:'hrs', target:7.5, icon:'😴'},
-                      {label:'Morning energy', val:+L.energyAM||0,  unit:'/10', target:6,   icon:'🌅'},
-                      {label:'Evening energy', val:+L.energyPM||0,  unit:'/10', target:6,   icon:'🌇'},
-                    ].map(m => {
-                      const hit = m.val >= m.target
-                      return (
-                        <div key={m.label} style={{padding:'12px',background:hit?'#EAF3DC':'#FDF8EC',border:`1px solid ${hit?'rgba(94,128,48,0.25)':'rgba(184,120,32,0.25)'}`,borderRadius:12}}>
-                          <div style={{fontSize:11,color:'#8A9482',fontWeight:600,marginBottom:4}}>{m.icon} {m.label}</div>
-                          <div style={{fontSize:20,fontWeight:800,color:hit?'#3C5A1E':'#B87820'}}>{m.val>0?`${m.val}${m.unit}`:'—'}</div>
-                          <div style={{fontSize:10,color:'#A8B0A0',marginTop:2}}>Target: {m.target}{m.unit}</div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                {/* ── What you DID (hit targets) ── */}
-                {hit.length > 0 && (
-                  <div className="card" style={{marginBottom:14,borderLeft:'4px solid #5E8030'}}>
-                    <div className="card-title" style={{color:'#3C5A1E'}}>✅ Targets Hit ({hit.length}/{metrics.length})</div>
-                    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:9}}>
-                      {hit.map(m => {
-                        const val = +L[m.k] || 0
-                        const pct = Math.min(100, Math.round(val / m.target * 100))
-                        return (
-                          <div key={m.k} style={{padding:'10px 12px',background:'#EAF3DC',border:'1px solid rgba(94,128,48,0.2)',borderRadius:11}}>
-                            <div style={{fontSize:11,color:'#657060',fontWeight:600,marginBottom:4}}>{m.icon} {m.label}</div>
-                            <div style={{fontSize:18,fontWeight:800,color:'#3C5A1E'}}>{val}{m.unit}</div>
-                            <div style={{fontSize:10,color:'#5E8030',marginTop:2}}>Target: {m.target}{m.unit} · {pct}%</div>
-                            <PBar value={pct} color="#5E8030" height={3}/>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* ── What was MISSING ── */}
-                {missed.length > 0 && (
-                  <div className="card" style={{marginBottom:14,borderLeft:'4px solid #B87820'}}>
-                    <div className="card-title" style={{color:'#7A4A10'}}>⚠ Missing / Below Target ({missed.length})</div>
-                    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:9}}>
-                      {missed.map(m => {
-                        const val = +L[m.k] || 0
-                        const pct = m.target ? Math.min(100, Math.round(val / m.target * 100)) : 0
-                        const notLogged = val === 0
-                        return (
-                          <div key={m.k} style={{padding:'10px 12px',background:notLogged?'#FDF0EC':'#FDF8EC',border:`1px solid ${notLogged?'rgba(184,56,40,0.2)':'rgba(184,120,32,0.2)'}`,borderRadius:11}}>
-                            <div style={{fontSize:11,color:'#657060',fontWeight:600,marginBottom:4}}>{m.icon} {m.label}</div>
-                            <div style={{fontSize:18,fontWeight:800,color:notLogged?'#B83828':'#B87820'}}>
-                              {notLogged ? 'Not logged' : `${val}${m.unit}`}
-                            </div>
-                            <div style={{fontSize:10,color:'#A8B0A0',marginTop:2}}>
-                              Need: {m.target}{m.unit}{!notLogged && ` · ${pct}% done`}
-                            </div>
-                            {!notLogged && <PBar value={pct} color="#B87820" height={3}/>}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* ── Body weight ── */}
-                {(+L.weightKg > 0) && (
-                  <div className="card" style={{marginBottom:14}}>
-                    <div className="card-title">⚖️ Body Weight</div>
-                    <div style={{display:'flex',alignItems:'center',gap:14}}>
-                      <div style={{fontSize:32,fontWeight:800,color:'#3C5A1E'}}>{L.weightKg} <span style={{fontSize:14,fontWeight:500,color:'#8A9482'}}>kg</span></div>
-                      <div style={{fontSize:12,color:'#8A9482'}}>Target: gain 0.3–0.5 kg/week</div>
-                    </div>
-                  </div>
-                )}
-
-                {/* ── Gym session ── */}
-                {L.gymGroup && L.gymGroup !== 'None today' && (
-                  <div style={{marginBottom:14,padding:'12px 16px',background:'#EAF3DC',border:'1px solid rgba(94,128,48,0.2)',borderRadius:14,display:'flex',alignItems:'center',gap:10}}>
-                    <span style={{fontSize:22}}>💪</span>
-                    <div>
-                      <div style={{fontSize:13,fontWeight:700,color:'#3C5A1E'}}>Gym session: {L.gymGroup}</div>
-                      <div style={{fontSize:11,color:'#5E8030'}}>Strength training completed ✓</div>
-                    </div>
-                  </div>
-                )}
-
-                {/* ── Digestion signals ── */}
-                <div className="card" style={{marginBottom:14}}>
-                  <div className="card-title">🌿 Digestion Signals</div>
-                  <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
-                    {[
-                      {label:'Gas level',        val:+L.gasLevel||0,      lower:true,  icon:'💨'},
-                      {label:'Bloating',          val:+L.bloating||0,      lower:true,  icon:'🫧'},
-                      {label:'Digestive comfort', val:+L.digestComfort||0, lower:false, icon:'✨'},
-                    ].map(m => {
-                      const good = m.lower ? m.val <= 4 : m.val >= 6
-                      return (
-                        <div key={m.label} style={{padding:'10px',background:good?'#EAF3DC':'#FDF8EC',border:`1px solid ${good?'rgba(94,128,48,0.2)':'rgba(184,120,32,0.2)'}`,borderRadius:11,textAlign:'center'}}>
-                          <div style={{fontSize:18}}>{m.icon}</div>
-                          <div style={{fontSize:16,fontWeight:800,color:good?'#3C5A1E':'#B87820',margin:'4px 0'}}>{m.val}/10</div>
-                          <div style={{fontSize:10,color:'#8A9482'}}>{m.label}</div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                {/* ── Food logged that day ── */}
-                {foods.length > 0 && (
-                  <div className="card" style={{marginBottom:14}}>
-                    <div className="card-title">🍽️ Food Logged This Day ({foods.length} entries)</div>
-                    {foods.map((f,i) => {
-                      const vC = {optimal:'#5E8030',acceptable:'#B87820',inadvisable:'#B83828'}
-                      const vBg= {optimal:'#EAF3DC',acceptable:'#FDF8EC',inadvisable:'#FDF0EC'}
-                      const vI = {optimal:'✓',acceptable:'!',inadvisable:'✕'}
-                      return (
-                        <div key={f.id||i} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 0',borderBottom:'1px solid #EDE8E0'}}>
-                          <div style={{width:34,height:34,borderRadius:9,background:vBg[f.verdict]||'#FDF8EC',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,fontWeight:800,color:vC[f.verdict]||'#B87820',flexShrink:0}}>
-                            {vI[f.verdict]||'!'}
-                          </div>
-                          <div style={{flex:1}}>
-                            <div style={{fontSize:13,fontWeight:600,color:'#1A2412'}}>{f.name||'Meal'}</div>
-                            <div style={{fontSize:11,color:'#8A9482'}}>{f.mealType||''}  {f.time ? '· '+f.time : ''}</div>
-                            {f.proteinEst > 0 && <div style={{fontSize:10,color:'#5E8030',marginTop:1}}>+{f.proteinEst}g protein est.</div>}
-                          </div>
-                          <div style={{fontSize:14,fontWeight:800,color:vC[f.verdict]||'#B87820',flexShrink:0}}>
-                            {f.score?`${f.score}/10`:''}
-                          </div>
-                        </div>
-                      )
-                    })}
-                    {foods.length === 0 && (
-                      <div style={{fontSize:13,color:'#A8B0A0',padding:'10px 0'}}>No food entries found for this day in the food tracker.</div>
-                    )}
-                  </div>
-                )}
-                {foods.length === 0 && (
-                  <div style={{marginBottom:14,padding:'12px 14px',background:'#FDF8EC',border:'1px solid rgba(184,120,32,0.2)',borderRadius:12,fontSize:12,color:'#8A7060'}}>
-                    🍽️ No food entries from the Food Tracker for this day. Use the Food Tracker to log meals with photos or by typing.
-                  </div>
-                )}
-
-                {/* ── Habits checklist ── */}
-                <div className="card" style={{marginBottom:14}}>
-                  <div className="card-title">✅ Daily Protocol — {doneHabits.length}/{HABITS_LIST.length} completed</div>
-                  {/* Done */}
-                  {doneHabits.length > 0 && (
-                    <div style={{marginBottom:10}}>
-                      <div style={{fontSize:11,fontWeight:700,color:'#5E8030',marginBottom:6}}>DONE</div>
-                      <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-                        {doneHabits.map((h,i) => (
-                          <span key={i} style={{padding:'4px 10px',background:'#EAF3DC',border:'1px solid rgba(94,128,48,0.2)',borderRadius:20,fontSize:12,color:'#3C5A1E',fontWeight:500}}>✓ {h}</span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {/* Missed */}
-                  {missedHabits.length > 0 && (
-                    <div>
-                      <div style={{fontSize:11,fontWeight:700,color:'#B87820',marginBottom:6}}>MISSED / NOT CHECKED</div>
-                      <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-                        {missedHabits.map((h,i) => (
-                          <span key={i} style={{padding:'4px 10px',background:'#FDF8EC',border:'1px solid rgba(184,120,32,0.18)',borderRadius:20,fontSize:12,color:'#8A7060'}}>✕ {h}</span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* ── Symptoms & Notes ── */}
-                {(L.symptoms || L.notes) && (
-                  <div className="card" style={{marginBottom:14}}>
-                    <div className="card-title">📝 Symptoms & Notes</div>
-                    {L.symptoms && (
-                      <div style={{marginBottom:10}}>
-                        <div style={{fontSize:11,fontWeight:700,color:'#8A9482',marginBottom:4}}>SYMPTOMS</div>
-                        <div style={{fontSize:13,color:'#2C3822',background:'#FDF0EC',padding:'10px 12px',borderRadius:9,border:'1px solid rgba(184,56,40,0.12)'}}>{L.symptoms}</div>
-                      </div>
-                    )}
-                    {L.notes && (
-                      <div>
-                        <div style={{fontSize:11,fontWeight:700,color:'#8A9482',marginBottom:4}}>NOTES</div>
-                        <div style={{fontSize:13,color:'#2C3822',background:'#F9F6F1',padding:'10px 12px',borderRadius:9,border:'1px solid #EDE8E0'}}>{L.notes}</div>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {(!L.symptoms && !L.notes) && (
-                  <div style={{marginBottom:14,padding:'10px 14px',background:'#F9F6F1',border:'1px solid #EDE8E0',borderRadius:12,fontSize:12,color:'#A8B0A0'}}>
-                    📝 No symptoms or notes recorded for this day.
-                  </div>
-                )}
-              </>
-            )
-          })()}
-        </div>
-      )}
-
-      {/* ── Period summary ── */}
-      {!selDay && logged.length > 0 && (
-        <>
-          {/* Score averages */}
-          <div className="stats-row" style={{marginBottom:14}}>
-            {[
-              {l:'Overall',      v:avgScore('overall'),   c:scoreColor(avgScore('overall'))},
-              {l:'🍽️ Nutrition',  v:avgScore('nutrition'), c:'#5E8030'},
-              {l:'💧 Hydration',  v:avgScore('hydration'), c:'#4A7090'},
-              {l:'🧘 Mind & Body',v:avgScore('mindBody'),  c:'#B87820'},
-              {l:'💪 Exercise',   v:avgScore('exercise'),  c:'#5E8030'},
-            ].map(s => (
-              <div key={s.l} className="stat">
-                <div className="stat-lbl">{s.l}</div>
-                <div className="stat-val" style={{color:s.v>0?s.c:'#A8B0A0',fontSize:22}}>{s.v>0?s.v:'—'}</div>
-                <PBar value={s.v} color={s.c} height={3}/>
-              </div>
-            ))}
-          </div>
-
-          {/* Recovery target achievement */}
-          <div className="card">
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
-              <div className="card-title" style={{marginBottom:0}}>Target Achievement — {period} Days</div>
-              <span style={{fontSize:11,color:'#8A9482'}}>{logged.length} days logged</span>
+            <div style={{textAlign:'right'}}>
+              {day.log?<span style={{fontSize:15,fontWeight:800,color:scoreColor(day.overall)}}>{day.overall}</span>:<span style={{color:'#E2E8F0'}}>—</span>}
             </div>
-            {ALL_METRICS.filter(m => m.target).map((m, i) => {
-              const daysHit = logged.filter(d => (+d.log?.[m.k]||0) >= m.target).length
-              const pctDays = Math.round(daysHit / Math.max(1, logged.length) * 100)
-              const avg     = avgVal(m.k)
-              const pctAvg  = Math.min(100, Math.round(avg / m.target * 100))
-              const good = pctDays >= 70; const fair = pctDays >= 40
-              const barC = good ? '#5E8030' : fair ? '#B87820' : '#B83828'
-              return (
-                <div key={i} style={{marginBottom:12,padding:'12px 14px',background:'#FAFAF7',borderRadius:12,border:'1px solid #EDE8E0'}}>
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:7}}>
-                    <div>
-                      <div style={{fontSize:13,fontWeight:600,color:'#1A2412'}}>{m.icon} {m.label}</div>
-                      <div style={{fontSize:10,color:'#A8B0A0',marginTop:1}}>Target: {m.target}{m.unit}</div>
-                    </div>
-                    <div style={{textAlign:'right',flexShrink:0,marginLeft:10}}>
-                      <div style={{fontSize:14,fontWeight:800,color:barC}}>{daysHit}/{logged.length} days</div>
-                      <div style={{fontSize:10,color:'#A8B0A0'}}>{pctDays}% compliance</div>
-                    </div>
-                  </div>
-                  <div style={{display:'flex',gap:10,alignItems:'center'}}>
-                    <div style={{flex:1}}>
-                      <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
-                        <span style={{fontSize:10,color:'#8A9482'}}>Avg logged</span>
-                        <span style={{fontSize:11,fontWeight:700,color:pctAvg>=100?m.color:'#657060'}}>{avg>0?`${avg}${m.unit}`:'—'}</span>
-                      </div>
-                      <PBar value={pctAvg} color={m.color} height={4}/>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
           </div>
-
-          {/* Day-by-day mini grid */}
-          <div className="card">
-            <div className="card-title">Day by Day (tap calendar above for full detail)</div>
-            <div style={{display:'grid',gridTemplateColumns:'60px 1fr 44px',gap:'4px 10px',marginBottom:8,fontSize:10,fontWeight:700,color:'#A8B0A0',textTransform:'uppercase',letterSpacing:0.5}}>
-              <span>Date</span>
-              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}><span>🍽️</span><span>💧</span><span>🧘</span><span>💪</span></div>
-              <span style={{textAlign:'right'}}>Score</span>
-            </div>
-            {periodDays.map(day => (
-              <div key={day.ds} className={'day-row'+(!day.log?' no-data':'')}
-                style={{cursor:day.log?'pointer':'default'}}
-                onClick={() => day.log && setSelDay(day.ds)}>
-                <div>
-                  <div style={{fontSize:11,fontWeight:700,color:day.isToday?'#B87820':'#657060'}}>{day.day}</div>
-                  <div style={{fontSize:11,color:day.isToday?'#C88A1E':'#A8B0A0'}}>{day.dateN} {day.mon}</div>
-                  {day.isToday&&<div style={{fontSize:9,color:'#5E8030',fontWeight:700}}>TODAY</div>}
-                </div>
-                <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}>
-                  {[{k:'nutrition',c:'#5E8030'},{k:'hydration',c:'#4A7090'},{k:'mindBody',c:'#B87820'},{k:'exercise',c:'#5E8030'}].map(p=>(
-                    <div key={p.k}>
-                      <PBar value={day[p.k]||0} color={p.c} height={5}/>
-                      <div style={{fontSize:9,color:day.log?p.c:'#EDE8E0',marginTop:2,fontWeight:700}}>{day.log?day[p.k]:'—'}</div>
-                    </div>
-                  ))}
-                </div>
-                <div style={{textAlign:'right'}}>
-                  {day.log
-                    ? <span style={{fontSize:15,fontWeight:800,color:scoreColor(day.overall)}}>{day.overall}</span>
-                    : <span style={{color:'#EDE8E0'}}>—</span>}
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
+        ))}
+      </div>
     </div>
   )
 }
 
-
 // ─── DASHBOARD — FIX #2 (English names) FIX #3 (data reflects) ──────────────
 const PILLARS_DEF = [
-  {id:'nutrition', emoji:'🍽️', label:'Nutrition',   sub:'Healing Foods',    color:'#5E8030',
+  {id:'nutrition', emoji:'🍽️', label:'Nutrition',   sub:'Healing Foods',    color:'#10B981',
    targets:[{l:'Protein',k:'proteinG',t:80,u:'g'},{l:'Fiber',k:'fiberG',t:30,u:'g'},{l:'Veggies',k:'veggieServings',t:5,u:'servings'}],
    tip:'5-6 small meals · CREON with every meal · 80g+ protein daily · No refined sugar · Sattvic diet'},
-  {id:'hydration', emoji:'💧', label:'Hydration',   sub:'Water & Drinks',   color:'#4A7090',
+  {id:'hydration', emoji:'💧', label:'Hydration',   sub:'Water & Drinks',   color:'#0EA5E9',
    targets:[{l:'Plain Water',k:'waterL',t:2,u:'L'},{l:'Health Drinks',k:'healthDrinksMl',t:500,u:'ml'}],
    tip:'Lemon water morning → Ash gourd juice 200ml → Ginger tea → Tulsi tea → Golden milk bedtime'},
-  {id:'mindBody',  emoji:'🧘', label:'Mind & Body', sub:'Yoga & Pranayama', color:'#B87820',
+  {id:'mindBody',  emoji:'🧘', label:'Mind & Body', sub:'Yoga & Pranayama', color:'#F59E0B',
    targets:[{l:'Yoga Asanas',k:'yogaMins',t:25,u:'min'},{l:'Pranayama',k:'pranayamaMins',t:20,u:'min'}],
    tip:'Anulom Vilom 10 min (NK+30%) · Bhramari 5 min (nitric oxide×15) · Surya Namaskar · Shavasana 20 min'},
-  {id:'exercise',  emoji:'💪', label:'Exercise',    sub:'Steps & Strength', color:'#5E8030',
+  {id:'exercise',  emoji:'💪', label:'Exercise',    sub:'Steps & Strength', color:'#8B5CF6',
    targets:[{l:'Steps',k:'walkingSteps',t:8000,u:''}],
    tip:'Phase 1: walks + bodyweight → Phase 2: light weights → Phase 3: compound movements · Protein within 30 min post-workout'},
 ]
@@ -2132,37 +1318,37 @@ function Dashboard({ db, uid, setDb, setTab, allLogs, profile }) {
   return (
     <div className="fade-up">
       {/* Mission banner */}
-      <div style={{padding:'16px 20px',background:'linear-gradient(135deg,#EAF3DC,#E8F0EC)',border:'1px solid #A7F3D0',borderRadius:14,marginBottom:18}}>
+      <div style={{padding:'16px 20px',background:'linear-gradient(135deg,#ECFDF5,#EFF6FF)',border:'1px solid #A7F3D0',borderRadius:14,marginBottom:18}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:10}}>
           <div>
-            <div style={{fontSize:20,fontWeight:800,color:'#3C5A1E',letterSpacing:'-0.3px'}}>🌿 Remission Active</div>
-            <div style={{fontSize:13,color:'#4A6A24',marginTop:2}}>PET-CT Clear · CA 19-9 Target ~6 U/mL · Recovery Protocol Running</div>
+            <div style={{fontSize:20,fontWeight:800,color:'#065F46',letterSpacing:'-0.3px'}}>🌿 Remission Active</div>
+            <div style={{fontSize:13,color:'#047857',marginTop:2}}>PET-CT Clear · CA 19-9 Target ~6 U/mL · Recovery Protocol Running</div>
           </div>
           <div style={{display:'flex',gap:12}}>
             {profile.ca199Current&&(
-              <div style={{textAlign:'center',padding:'8px 14px',background:'#FFFFFF',borderRadius:10,border:'1px solid #A7F3D0'}}>
+              <div style={{textAlign:'center',padding:'8px 14px',background:'white',borderRadius:10,border:'1px solid #A7F3D0'}}>
                 <div style={{fontSize:10,fontWeight:700,color:'#6B7280'}}>CA 19-9</div>
-                <div style={{fontSize:22,fontWeight:800,color:+profile.ca199Current<=6?'#5E8030':+profile.ca199Current<=37?'#B87820':'#B83828'}}>{profile.ca199Current}</div>
+                <div style={{fontSize:22,fontWeight:800,color:+profile.ca199Current<=6?'#10B981':+profile.ca199Current<=37?'#F59E0B':'#EF4444'}}>{profile.ca199Current}</div>
               </div>
             )}
-            <div style={{textAlign:'center',padding:'8px 14px',background:'#FFFFFF',borderRadius:10,border:'1px solid #A8CCEC'}}>
+            <div style={{textAlign:'center',padding:'8px 14px',background:'white',borderRadius:10,border:'1px solid #BFDBFE'}}>
               <div style={{fontSize:10,fontWeight:700,color:'#6B7280'}}>7-Day Avg</div>
-              <div style={{fontSize:22,fontWeight:800,color:avg7>0?scoreColor(avg7):'#657060'}}>{avg7>0?avg7:'—'}</div>
+              <div style={{fontSize:22,fontWeight:800,color:avg7>0?scoreColor(avg7):'#CBD5E1'}}>{avg7>0?avg7:'—'}</div>
             </div>
           </div>
         </div>
       </div>
 
       {!todayLog&&(
-        <div onClick={()=>setTab('log')} style={{cursor:'pointer',padding:'14px 18px',background:'#FDF8EC',border:'1.5px solid #FDE68A',borderRadius:12,marginBottom:16,display:'flex',alignItems:'center',gap:12}}>
+        <div onClick={()=>setTab('log')} style={{cursor:'pointer',padding:'14px 18px',background:'#FFFBEB',border:'1.5px solid #FDE68A',borderRadius:12,marginBottom:16,display:'flex',alignItems:'center',gap:12}}>
           <div style={{fontSize:26}}>📋</div>
-          <div style={{flex:1}}><div style={{fontSize:14,fontWeight:700,color:'#7A4A10'}}>Log today's data</div><div style={{fontSize:12,color:'#8A5010'}}>Record food, water, pranayama, gym, medicines</div></div>
+          <div style={{flex:1}}><div style={{fontSize:14,fontWeight:700,color:'#92400E'}}>Log today's data</div><div style={{fontSize:12,color:'#B45309'}}>Record food, water, pranayama, gym, medicines</div></div>
           <div style={{fontSize:13,fontWeight:700,color:'#D97706'}}>Log Now →</div>
         </div>
       )}
 
       {/* 4 Pillars */}
-      <div style={{fontSize:12,fontWeight:700,color:'#8A9482',letterSpacing:0.8,textTransform:'uppercase',marginBottom:10}}>Your 4 Recovery Pillars</div>
+      <div style={{fontSize:12,fontWeight:700,color:'#94A3B8',letterSpacing:0.8,textTransform:'uppercase',marginBottom:10}}>Your 4 Recovery Pillars</div>
       <div className="pillar-grid">
         {PILLARS_DEF.map(p=>{
           const s=sc[p.id]||0; const isOpen=openPillar===p.id
@@ -2171,10 +1357,10 @@ function Dashboard({ db, uid, setDb, setTab, allLogs, profile }) {
               <div className="pillar-top">
                 <span className="pillar-emoji">{p.emoji}</span>
                 <div><div className="pillar-name">{p.label}</div><div className="pillar-sub">{p.sub}</div></div>
-                <div className="pillar-score" style={{color:s>0?scoreColor(s):'#657060'}}>{s>0?s:'—'}</div>
+                <div className="pillar-score" style={{color:s>0?scoreColor(s):'#CBD5E1'}}>{s>0?s:'—'}</div>
               </div>
-              <div className="pillar-bar-bg"><div className="pillar-bar-fill" style={{width:`${s}%`,background:s>0?p.color:'#2A381A'}}/></div>
-              <div className="pillar-status" style={{color:s>0?scoreColor(s):'#8A9482'}}>{scoreLabel(s)}</div>
+              <div className="pillar-bar-bg"><div className="pillar-bar-fill" style={{width:`${s}%`,background:s>0?p.color:'#E2E8F0'}}/></div>
+              <div className="pillar-status" style={{color:s>0?scoreColor(s):'#94A3B8'}}>{scoreLabel(s)}</div>
               {isOpen&&(
                 <div style={{marginTop:12,paddingTop:12,borderTop:`1px solid ${p.color}25`}} onClick={e=>e.stopPropagation()}>
                   {p.targets.map(t=>{
@@ -2183,30 +1369,30 @@ function Dashboard({ db, uid, setDb, setTab, allLogs, profile }) {
                     return (
                       <div key={t.k} style={{marginBottom:10}}>
                         <div style={{display:'flex',justifyContent:'space-between',marginBottom:5}}>
-                          <span style={{fontSize:12,color:'#657060'}}>{t.l}</span>
+                          <span style={{fontSize:12,color:'#64748B'}}>{t.l}</span>
                           <span style={{fontSize:12,fontWeight:700,color:pct>=100?p.color:scoreColor(pct)}}>{val}{t.u} / {t.t}{t.u}</span>
                         </div>
                         <PBar value={pct} color={p.color}/>
                       </div>
                     )
                   })}
-                  <div style={{fontSize:11,color:'#657060',lineHeight:1.65,marginTop:8,padding:'8px 10px',background:`${p.color}0A`,borderRadius:7}}>{p.tip}</div>
+                  <div style={{fontSize:11,color:'#64748B',lineHeight:1.65,marginTop:8,padding:'8px 10px',background:`${p.color}0A`,borderRadius:7}}>{p.tip}</div>
                 </div>
               )}
-              <div style={{fontSize:10,color:'#8A9482',marginTop:6}}>{isOpen?'▲ Tap to collapse':'▼ Tap for details'}</div>
+              <div style={{fontSize:10,color:'#94A3B8',marginTop:6}}>{isOpen?'▲ Tap to collapse':'▼ Tap for details'}</div>
             </div>
           )
         })}
         {/* Medicine pillar */}
-        <div className="pillar-card" style={{'--pc':'#B05878'}}>
+        <div className="pillar-card" style={{'--pc':'#EC4899'}}>
           <div className="pillar-top">
             <span className="pillar-emoji">💊</span>
             <div><div className="pillar-name">Medicines</div><div className="pillar-sub">Daily Compliance</div></div>
-            <div className="pillar-score" style={{color:sc.medicine>0?scoreColor(sc.medicine):'#657060'}}>{sc.medicine>0?sc.medicine:'—'}</div>
+            <div className="pillar-score" style={{color:sc.medicine>0?scoreColor(sc.medicine):'#CBD5E1'}}>{sc.medicine>0?sc.medicine:'—'}</div>
           </div>
-          <div className="pillar-bar-bg"><div className="pillar-bar-fill" style={{width:`${sc.medicine}%`,background:sc.medicine>0?'#B05878':'#2A381A'}}/></div>
-          <div className="pillar-status" style={{color:sc.medicine>0?scoreColor(sc.medicine):'#8A9482'}}>{scoreLabel(sc.medicine)}</div>
-          <div style={{fontSize:10,color:'#8A9482',marginTop:6}}>CREON + all supplements</div>
+          <div className="pillar-bar-bg"><div className="pillar-bar-fill" style={{width:`${sc.medicine}%`,background:sc.medicine>0?'#EC4899':'#E2E8F0'}}/></div>
+          <div className="pillar-status" style={{color:sc.medicine>0?scoreColor(sc.medicine):'#94A3B8'}}>{scoreLabel(sc.medicine)}</div>
+          <div style={{fontSize:10,color:'#94A3B8',marginTop:6}}>CREON + all supplements</div>
         </div>
       </div>
 
@@ -2217,16 +1403,16 @@ function Dashboard({ db, uid, setDb, setTab, allLogs, profile }) {
             <div style={{fontSize:22,fontWeight:800,color:scoreColor(sc.overall)}}>{sc.overall}/100</div>
           </div>
           {[
-            {l:'🍽️ Nutrition (Food & Protein)', v:sc.nutrition, c:'#5E8030'},
-            {l:'💧 Hydration (Water & Drinks)',  v:sc.hydration, c:'#4A7090'},
-            {l:'🧘 Mind & Body (Yoga & Pranayama)',v:sc.mindBody,c:'#B87820'},
-            {l:'💪 Exercise (Steps & Gym)',        v:sc.exercise, c:'#5E8030'},
-            {l:'💊 Medicines (CREON compliance)',  v:sc.medicine, c:'#B05878'},
+            {l:'🍽️ Nutrition (Food & Protein)', v:sc.nutrition, c:'#10B981'},
+            {l:'💧 Hydration (Water & Drinks)',  v:sc.hydration, c:'#0EA5E9'},
+            {l:'🧘 Mind & Body (Yoga & Pranayama)',v:sc.mindBody,c:'#F59E0B'},
+            {l:'💪 Exercise (Steps & Gym)',        v:sc.exercise, c:'#8B5CF6'},
+            {l:'💊 Medicines (CREON compliance)',  v:sc.medicine, c:'#EC4899'},
           ].map(s=>(
             <div key={s.l} style={{marginBottom:11}}>
               <div style={{display:'flex',justifyContent:'space-between',marginBottom:5}}>
-                <span style={{fontSize:13,color:'#2C3822'}}>{s.l}</span>
-                <span style={{fontSize:13,fontWeight:700,color:s.v>0?scoreColor(s.v):'#657060'}}>{s.v>0?`${s.v}%`:'—'}</span>
+                <span style={{fontSize:13,color:'#374151'}}>{s.l}</span>
+                <span style={{fontSize:13,fontWeight:700,color:s.v>0?scoreColor(s.v):'#CBD5E1'}}>{s.v>0?`${s.v}%`:'—'}</span>
               </div>
               <PBar value={s.v} color={s.c}/>
             </div>
@@ -2237,24 +1423,24 @@ function Dashboard({ db, uid, setDb, setTab, allLogs, profile }) {
       <div className="card">
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
           <div className="card-title" style={{marginBottom:0}}>Today's Protocol</div>
-          <span style={{fontSize:12,color:'#657060',fontWeight:600}}>{doneN}/{PROTOCOL.length}</span>
+          <span style={{fontSize:12,color:'#64748B',fontWeight:600}}>{doneN}/{PROTOCOL.length}</span>
         </div>
         {PROTOCOL.map((item,i)=>{
           const done=checks[i]
           return (
             <div key={i} onClick={()=>toggle(i)} style={{display:'flex',alignItems:'flex-start',gap:10,padding:'8px 10px',borderRadius:8,cursor:'pointer',marginBottom:2,background:done?'#F0FDF4':'transparent',transition:'background 0.12s'}}>
-              <div style={{width:18,height:18,borderRadius:5,border:`1.5px solid ${done?'#5E8030':'#2A381A'}`,background:done?'#5E8030':'white',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginTop:1,fontSize:11,color:'white'}}>{done?'✓':''}</div>
-              <span style={{fontSize:13,color:done?'#3C5A1E':'#657060',textDecoration:done?'line-through':'none',opacity:done?0.7:1}}>{item}</span>
+              <div style={{width:18,height:18,borderRadius:5,border:`1.5px solid ${done?'#10B981':'#E2E8F0'}`,background:done?'#10B981':'white',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginTop:1,fontSize:11,color:'white'}}>{done?'✓':''}</div>
+              <span style={{fontSize:13,color:done?'#059669':'#64748B',textDecoration:done?'line-through':'none',opacity:done?0.7:1}}>{item}</span>
             </div>
           )
         })}
       </div>
 
       {(db.intolerances||[]).length>0&&(
-        <div className="card" style={{borderTop:'3px solid #EF4444',background:'#FDF0EC'}}>
-          <div className="card-title" style={{color:'#A82818'}}>⚠ Food Intolerances (auto-tracked)</div>
+        <div className="card" style={{borderTop:'3px solid #EF4444',background:'#FEF2F2'}}>
+          <div className="card-title" style={{color:'#DC2626'}}>⚠ Food Intolerances (auto-tracked)</div>
           <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-            {db.intolerances.map((f,i)=><span key={i} style={{background:'#FDE8E4',border:'1px solid #F4C8C0',color:'#A82818',padding:'3px 10px',borderRadius:20,fontSize:12}}>{f}</span>)}
+            {db.intolerances.map((f,i)=><span key={i} style={{background:'#FEE2E2',border:'1px solid #FECACA',color:'#DC2626',padding:'3px 10px',borderRadius:20,fontSize:12}}>{f}</span>)}
           </div>
         </div>
       )}
@@ -2313,10 +1499,10 @@ function AICoach({ uid, db, userEmail, aiLoading, setAiLoading, profile }) {
           <div key={i} className={`chat-row${m.role==='user'?' user':''}`}>
             {m.role==='assistant'&&<div className="chat-av">🤖</div>}
             <div className={`bubble ${m.role==='user'?'user':'ai'}`}>
-              {m.role==='assistant'&&<div style={{fontSize:10,fontWeight:700,color:'#4A7090',marginBottom:4,letterSpacing:0.5}}>JARVIS</div>}
+              {m.role==='assistant'&&<div style={{fontSize:10,fontWeight:700,color:'#0EA5E9',marginBottom:4,letterSpacing:0.5}}>JARVIS</div>}
               {m.content}
               {m.role==='assistant'&&(
-                <button onClick={()=>speak(m.content,{max:480})} style={{display:'block',marginTop:8,padding:'4px 10px',borderRadius:6,border:'1px solid #E2DDD6',background:'#FFFFFF',color:'#657060',fontSize:11,cursor:'pointer'}}>🔊 Listen</button>
+                <button onClick={()=>speak(m.content,{max:480})} style={{display:'block',marginTop:8,padding:'4px 10px',borderRadius:6,border:'1px solid #E2E8F0',background:'white',color:'#64748B',fontSize:11,cursor:'pointer'}}>🔊 Listen</button>
               )}
             </div>
           </div>
@@ -2325,7 +1511,7 @@ function AICoach({ uid, db, userEmail, aiLoading, setAiLoading, profile }) {
           <div className="chat-row">
             <div className="chat-av">🤖</div>
             <div className="bubble ai" style={{display:'flex',gap:5,alignItems:'center'}}>
-              {[0,0.15,0.3].map(d=><div key={d} style={{width:7,height:7,borderRadius:'50%',background:'#657060',animation:`pulse 1s ease ${d}s infinite`}}/>)}
+              {[0,0.15,0.3].map(d=><div key={d} style={{width:7,height:7,borderRadius:'50%',background:'#CBD5E1',animation:`pulse 1s ease ${d}s infinite`}}/>)}
             </div>
           </div>
         )}
@@ -2338,8 +1524,8 @@ function AICoach({ uid, db, userEmail, aiLoading, setAiLoading, profile }) {
         <textarea className="chat-in" placeholder="Ask JARVIS about food, medicines, CA 19-9, pranayama, recovery..." value={input}
           onChange={e=>{setInput(e.target.value);e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,100)+'px'}}
           onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}}
-          onFocus={e=>e.target.style.borderColor='#4A7090'}
-          onBlur={e=>e.target.style.borderColor='#2A381A'}/>
+          onFocus={e=>e.target.style.borderColor='#0EA5E9'}
+          onBlur={e=>e.target.style.borderColor='#E2E8F0'}/>
         <button className="btn btn-pr" style={{alignSelf:'flex-end',padding:'10px 14px'}} onClick={()=>send()} disabled={!input.trim()||aiLoading}>➤</button>
       </div>
     </div>
@@ -2388,7 +1574,7 @@ function BloodTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading }) {
         ):(
           <>
             <div className={`upload-z${img?' has-img':''}`} onClick={()=>!img&&fileRef.current.click()}>
-              {img?<img src={img} alt="report" style={{width:'100%',maxHeight:220,objectFit:'contain'}}/>:(<><div style={{fontSize:36,marginBottom:8}}>📋</div><div style={{fontSize:14,fontWeight:600,color:'#657060'}}>Upload blood test report</div><div style={{fontSize:12,color:'#8A9482',marginTop:4}}>Photo or scan</div></>)}
+              {img?<img src={img} alt="report" style={{width:'100%',maxHeight:220,objectFit:'contain'}}/>:(<><div style={{fontSize:36,marginBottom:8}}>📋</div><div style={{fontSize:14,fontWeight:600,color:'#64748B'}}>Upload blood test report</div><div style={{fontSize:12,color:'#94A3B8',marginTop:4}}>Photo or scan</div></>)}
             </div>
             <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={async e=>{const f=e.target.files[0];if(!f)return;setImg(URL.createObjectURL(f));setImgData(await imgToBase64(f))}}/>
             <div className="upload-btns">
@@ -2406,16 +1592,16 @@ function BloodTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading }) {
             {/* FIX #10: voice only on button press */}
             <button onClick={()=>speak(result.full,{max:450})} className="btn btn-ou btn-sm">🔊 Listen</button>
           </div>
-          <div style={{fontSize:13,color:'#2C3822',lineHeight:1.8,whiteSpace:'pre-wrap'}}>{result.full}</div>
-          <div style={{marginTop:12,padding:'10px 12px',background:'#FDF8EC',border:'1px solid #E8D090',borderRadius:8,fontSize:12,color:'#7A4A10'}}>⚠ Share with your oncologist for all medical decisions.</div>
+          <div style={{fontSize:13,color:'#374151',lineHeight:1.8,whiteSpace:'pre-wrap'}}>{result.full}</div>
+          <div style={{marginTop:12,padding:'10px 12px',background:'#FFFBEB',border:'1px solid #FDE68A',borderRadius:8,fontSize:12,color:'#92400E'}}>⚠ Share with your oncologist for all medical decisions.</div>
         </div>
       )}
       {(db.bloodReports||[]).length>0&&(
         <div className="card"><div className="card-title">History</div>
           {(db.bloodReports||[]).slice(0,4).map(r=>(
             <div key={r.id} style={{padding:'10px 0',borderBottom:'1px solid #F1F5F9'}}>
-              <div style={{fontSize:11,fontWeight:700,color:'#4A6A24',marginBottom:3}}>{r.date}</div>
-              <div style={{fontSize:12,color:'#657060'}}>{r.summary?.slice(0,140)}...</div>
+              <div style={{fontSize:11,fontWeight:700,color:'#7C3AED',marginBottom:3}}>{r.date}</div>
+              <div style={{fontSize:12,color:'#64748B'}}>{r.summary?.slice(0,140)}...</div>
             </div>
           ))}
         </div>
@@ -2455,42 +1641,42 @@ function FitTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, profile })
 
       {view==='yoga' && (
         <>
-          <div style={{padding:'10px 16px',background:'#FDF8EC',border:'1px solid #E8D090',borderRadius:10,marginBottom:14}}>
-            <div style={{fontSize:13,fontWeight:700,color:'#7A4A10',marginBottom:2}}>Complete Daily Yoga — 45 Minutes Total</div>
-            <div style={{fontSize:12,color:'#6A4010'}}>Follow this exact sequence every day. Static reference — no internet needed. Tap each practice for full instructions.</div>
+          <div style={{padding:'10px 16px',background:'#FFFBEB',border:'1px solid #FDE68A',borderRadius:10,marginBottom:14}}>
+            <div style={{fontSize:13,fontWeight:700,color:'#92400E',marginBottom:2}}>Complete Daily Yoga — 45 Minutes Total</div>
+            <div style={{fontSize:12,color:'#78350F'}}>Follow this exact sequence every day. Static reference — no internet needed. Tap each practice for full instructions.</div>
           </div>
           {YOGA_SEQUENCE.map((y,i)=>{
             const isOpen=yogaExp===i
-            const tC=y.type==='Pranayama'?'#4A7090':y.type==='Asana'?'#B87820':'#5E8030'
+            const tC=y.type==='Pranayama'?'#0EA5E9':y.type==='Asana'?'#F59E0B':'#8B5CF6'
             return (
-              <div key={i} style={{background:'#FFFFFF',border:`1.5px solid ${isOpen?y.color+'40':'#E8EEF4'}`,borderRadius:12,marginBottom:8,overflow:'hidden',boxShadow:'0 1px 4px rgba(15,23,42,0.05)'}}>
+              <div key={i} style={{background:'white',border:`1.5px solid ${isOpen?y.color+'40':'#E8EEF4'}`,borderRadius:12,marginBottom:8,overflow:'hidden',boxShadow:'0 1px 4px rgba(15,23,42,0.05)'}}>
                 <div style={{display:'flex',alignItems:'center',gap:11,padding:'12px 16px',cursor:'pointer'}} onClick={()=>setYogaExp(isOpen?null:i)}>
                   <div style={{width:36,height:36,borderRadius:9,background:`${y.color}12`,border:`1px solid ${y.color}25`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>{y.emoji}</div>
                   <div style={{flex:1}}>
-                    <div style={{fontSize:13,fontWeight:700,color:'#1A2412'}}>Step {y.step}: {y.name}</div>
+                    <div style={{fontSize:13,fontWeight:700,color:'#0F172A'}}>Step {y.step}: {y.name}</div>
                     <div style={{display:'flex',gap:8,marginTop:2,flexWrap:'wrap'}}>
                       <span style={{fontSize:10,fontWeight:600,color:tC,background:`${tC}10`,padding:'1px 7px',borderRadius:4}}>{y.type}</span>
-                      <span style={{fontSize:11,color:'#8A9482'}}>⏱ {y.mins} min</span>
+                      <span style={{fontSize:11,color:'#94A3B8'}}>⏱ {y.mins} min</span>
                     </div>
                   </div>
-                  <span style={{color:'#8A9482',fontSize:11}}>{isOpen?'▲':'▼'}</span>
+                  <span style={{color:'#94A3B8',fontSize:11}}>{isOpen?'▲':'▼'}</span>
                 </div>
                 {isOpen && (
                   <div style={{padding:'0 16px 14px',borderTop:`1px solid ${y.color}20`}}>
-                    <div style={{fontSize:11,color:'#657060',fontWeight:500,marginBottom:6}}>📍 {y.when}</div>
+                    <div style={{fontSize:11,color:'#64748B',fontWeight:500,marginBottom:6}}>📍 {y.when}</div>
                     <div style={{marginBottom:10}}>
-                      <div style={{fontSize:10,fontWeight:700,color:'#8A9482',marginBottom:5,textTransform:'uppercase'}}>How to do it</div>
-                      <div style={{fontSize:13,color:'#2C3822',lineHeight:1.8}}>{y.how}</div>
+                      <div style={{fontSize:10,fontWeight:700,color:'#94A3B8',marginBottom:5,textTransform:'uppercase'}}>How to do it</div>
+                      <div style={{fontSize:13,color:'#374151',lineHeight:1.8}}>{y.how}</div>
                     </div>
                     <div style={{padding:'10px 12px',background:`${y.color}07`,borderRadius:8,border:`1px solid ${y.color}20`,marginBottom:8}}>
                       <div style={{fontSize:10,fontWeight:700,color:y.color,marginBottom:3,textTransform:'uppercase'}}>Benefits for You Specifically</div>
-                      <div style={{fontSize:12,color:'#2C3822',lineHeight:1.65}}>{y.benefit}</div>
+                      <div style={{fontSize:12,color:'#374151',lineHeight:1.65}}>{y.benefit}</div>
                     </div>
-                    <div style={{padding:'10px 12px',background:'#F0F9FF',borderRadius:8,border:'1px solid #A4CCE8',marginBottom:y.caution?8:0}}>
-                      <div style={{fontSize:10,fontWeight:700,color:'#2A5878',marginBottom:3,textTransform:'uppercase'}}>🔬 Science</div>
-                      <div style={{fontSize:11,color:'#1E3A58',lineHeight:1.65}}>{y.science}</div>
+                    <div style={{padding:'10px 12px',background:'#F0F9FF',borderRadius:8,border:'1px solid #BAE6FD',marginBottom:y.caution?8:0}}>
+                      <div style={{fontSize:10,fontWeight:700,color:'#0369A1',marginBottom:3,textTransform:'uppercase'}}>🔬 Science</div>
+                      <div style={{fontSize:11,color:'#0C4A6E',lineHeight:1.65}}>{y.science}</div>
                     </div>
-                    {y.caution && <div style={{padding:'9px 12px',background:'#FDF0EC',borderRadius:8,border:'1px solid #F4C8C0',fontSize:11,color:'#A82818'}}>⚠ {y.caution}</div>}
+                    {y.caution && <div style={{padding:'9px 12px',background:'#FEF2F2',borderRadius:8,border:'1px solid #FECACA',fontSize:11,color:'#DC2626'}}>⚠ {y.caution}</div>}
                   </div>
                 )}
               </div>
@@ -2501,12 +1687,12 @@ function FitTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, profile })
 
       {view==='gym' && (
         <>
-          <div style={{padding:'10px 16px',background:'#F2F8E8',border:'1px solid #D8ECBC',borderRadius:10,marginBottom:14,fontSize:12,color:'#6D28D9'}}>
+          <div style={{padding:'10px 16px',background:'#F5F3FF',border:'1px solid #DDD6FE',borderRadius:10,marginBottom:14,fontSize:12,color:'#6D28D9'}}>
             💡 Every 1% muscle gain = 4% reduction in cancer mortality. Select your current phase. Tap any exercise for coaching notes.
           </div>
           <div style={{display:'flex',gap:8,marginBottom:16}}>
             {GYM_PHASES.map((p,i)=>(
-              <button key={i} onClick={()=>setGymPhase(i)} style={{flex:1,padding:'10px 6px',borderRadius:10,border:`1.5px solid ${gymPhase===i?p.color:'#2A381A'}`,background:gymPhase===i?`${p.color}0E`:'white',color:gymPhase===i?p.color:'#657060',fontSize:11,fontWeight:600,cursor:'pointer',lineHeight:1.5}}>
+              <button key={i} onClick={()=>setGymPhase(i)} style={{flex:1,padding:'10px 6px',borderRadius:10,border:`1.5px solid ${gymPhase===i?p.color:'#E2E8F0'}`,background:gymPhase===i?`${p.color}0E`:'white',color:gymPhase===i?p.color:'#64748B',fontSize:11,fontWeight:600,cursor:'pointer',lineHeight:1.5}}>
                 Phase {p.phase}<br/><span style={{fontWeight:400,fontSize:10}}>{p.weeks}</span>
               </button>
             ))}
@@ -2516,43 +1702,43 @@ function FitTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, profile })
             return (
               <>
                 <div className="card" style={{borderTop:`3px solid ${ph.color}`}}>
-                  <div style={{fontSize:15,fontWeight:800,color:'#1A2412',marginBottom:2}}>{ph.label}</div>
-                  <div style={{fontSize:12,color:'#657060',marginBottom:12}}>{ph.goal}</div>
+                  <div style={{fontSize:15,fontWeight:800,color:'#0F172A',marginBottom:2}}>{ph.label}</div>
+                  <div style={{fontSize:12,color:'#64748B',marginBottom:12}}>{ph.goal}</div>
                   <div style={{padding:'10px 12px',background:`${ph.color}08`,borderRadius:9,border:`1px solid ${ph.color}20`,marginBottom:12}}>
                     <div style={{fontSize:11,fontWeight:700,color:ph.color,marginBottom:3}}>🚶 CARDIO</div>
-                    <div style={{fontSize:12,color:'#2C3822',lineHeight:1.65}}>{ph.cardio}</div>
+                    <div style={{fontSize:12,color:'#374151',lineHeight:1.65}}>{ph.cardio}</div>
                   </div>
-                  <div style={{fontSize:11,fontWeight:700,color:'#657060',textTransform:'uppercase',letterSpacing:0.5,marginBottom:8}}>STRENGTH — {ph.strength}</div>
+                  <div style={{fontSize:11,fontWeight:700,color:'#64748B',textTransform:'uppercase',letterSpacing:0.5,marginBottom:8}}>STRENGTH — {ph.strength}</div>
                   {ph.exercises.map((ex,ei)=>{
                     const key=`${gymPhase}-${ei}`; const isOpen=gymExp===key
                     return (
-                      <div key={ei} style={{border:`1px solid ${isOpen?ph.color+'40':'#1A2412'}`,borderRadius:9,marginBottom:6,overflow:'hidden'}}>
+                      <div key={ei} style={{border:`1px solid ${isOpen?ph.color+'40':'#F1F5F9'}`,borderRadius:9,marginBottom:6,overflow:'hidden'}}>
                         <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 13px',cursor:'pointer',background:isOpen?`${ph.color}05`:'white'}} onClick={()=>setGymExp(isOpen?null:key)}>
                           <div style={{flex:1}}>
-                            <div style={{fontSize:13,fontWeight:600,color:'#1A2412'}}>{ex.name}</div>
+                            <div style={{fontSize:13,fontWeight:600,color:'#0F172A'}}>{ex.name}</div>
                             <div style={{display:'flex',gap:10,marginTop:2}}>
                               <span style={{fontSize:11,color:ph.color,fontWeight:600}}>{ex.sets} sets × {ex.reps}</span>
-                              <span style={{fontSize:11,color:'#8A9482'}}>Rest: {ex.rest}</span>
+                              <span style={{fontSize:11,color:'#94A3B8'}}>Rest: {ex.rest}</span>
                             </div>
                           </div>
-                          <span style={{color:'#8A9482',fontSize:11}}>{isOpen?'▲':'ℹ'}</span>
+                          <span style={{color:'#94A3B8',fontSize:11}}>{isOpen?'▲':'ℹ'}</span>
                         </div>
-                        {isOpen && <div style={{padding:'8px 13px 12px',borderTop:`1px solid ${ph.color}20`,background:`${ph.color}04`,fontSize:12,color:'#2C3822',lineHeight:1.65}}>{ex.note}</div>}
+                        {isOpen && <div style={{padding:'8px 13px 12px',borderTop:`1px solid ${ph.color}20`,background:`${ph.color}04`,fontSize:12,color:'#374151',lineHeight:1.65}}>{ex.note}</div>}
                       </div>
                     )
                   })}
                 </div>
-                <div className="card" style={{background:'#EAF3DC',border:'1px solid #C8DDA8'}}>
-                  <div style={{fontSize:12,fontWeight:700,color:'#3C5A1E',marginBottom:5}}>⚡ POST-WORKOUT NUTRITION — Within 30 min (mandatory)</div>
-                  <div style={{fontSize:13,color:'#2C3822',lineHeight:1.65}}>{ph.postWorkout}</div>
+                <div className="card" style={{background:'#F0FDF4',border:'1px solid #BBF7D0'}}>
+                  <div style={{fontSize:12,fontWeight:700,color:'#059669',marginBottom:5}}>⚡ POST-WORKOUT NUTRITION — Within 30 min (mandatory)</div>
+                  <div style={{fontSize:13,color:'#374151',lineHeight:1.65}}>{ph.postWorkout}</div>
                 </div>
-                <div className="card" style={{background:'#FDF0EC',borderTop:'2px solid #EF4444'}}>
-                  <div className="card-title" style={{color:'#A82818',marginBottom:8}}>⚠ Safety Rules — Always Follow</div>
-                  <div style={{fontSize:12,color:'#2C3822',lineHeight:1.7,marginBottom:8}}>{ph.caution}</div>
+                <div className="card" style={{background:'#FEF2F2',borderTop:'2px solid #EF4444'}}>
+                  <div className="card-title" style={{color:'#DC2626',marginBottom:8}}>⚠ Safety Rules — Always Follow</div>
+                  <div style={{fontSize:12,color:'#374151',lineHeight:1.7,marginBottom:8}}>{ph.caution}</div>
                   {['Never exercise on empty stomach — blood sugar drop with partial pancreas','Stop at any sharp abdominal pain, chest tightness, or dizziness','Drink water: 300ml before + 300ml during + 300ml after','If exhausted on a day: walk + pranayama only. Rest is also training.'].map((r,ri)=>(
                     <div key={ri} style={{display:'flex',gap:8,marginBottom:5}}>
-                      <span style={{color:'#B83828',flexShrink:0,fontWeight:700}}>•</span>
-                      <span style={{fontSize:12,color:'#2C3822'}}>{r}</span>
+                      <span style={{color:'#EF4444',flexShrink:0,fontWeight:700}}>•</span>
+                      <span style={{fontSize:12,color:'#374151'}}>{r}</span>
                     </div>
                   ))}
                 </div>
@@ -2561,7 +1747,7 @@ function FitTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, profile })
                   {[['Monday','Yoga + Strength (Push — Chest/Shoulders)'],['Tuesday','Walk + Pranayama only (recovery)'],['Wednesday','Yoga + Strength (Pull — Back/Arms)'],['Thursday','Walk + Pranayama + Flexibility'],['Friday','Yoga + Strength (Legs — Squats/Glutes)'],['Saturday','Full 45-min Yoga session'],['Sunday','Rest + gentle walk only']].map(([d,a],di)=>(
                     <div key={di} style={{display:'flex',gap:12,padding:'9px 0',borderBottom:'1px solid #F1F5F9'}}>
                       <div style={{width:90,fontSize:12,fontWeight:700,color:ph.color,flexShrink:0}}>{d}</div>
-                      <div style={{fontSize:12,color:'#2C3822'}}>{a}</div>
+                      <div style={{fontSize:12,color:'#374151'}}>{a}</div>
                     </div>
                   ))}
                 </div>
@@ -2573,16 +1759,16 @@ function FitTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, profile })
 
       {view==='ai' && (
         <div>
-          <div style={{padding:'12px 16px',background:'#F0F6FE',border:'1px solid #A8CCEC',borderRadius:10,marginBottom:14}}>
-            <div style={{fontSize:13,fontWeight:700,color:'#2E5080',marginBottom:3}}>🤖 AI-Personalised Plan</div>
-            <div style={{fontSize:12,color:'#2A4070'}}>JARVIS generates a custom plan using your complete health profile — phase, surgery history, current fitness level, and recovery goals. More specific than any generic program.</div>
+          <div style={{padding:'12px 16px',background:'#EFF6FF',border:'1px solid #BFDBFE',borderRadius:10,marginBottom:14}}>
+            <div style={{fontSize:13,fontWeight:700,color:'#1D4ED8',marginBottom:3}}>🤖 AI-Personalised Plan</div>
+            <div style={{fontSize:12,color:'#3730A3'}}>JARVIS generates a custom plan using your complete health profile — phase, surgery history, current fitness level, and recovery goals. More specific than any generic program.</div>
           </div>
           <div className="card">
             <div className="fg">
               <label className="fl">Plan type</label>
               <div style={{display:'flex',gap:8}}>
                 {[['yoga','🧘 Yoga & Pranayama'],['gym','💪 Strength Training']].map(([t,l])=>(
-                  <button key={t} onClick={()=>setAiType(t)} style={{flex:1,padding:'10px',borderRadius:9,border:`1.5px solid ${aiType===t?'#4A7090':'#2A381A'}`,background:aiType===t?'#F0F6FE':'white',color:aiType===t?'#4A7090':'#657060',fontSize:13,fontWeight:600,cursor:'pointer'}}>{l}</button>
+                  <button key={t} onClick={()=>setAiType(t)} style={{flex:1,padding:'10px',borderRadius:9,border:`1.5px solid ${aiType===t?'#0EA5E9':'#E2E8F0'}`,background:aiType===t?'#EFF6FF':'white',color:aiType===t?'#0EA5E9':'#64748B',fontSize:13,fontWeight:600,cursor:'pointer'}}>{l}</button>
                 ))}
               </div>
             </div>
@@ -2590,7 +1776,7 @@ function FitTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, profile })
               <label className="fl">Recovery phase</label>
               <div style={{display:'flex',gap:8}}>
                 {[['1','Weeks 1-6'],['2','Weeks 7-16'],['3','Month 4+']].map(([p,l])=>(
-                  <button key={p} onClick={()=>setAiPh(p)} style={{flex:1,padding:'10px 6px',borderRadius:9,border:`1.5px solid ${aiPh===p?'#5E8030':'#2A381A'}`,background:aiPh===p?'#F2F8E8':'white',color:aiPh===p?'#4A6A24':'#657060',fontSize:11,fontWeight:600,cursor:'pointer',lineHeight:1.5}}>Phase {p}<br/><span style={{fontWeight:400,fontSize:10,color:aiPh===p?'#5E8030':'#8A9482'}}>{l}</span></button>
+                  <button key={p} onClick={()=>setAiPh(p)} style={{flex:1,padding:'10px 6px',borderRadius:9,border:`1.5px solid ${aiPh===p?'#8B5CF6':'#E2E8F0'}`,background:aiPh===p?'#F5F3FF':'white',color:aiPh===p?'#7C3AED':'#64748B',fontSize:11,fontWeight:600,cursor:'pointer',lineHeight:1.5}}>Phase {p}<br/><span style={{fontWeight:400,fontSize:10,color:aiPh===p?'#8B5CF6':'#94A3B8'}}>{l}</span></button>
                 ))}
               </div>
             </div>
@@ -2604,7 +1790,7 @@ function FitTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, profile })
                 <div className="card-title" style={{marginBottom:0}}>Your Custom {aiType==='yoga'?'Yoga':'Gym'} Plan — Phase {aiPh}</div>
                 <button onClick={()=>speak((aiPlan||saved),{max:400})} className="btn btn-ou btn-sm">🔊</button>
               </div>
-              <div style={{fontSize:13,color:'#2C3822',lineHeight:1.85,whiteSpace:'pre-wrap'}}>{aiPlan||saved}</div>
+              <div style={{fontSize:13,color:'#374151',lineHeight:1.85,whiteSpace:'pre-wrap'}}>{aiPlan||saved}</div>
             </div>
           )}
         </div>
@@ -2612,18 +1798,19 @@ function FitTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, profile })
     </div>
   )
 }
+
 // ─── HEALING GUIDES ───────────────────────────────────────────────────────────
 const HEAL_TOPICS = [
-  {id:'ca199',    icon:'🎯',label:'Reduce CA 19-9',        color:'#B83828'},
-  {id:'sperm',    icon:'🌱',label:'Sperm & Fertility',      color:'#4A7090'},
-  {id:'hair',     icon:'✨',label:'Hair Regrowth',          color:'#B87820'},
-  {id:'weight',   icon:'⚖️',label:'Gain Weight Safely',    color:'#5E8030'},
-  {id:'immunity', icon:'🛡️',label:'Rebuild Immunity',      color:'#4A7090'},
-  {id:'energy',   icon:'⚡',label:'Restore Energy',         color:'#B87820'},
-  {id:'digestion',icon:'🌿',label:'Fix Digestion (PERT)',   color:'#5E8030'},
-  {id:'eyebrow',  icon:'👁️',label:'Eyebrow & Lashes',      color:'#5E8030'},
-  {id:'appear',   icon:'🌟',label:'Look Normal Again',      color:'#5E8030'},
-  {id:'complete', icon:'🏆',label:'Full Recovery Roadmap', color:'#B83828'},
+  {id:'ca199',    icon:'🎯',label:'Reduce CA 19-9',        color:'#EF4444'},
+  {id:'sperm',    icon:'🌱',label:'Sperm & Fertility',      color:'#0EA5E9'},
+  {id:'hair',     icon:'✨',label:'Hair Regrowth',          color:'#F59E0B'},
+  {id:'weight',   icon:'⚖️',label:'Gain Weight Safely',    color:'#10B981'},
+  {id:'immunity', icon:'🛡️',label:'Rebuild Immunity',      color:'#0EA5E9'},
+  {id:'energy',   icon:'⚡',label:'Restore Energy',         color:'#F59E0B'},
+  {id:'digestion',icon:'🌿',label:'Fix Digestion (PERT)',   color:'#10B981'},
+  {id:'eyebrow',  icon:'👁️',label:'Eyebrow & Lashes',      color:'#8B5CF6'},
+  {id:'appear',   icon:'🌟',label:'Look Normal Again',      color:'#10B981'},
+  {id:'complete', icon:'🏆',label:'Full Recovery Roadmap', color:'#EF4444'},
 ]
 const HEAL_PROMPTS = {
   ca199:'Specific actionable CA 19-9 reduction protocol (5 layers): 1) Blood sugar control — eliminate refined sugar, low glycemic, protein before carbs, cinnamon half tsp, berberine 500mg, fasting glucose target 80-90. 2) Liver support — milk thistle, NAC 600mg, amla 2 tsp daily, 3L water, no alcohol. 3) Gut inflammation — L-Glutamine 5g empty stomach, probiotic (Lactobacillus + Bifidobacterium), no NSAIDs. 4) Anti-inflammatory stack — turmeric+pepper nightly, omega-3 2-3g, ginger daily, green tea 2 cups. 5) Evidence-based agents — Vitamin D3 4000-5000 IU, melatonin 10-20mg, quercetin 500mg, modified citrus pectin 5g 3x. Include realistic timeline and tracking.',
@@ -2662,19 +1849,19 @@ function HealTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading }) {
         {HEAL_TOPICS.map(t=>(
           <button key={t.id} className={`heal-btn${topic===t.id?' sel':''}`} style={{'--hc':t.color}} onClick={()=>get(t.id)}>
             <div style={{fontSize:22,marginBottom:7}}>{t.icon}</div>
-            <div style={{fontSize:12,fontWeight:700,color:topic===t.id?t.color:'#2C3822',marginBottom:2}}>{t.label}</div>
-            {db.recoveryGuides?.[t.id]&&<div style={{fontSize:9,fontWeight:700,color:'#5E8030',marginTop:3}}>✓ Saved</div>}
+            <div style={{fontSize:12,fontWeight:700,color:topic===t.id?t.color:'#374151',marginBottom:2}}>{t.label}</div>
+            {db.recoveryGuides?.[t.id]&&<div style={{fontSize:9,fontWeight:700,color:'#10B981',marginTop:3}}>✓ Saved</div>}
           </button>
         ))}
       </div>
-      {aiLoading&&<div className="card" style={{display:'flex',alignItems:'center',gap:10,color:'#657060'}}><Spin/>Generating your personalized guide — please wait...</div>}
+      {aiLoading&&<div className="card" style={{display:'flex',alignItems:'center',gap:10,color:'#64748B'}}><Spin/>Generating your personalized guide — please wait...</div>}
       {result&&topic&&(
-        <div className="card fade-up" style={{borderTop:`3px solid ${HEAL_TOPICS.find(t=>t.id===topic)?.color||'#4A7090'}`}}>
+        <div className="card fade-up" style={{borderTop:`3px solid ${HEAL_TOPICS.find(t=>t.id===topic)?.color||'#0EA5E9'}`}}>
           <div style={{display:'flex',justifyContent:'space-between',marginBottom:12}}>
             <div className="card-title" style={{marginBottom:0,color:HEAL_TOPICS.find(t=>t.id===topic)?.color}}>{HEAL_TOPICS.find(t=>t.id===topic)?.label}</div>
             <button onClick={()=>speak(result,{max:480})} className="btn btn-ou btn-sm">🔊 Listen</button>
           </div>
-          <div style={{fontSize:13,color:'#2C3822',lineHeight:1.8,whiteSpace:'pre-wrap'}}>{result}</div>
+          <div style={{fontSize:13,color:'#374151',lineHeight:1.8,whiteSpace:'pre-wrap'}}>{result}</div>
         </div>
       )}
     </div>
@@ -2690,9 +1877,9 @@ function ProfileTab({ uid, profile, setProfile, showToast }) {
   }
   return (
     <div className="fade-up">
-      <div style={{padding:'13px 16px',background:'#F0F6FE',border:'1px solid #A8CCEC',borderRadius:12,marginBottom:16}}>
-        <div style={{fontSize:13,fontWeight:700,color:'#2E5080',marginBottom:3}}>Your JARVIS Memory</div>
-        <div style={{fontSize:12,color:'#2A4070',lineHeight:1.6}}>Everything here is used by JARVIS in every conversation and analysis. Update after each oncologist visit.</div>
+      <div style={{padding:'13px 16px',background:'#EFF6FF',border:'1px solid #BFDBFE',borderRadius:12,marginBottom:16}}>
+        <div style={{fontSize:13,fontWeight:700,color:'#1D4ED8',marginBottom:3}}>Your JARVIS Memory</div>
+        <div style={{fontSize:12,color:'#3730A3',lineHeight:1.6}}>Everything here is used by JARVIS in every conversation and analysis. Update after each oncologist visit.</div>
       </div>
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:14}}>
         <div className="card">
@@ -2763,9 +1950,9 @@ function SuperTab({ userEmail, aiLoading, setAiLoading }) {
 
   return (
     <div className="fade-up">
-      <div style={{padding:'14px 18px',background:'linear-gradient(135deg,#EAF3DC,#E8F0EC)',border:'1px solid #A7F3D0',borderRadius:14,marginBottom:16}}>
-        <div style={{fontSize:16,fontWeight:800,color:'#3C5A1E',marginBottom:3}}>🌱 Your Complete Healing Arsenal</div>
-        <div style={{fontSize:12,color:'#4A6A24',lineHeight:1.6}}>Every food and supplement here is chosen specifically for pancreatic cancer recovery. Built into the app — instant, always available, no internet needed for the reference. Tap "Ask JARVIS" for AI-personalized deep-dive on anything.</div>
+      <div style={{padding:'14px 18px',background:'linear-gradient(135deg,#ECFDF5,#EFF6FF)',border:'1px solid #A7F3D0',borderRadius:14,marginBottom:16}}>
+        <div style={{fontSize:16,fontWeight:800,color:'#065F46',marginBottom:3}}>🌱 Your Complete Healing Arsenal</div>
+        <div style={{fontSize:12,color:'#047857',lineHeight:1.6}}>Every food and supplement here is chosen specifically for pancreatic cancer recovery. Built into the app — instant, always available, no internet needed for the reference. Tap "Ask JARVIS" for AI-personalized deep-dive on anything.</div>
       </div>
       <div className="tabs">
         <button className={`tab${section==='foods'?' on':''}`} onClick={()=>setSection('foods')}>🥦 Superfoods ({SUPERFOODS.length})</button>
@@ -2775,50 +1962,50 @@ function SuperTab({ userEmail, aiLoading, setAiLoading }) {
 
       {section==='foods' && (
         <>
-          <div style={{padding:'9px 13px',background:'rgba(94,128,48,0.07)',border:'1px solid rgba(16,185,129,0.25)',borderRadius:9,marginBottom:12,fontSize:12,color:'#3C5A1E',fontWeight:600}}>
+          <div style={{padding:'9px 13px',background:'rgba(16,185,129,0.07)',border:'1px solid rgba(16,185,129,0.25)',borderRadius:9,marginBottom:12,fontSize:12,color:'#059669',fontWeight:600}}>
             🏆 MUST HAVE = Daily non-negotiable · HIGH = 3-4x/week · Tap any food for full details + Ask JARVIS for AI personalisation
           </div>
           {SUPERFOODS.map((f,i)=>{
             const isOpen=expanded===i
             return (
-              <div key={i} style={{background:'#FFFFFF',border:`1.5px solid ${isOpen?f.color+'40':'#E8EEF4'}`,borderRadius:12,marginBottom:8,overflow:'hidden',boxShadow:'0 1px 4px rgba(15,23,42,0.05)'}}>
+              <div key={i} style={{background:'white',border:`1.5px solid ${isOpen?f.color+'40':'#E8EEF4'}`,borderRadius:12,marginBottom:8,overflow:'hidden',boxShadow:'0 1px 4px rgba(15,23,42,0.05)'}}>
                 <div style={{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',cursor:'pointer'}} onClick={()=>setExpanded(isOpen?null:i)}>
                   <span style={{fontSize:24,flexShrink:0}}>{f.emoji}</span>
                   <div style={{flex:1}}>
-                    <div style={{fontSize:13,fontWeight:700,color:'#1A2412'}}>{f.name}</div>
-                    <div style={{fontSize:11,color:'#8A9482',marginTop:1}}>{f.dose}</div>
+                    <div style={{fontSize:13,fontWeight:700,color:'#0F172A'}}>{f.name}</div>
+                    <div style={{fontSize:11,color:'#94A3B8',marginTop:1}}>{f.dose}</div>
                   </div>
-                  <span style={{padding:'3px 9px',borderRadius:20,fontSize:10,fontWeight:700,background:f.tag==='MUST HAVE'?'#F0FDF4':'#F0F6FE',color:f.tag==='MUST HAVE'?'#3C5A1E':'#4A7090',border:`1px solid ${f.tag==='MUST HAVE'?'#C8DDA8':'#A8CCEC'}`,flexShrink:0}}>{f.tag}</span>
-                  <span style={{color:'#8A9482',fontSize:11,flexShrink:0,marginLeft:4}}>{isOpen?'▲':'▼'}</span>
+                  <span style={{padding:'3px 9px',borderRadius:20,fontSize:10,fontWeight:700,background:f.tag==='MUST HAVE'?'#F0FDF4':'#EFF6FF',color:f.tag==='MUST HAVE'?'#059669':'#0EA5E9',border:`1px solid ${f.tag==='MUST HAVE'?'#BBF7D0':'#BFDBFE'}`,flexShrink:0}}>{f.tag}</span>
+                  <span style={{color:'#94A3B8',fontSize:11,flexShrink:0,marginLeft:4}}>{isOpen?'▲':'▼'}</span>
                 </div>
                 {isOpen && (
                   <div style={{padding:'0 16px 14px',borderTop:`1px solid ${f.color}20`}}>
                     <div style={{display:'flex',gap:10,marginBottom:10,flexWrap:'wrap'}}>
-                      <div style={{flex:1,minWidth:160,padding:'9px 11px',background:'#F9F6F1',borderRadius:8}}>
-                        <div style={{fontSize:10,fontWeight:700,color:'#8A9482',marginBottom:3}}>DOSE & TIMING</div>
-                        <div style={{fontSize:12,color:'#2C3822',fontWeight:600}}>{f.dose}</div>
-                        <div style={{fontSize:11,color:'#657060',marginTop:2}}>{f.timing}</div>
+                      <div style={{flex:1,minWidth:160,padding:'9px 11px',background:'#F8FAFC',borderRadius:8}}>
+                        <div style={{fontSize:10,fontWeight:700,color:'#94A3B8',marginBottom:3}}>DOSE & TIMING</div>
+                        <div style={{fontSize:12,color:'#374151',fontWeight:600}}>{f.dose}</div>
+                        <div style={{fontSize:11,color:'#64748B',marginTop:2}}>{f.timing}</div>
                       </div>
                     </div>
                     <div style={{marginBottom:9}}>
-                      <div style={{fontSize:10,fontWeight:700,color:'#8A9482',marginBottom:4,textTransform:'uppercase'}}>Why it matters for you</div>
-                      <div style={{fontSize:12,color:'#2C3822',lineHeight:1.65}}>{f.why}</div>
+                      <div style={{fontSize:10,fontWeight:700,color:'#94A3B8',marginBottom:4,textTransform:'uppercase'}}>Why it matters for you</div>
+                      <div style={{fontSize:12,color:'#374151',lineHeight:1.65}}>{f.why}</div>
                     </div>
-                    <div style={{padding:'9px 12px',background:'#F0F9FF',borderRadius:8,border:'1px solid #A4CCE8',marginBottom:8}}>
-                      <div style={{fontSize:10,fontWeight:700,color:'#2A5878',marginBottom:3}}>🔬 SCIENCE</div>
-                      <div style={{fontSize:11,color:'#1E3A58',lineHeight:1.6}}>{f.science}</div>
+                    <div style={{padding:'9px 12px',background:'#F0F9FF',borderRadius:8,border:'1px solid #BAE6FD',marginBottom:8}}>
+                      <div style={{fontSize:10,fontWeight:700,color:'#0369A1',marginBottom:3}}>🔬 SCIENCE</div>
+                      <div style={{fontSize:11,color:'#0C4A6E',lineHeight:1.6}}>{f.science}</div>
                     </div>
-                    <div style={{padding:'9px 12px',background:'#FDF8EC',borderRadius:8,border:'1px solid #E8D090',marginBottom:8}}>
-                      <div style={{fontSize:10,fontWeight:700,color:'#7A4A10',marginBottom:3}}>HOW TO USE</div>
-                      <div style={{fontSize:11,color:'#6A4010',lineHeight:1.65}}>{f.how}</div>
+                    <div style={{padding:'9px 12px',background:'#FFFBEB',borderRadius:8,border:'1px solid #FDE68A',marginBottom:8}}>
+                      <div style={{fontSize:10,fontWeight:700,color:'#92400E',marginBottom:3}}>HOW TO USE</div>
+                      <div style={{fontSize:11,color:'#78350F',lineHeight:1.65}}>{f.how}</div>
                     </div>
                     {f.avoid && (
-                      <div style={{padding:'9px 12px',background:'#FDF0EC',borderRadius:8,border:'1px solid #F4C8C0',marginBottom:10,fontSize:11,color:'#A82818'}}>⚠ {f.avoid}</div>
+                      <div style={{padding:'9px 12px',background:'#FEF2F2',borderRadius:8,border:'1px solid #FECACA',marginBottom:10,fontSize:11,color:'#DC2626'}}>⚠ {f.avoid}</div>
                     )}
                     <button onClick={()=>askAbout(f.name,`Dose: ${f.dose}. Timing: ${f.timing}. I want to know more about optimal usage, interactions with my medicines, and how to maximise benefit.`)} disabled={aiLoading} className="btn btn-ou btn-sm" style={{width:'100%'}}>
                       {aiLoading?<><Spin size={13}/>Asking JARVIS...</>:`🤖 Ask JARVIS — Is ${f.name.split(' ')[0]} right for me?`}
                     </button>
-                    {aiA && <div style={{marginTop:10,padding:'12px',background:'#F9F6F1',borderRadius:9,border:'1px solid #E2DDD6',fontSize:12,color:'#2C3822',lineHeight:1.75,whiteSpace:'pre-wrap'}}>{aiA}</div>}
+                    {aiA && <div style={{marginTop:10,padding:'12px',background:'#F8FAFC',borderRadius:9,border:'1px solid #E2E8F0',fontSize:12,color:'#374151',lineHeight:1.75,whiteSpace:'pre-wrap'}}>{aiA}</div>}
                   </div>
                 )}
               </div>
@@ -2829,31 +2016,31 @@ function SuperTab({ userEmail, aiLoading, setAiLoading }) {
 
       {section==='supps' && (
         <>
-          <div style={{padding:'9px 13px',background:'#FDF8EC',border:'1px solid #E8D090',borderRadius:9,marginBottom:12,fontSize:12,color:'#7A4A10'}}>
+          <div style={{padding:'9px 13px',background:'#FFFBEB',border:'1px solid #FDE68A',borderRadius:9,marginBottom:12,fontSize:12,color:'#92400E'}}>
             ⚠ Always confirm new supplements with your oncologist. Introduce ONE at a time every 5-7 days. Tap any supplement for full details.
           </div>
           {SUPPLEMENT_STACK.map((slot,si)=>(
             <div key={si} className="card" style={{borderTop:`3px solid ${slot.color}`}}>
-              <div style={{fontSize:14,fontWeight:700,color:'#1A2412',marginBottom:12}}>{slot.time}</div>
+              <div style={{fontSize:14,fontWeight:700,color:'#0F172A',marginBottom:12}}>{slot.time}</div>
               {slot.items.map((item,ii)=>{
                 const key=`${si}-${ii}`; const isOpen=suppExp===key
                 return (
-                  <div key={ii} style={{marginBottom:7,border:`1px solid ${isOpen?slot.color+'40':'#1A2412'}`,borderRadius:9,overflow:'hidden'}}>
+                  <div key={ii} style={{marginBottom:7,border:`1px solid ${isOpen?slot.color+'40':'#F1F5F9'}`,borderRadius:9,overflow:'hidden'}}>
                     <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 13px',cursor:'pointer',background:isOpen?`${slot.color}05`:'white'}} onClick={()=>setSuppExp(isOpen?null:key)}>
                       <div style={{flex:1}}>
-                        <div style={{fontSize:13,fontWeight:600,color:'#1A2412'}}>{item.name}</div>
+                        <div style={{fontSize:13,fontWeight:600,color:'#0F172A'}}>{item.name}</div>
                         <div style={{fontSize:11,color:slot.color,fontWeight:600,marginTop:1}}>{item.dose}</div>
                       </div>
-                      <span style={{color:'#8A9482',fontSize:11}}>{isOpen?'▲':'▼'}</span>
+                      <span style={{color:'#94A3B8',fontSize:11}}>{isOpen?'▲':'▼'}</span>
                     </div>
                     {isOpen && (
                       <div style={{padding:'8px 13px 12px',borderTop:`1px solid ${slot.color}20`}}>
-                        <div style={{fontSize:12,color:'#2C3822',lineHeight:1.65,marginBottom:7}}>{item.why}</div>
-                        <div style={{padding:'8px 10px',background:'#F9F6F1',borderRadius:7,fontSize:11,color:'#657060',marginBottom:9}}>📌 {item.note}</div>
+                        <div style={{fontSize:12,color:'#374151',lineHeight:1.65,marginBottom:7}}>{item.why}</div>
+                        <div style={{padding:'8px 10px',background:'#F8FAFC',borderRadius:7,fontSize:11,color:'#64748B',marginBottom:9}}>📌 {item.note}</div>
                         <button onClick={()=>askAbout(item.name,`Dose: ${item.dose}. I want to know about interactions with other supplements I take, optimal timing, and what results I should expect.`)} disabled={aiLoading} className="btn btn-ou btn-sm" style={{width:'100%'}}>
                           {aiLoading?<><Spin size={13}/>...</>:`🤖 Ask JARVIS about ${item.name.split(' ')[0]}`}
                         </button>
-                        {aiA && <div style={{marginTop:8,padding:'10px',background:'#F9F6F1',borderRadius:8,fontSize:11,color:'#2C3822',lineHeight:1.7,whiteSpace:'pre-wrap'}}>{aiA}</div>}
+                        {aiA && <div style={{marginTop:8,padding:'10px',background:'#F8FAFC',borderRadius:8,fontSize:11,color:'#374151',lineHeight:1.7,whiteSpace:'pre-wrap'}}>{aiA}</div>}
                       </div>
                     )}
                   </div>
@@ -2866,8 +2053,8 @@ function SuperTab({ userEmail, aiLoading, setAiLoading }) {
 
       {section==='avoid' && (
         <div className="card" style={{borderTop:'3px solid #EF4444'}}>
-          <div className="card-title" style={{color:'#A82818'}}>❌ Foods That Work Against Your Recovery</div>
-          <div style={{fontSize:12,color:'#657060',marginBottom:14}}>These are not opinions. These are evidence-based factors that drive CA 19-9 elevation, cancer recurrence, and chronic disease. Avoid them permanently.</div>
+          <div className="card-title" style={{color:'#DC2626'}}>❌ Foods That Work Against Your Recovery</div>
+          <div style={{fontSize:12,color:'#64748B',marginBottom:14}}>These are not opinions. These are evidence-based factors that drive CA 19-9 elevation, cancer recurrence, and chronic disease. Avoid them permanently.</div>
           {[
             {food:'Refined Sugar (all forms)',reason:'Cancer cells consume glucose 10x faster than healthy cells. Every sugar spike creates an insulin surge → IGF-1 surge → direct cancer cell proliferation signal. This includes jaggery in excess, honey in excess, and fruit juice.'},
             {food:'Alcohol — Zero Tolerance',reason:'Your liver underwent radiation AND ablation. Alcohol is directly hepatotoxic even at one drink. It undoes weeks of liver repair, interferes with melatonin, and is a Group 1 carcinogen. This is permanent, not temporary.'},
@@ -2879,10 +2066,10 @@ function SuperTab({ userEmail, aiLoading, setAiLoading }) {
             {food:'NSAIDs (Ibuprofen, Aspirin)',reason:'Damage the gut lining directly — the same gut lining damaged by chemotherapy and currently healing. If you need pain relief, use paracetamol at minimum effective dose and consult your doctor.'},
           ].map((a,i)=>(
             <div key={i} style={{display:'flex',gap:11,padding:'11px 0',borderBottom:'1px solid #FEE2E2'}}>
-              <span style={{color:'#B83828',fontWeight:700,flexShrink:0,fontSize:16,marginTop:2}}>✕</span>
+              <span style={{color:'#EF4444',fontWeight:700,flexShrink:0,fontSize:16,marginTop:2}}>✕</span>
               <div>
-                <div style={{fontSize:13,fontWeight:700,color:'#A82818',marginBottom:2}}>{a.food}</div>
-                <div style={{fontSize:12,color:'#6A1A14',lineHeight:1.6}}>{a.reason}</div>
+                <div style={{fontSize:13,fontWeight:700,color:'#DC2626',marginBottom:2}}>{a.food}</div>
+                <div style={{fontSize:12,color:'#7F1D1D',lineHeight:1.6}}>{a.reason}</div>
               </div>
             </div>
           ))}
@@ -2926,12 +2113,12 @@ function RoutineTab({ userEmail, aiLoading, setAiLoading }) {
         <input className="fi" placeholder="Ask JARVIS: Can I do yoga after dinner? What to eat after gym?..." value={aiAsk} onChange={e=>setAiAsk(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')askRoutineAI(aiAsk)}} style={{flex:1}}/>
         <button className="btn btn-pr" onClick={()=>askRoutineAI(aiAsk)} disabled={!aiAsk.trim()||aiLoading} style={{flexShrink:0,padding:'10px 14px'}}>Ask</button>
       </div>
-      {aiResp && <div style={{padding:'12px 14px',background:'#FFFFFF',border:'1px solid #A8CCEC',borderRadius:10,marginBottom:14,fontSize:13,color:'#2C3822',lineHeight:1.75,whiteSpace:'pre-wrap'}}><span style={{fontSize:10,fontWeight:700,color:'#4A7090',display:'block',marginBottom:4}}>JARVIS</span>{aiResp}<button onClick={()=>speak(aiResp,{max:400})} style={{display:'block',marginTop:8,padding:'4px 10px',borderRadius:6,border:'1px solid #E2DDD6',background:'#FFFFFF',color:'#657060',fontSize:11,cursor:'pointer'}}>🔊 Listen</button></div>}
+      {aiResp && <div style={{padding:'12px 14px',background:'white',border:'1px solid #BFDBFE',borderRadius:10,marginBottom:14,fontSize:13,color:'#374151',lineHeight:1.75,whiteSpace:'pre-wrap'}}><span style={{fontSize:10,fontWeight:700,color:'#0EA5E9',display:'block',marginBottom:4}}>JARVIS</span>{aiResp}<button onClick={()=>speak(aiResp,{max:400})} style={{display:'block',marginTop:8,padding:'4px 10px',borderRadius:6,border:'1px solid #E2E8F0',background:'white',color:'#64748B',fontSize:11,cursor:'pointer'}}>🔊 Listen</button></div>}
 
       {/* ── SCHEDULE ── */}
       {view==='schedule' && (
         <>
-          <div style={{padding:'10px 14px',background:'#F0F6FE',border:'1px solid #A8CCEC',borderRadius:10,marginBottom:14,fontSize:12,color:'#2E5080'}}>
+          <div style={{padding:'10px 14px',background:'#EFF6FF',border:'1px solid #BFDBFE',borderRadius:10,marginBottom:14,fontSize:12,color:'#1D4ED8'}}>
             Your complete daily recovery protocol from waking to sleep. Follow this 80% consistently and your body heals. Tap any block for the science behind it.
           </div>
           {DAILY_SCHEDULE.map((slot,i)=>{
@@ -2939,21 +2126,21 @@ function RoutineTab({ userEmail, aiLoading, setAiLoading }) {
             return (
               <div key={i} style={{display:'flex',gap:12,marginBottom:8}}>
                 <div style={{display:'flex',flexDirection:'column',alignItems:'center',width:50,flexShrink:0}}>
-                  <div style={{fontSize:9,fontWeight:700,color:'#657060',textAlign:'center',lineHeight:1.3}}>{slot.time}</div>
+                  <div style={{fontSize:9,fontWeight:700,color:'#64748B',textAlign:'center',lineHeight:1.3}}>{slot.time}</div>
                   <div style={{width:2,flex:1,background:`${slot.color}25`,margin:'4px 0',minHeight:24}}/>
                 </div>
-                <div style={{flex:1,background:'#FFFFFF',border:`1px solid ${isOpen?slot.color+'40':'#E8EEF4'}`,borderRadius:12,cursor:'pointer',overflow:'hidden',boxShadow:'0 1px 3px rgba(15,23,42,0.04)',marginBottom:2}} onClick={()=>setOpenSlot(isOpen?null:i)}>
+                <div style={{flex:1,background:'white',border:`1px solid ${isOpen?slot.color+'40':'#E8EEF4'}`,borderRadius:12,cursor:'pointer',overflow:'hidden',boxShadow:'0 1px 3px rgba(15,23,42,0.04)',marginBottom:2}} onClick={()=>setOpenSlot(isOpen?null:i)}>
                   <div style={{display:'flex',alignItems:'center',gap:10,padding:'11px 14px'}}>
                     <span style={{fontSize:19}}>{slot.emoji}</span>
                     <div style={{flex:1}}>
-                      <div style={{fontSize:13,fontWeight:700,color:'#1A2412'}}>{slot.label}</div>
+                      <div style={{fontSize:13,fontWeight:700,color:'#0F172A'}}>{slot.label}</div>
                     </div>
-                    <span style={{color:'#8A9482',fontSize:11,flexShrink:0}}>{isOpen?'▲':'▼'}</span>
+                    <span style={{color:'#94A3B8',fontSize:11,flexShrink:0}}>{isOpen?'▲':'▼'}</span>
                   </div>
                   {isOpen && (
                     <div style={{padding:'0 14px 12px',borderTop:`1px solid ${slot.color}15`}}>
-                      <div style={{fontSize:13,color:'#2C3822',lineHeight:1.75,marginBottom:8}}>{slot.details}</div>
-                      <div style={{padding:'9px 12px',background:`${slot.color}07`,borderRadius:8,border:`1px solid ${slot.color}18`,fontSize:11,color:'#2C3822',lineHeight:1.65}}>
+                      <div style={{fontSize:13,color:'#374151',lineHeight:1.75,marginBottom:8}}>{slot.details}</div>
+                      <div style={{padding:'9px 12px',background:`${slot.color}07`,borderRadius:8,border:`1px solid ${slot.color}18`,fontSize:11,color:'#374151',lineHeight:1.65}}>
                         🔬 <strong>Why:</strong> {slot.why}
                       </div>
                     </div>
@@ -2968,42 +2155,42 @@ function RoutineTab({ userEmail, aiLoading, setAiLoading }) {
       {/* ── YOGA ── */}
       {view==='yoga' && (
         <>
-          <div style={{padding:'10px 14px',background:'#FDF8EC',border:'1px solid #E8D090',borderRadius:10,marginBottom:14}}>
-            <div style={{fontSize:13,fontWeight:700,color:'#7A4A10',marginBottom:2}}>Complete Daily Practice — {YOGA_SEQUENCE.reduce((s,y)=>s+y.mins,0)} Minutes</div>
-            <div style={{fontSize:12,color:'#6A4010'}}>Follow in this exact order every day. Static reference — no internet needed. Tap each practice for full instructions and science.</div>
+          <div style={{padding:'10px 14px',background:'#FFFBEB',border:'1px solid #FDE68A',borderRadius:10,marginBottom:14}}>
+            <div style={{fontSize:13,fontWeight:700,color:'#92400E',marginBottom:2}}>Complete Daily Practice — {YOGA_SEQUENCE.reduce((s,y)=>s+y.mins,0)} Minutes</div>
+            <div style={{fontSize:12,color:'#78350F'}}>Follow in this exact order every day. Static reference — no internet needed. Tap each practice for full instructions and science.</div>
           </div>
           {YOGA_SEQUENCE.map((y,i)=>{
             const isOpen=yogaExp===i
-            const tC=y.type==='Pranayama'?'#4A7090':y.type==='Asana'?'#B87820':'#5E8030'
+            const tC=y.type==='Pranayama'?'#0EA5E9':y.type==='Asana'?'#F59E0B':'#8B5CF6'
             return (
-              <div key={i} style={{background:'#FFFFFF',border:`1.5px solid ${isOpen?y.color+'40':'#E8EEF4'}`,borderRadius:12,marginBottom:8,overflow:'hidden',boxShadow:'0 1px 4px rgba(15,23,42,0.05)'}}>
+              <div key={i} style={{background:'white',border:`1.5px solid ${isOpen?y.color+'40':'#E8EEF4'}`,borderRadius:12,marginBottom:8,overflow:'hidden',boxShadow:'0 1px 4px rgba(15,23,42,0.05)'}}>
                 <div style={{display:'flex',alignItems:'center',gap:11,padding:'12px 16px',cursor:'pointer'}} onClick={()=>setYogaExp(isOpen?null:i)}>
                   <div style={{width:36,height:36,borderRadius:9,background:`${y.color}12`,border:`1px solid ${y.color}25`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>{y.emoji}</div>
                   <div style={{flex:1}}>
-                    <div style={{fontSize:13,fontWeight:700,color:'#1A2412'}}>Step {y.step}: {y.name}</div>
+                    <div style={{fontSize:13,fontWeight:700,color:'#0F172A'}}>Step {y.step}: {y.name}</div>
                     <div style={{display:'flex',gap:8,marginTop:2,flexWrap:'wrap'}}>
                       <span style={{fontSize:10,fontWeight:600,color:tC,background:`${tC}10`,padding:'1px 7px',borderRadius:4}}>{y.type}</span>
-                      <span style={{fontSize:11,color:'#8A9482'}}>⏱ {y.mins} min</span>
+                      <span style={{fontSize:11,color:'#94A3B8'}}>⏱ {y.mins} min</span>
                     </div>
                   </div>
-                  <span style={{color:'#8A9482',fontSize:11}}>{isOpen?'▲':'▼'}</span>
+                  <span style={{color:'#94A3B8',fontSize:11}}>{isOpen?'▲':'▼'}</span>
                 </div>
                 {isOpen && (
                   <div style={{padding:'0 16px 14px',borderTop:`1px solid ${y.color}20`}}>
-                    <div style={{fontSize:11,color:'#657060',marginBottom:8}}>📍 {y.when}</div>
+                    <div style={{fontSize:11,color:'#64748B',marginBottom:8}}>📍 {y.when}</div>
                     <div style={{marginBottom:9}}>
-                      <div style={{fontSize:10,fontWeight:700,color:'#8A9482',textTransform:'uppercase',marginBottom:4}}>How to do it</div>
-                      <div style={{fontSize:13,color:'#2C3822',lineHeight:1.8}}>{y.how}</div>
+                      <div style={{fontSize:10,fontWeight:700,color:'#94A3B8',textTransform:'uppercase',marginBottom:4}}>How to do it</div>
+                      <div style={{fontSize:13,color:'#374151',lineHeight:1.8}}>{y.how}</div>
                     </div>
                     <div style={{padding:'9px 12px',background:`${y.color}07`,borderRadius:8,border:`1px solid ${y.color}18`,marginBottom:8}}>
                       <div style={{fontSize:10,fontWeight:700,color:y.color,marginBottom:3,textTransform:'uppercase'}}>Benefits for You</div>
-                      <div style={{fontSize:12,color:'#2C3822',lineHeight:1.65}}>{y.benefit}</div>
+                      <div style={{fontSize:12,color:'#374151',lineHeight:1.65}}>{y.benefit}</div>
                     </div>
-                    <div style={{padding:'9px 12px',background:'#F0F9FF',borderRadius:8,border:'1px solid #A4CCE8',marginBottom:y.caution?8:0}}>
-                      <div style={{fontSize:10,fontWeight:700,color:'#2A5878',marginBottom:3,textTransform:'uppercase'}}>🔬 Science</div>
-                      <div style={{fontSize:11,color:'#1E3A58',lineHeight:1.65}}>{y.science}</div>
+                    <div style={{padding:'9px 12px',background:'#F0F9FF',borderRadius:8,border:'1px solid #BAE6FD',marginBottom:y.caution?8:0}}>
+                      <div style={{fontSize:10,fontWeight:700,color:'#0369A1',marginBottom:3,textTransform:'uppercase'}}>🔬 Science</div>
+                      <div style={{fontSize:11,color:'#0C4A6E',lineHeight:1.65}}>{y.science}</div>
                     </div>
-                    {y.caution && <div style={{padding:'9px 12px',background:'#FDF0EC',borderRadius:8,border:'1px solid #F4C8C0',fontSize:11,color:'#A82818'}}>⚠ {y.caution}</div>}
+                    {y.caution && <div style={{padding:'9px 12px',background:'#FEF2F2',borderRadius:8,border:'1px solid #FECACA',fontSize:11,color:'#DC2626'}}>⚠ {y.caution}</div>}
                   </div>
                 )}
               </div>
@@ -3015,12 +2202,12 @@ function RoutineTab({ userEmail, aiLoading, setAiLoading }) {
       {/* ── GYM ── */}
       {view==='gym' && (
         <>
-          <div style={{padding:'10px 14px',background:'#F2F8E8',border:'1px solid #D8ECBC',borderRadius:10,marginBottom:14,fontSize:12,color:'#6D28D9'}}>
+          <div style={{padding:'10px 14px',background:'#F5F3FF',border:'1px solid #DDD6FE',borderRadius:10,marginBottom:14,fontSize:12,color:'#6D28D9'}}>
             💡 Every 1% muscle gain = 4% lower cancer mortality. Phase-based progression — from gentle to powerful. Select your current phase.
           </div>
           <div style={{display:'flex',gap:8,marginBottom:16}}>
             {GYM_PHASES.map((p,i)=>(
-              <button key={i} onClick={()=>setGymPhase(i)} style={{flex:1,padding:'10px 6px',borderRadius:10,border:`1.5px solid ${gymPhase===i?p.color:'#2A381A'}`,background:gymPhase===i?`${p.color}0E`:'white',color:gymPhase===i?p.color:'#657060',fontSize:11,fontWeight:600,cursor:'pointer',lineHeight:1.5}}>
+              <button key={i} onClick={()=>setGymPhase(i)} style={{flex:1,padding:'10px 6px',borderRadius:10,border:`1.5px solid ${gymPhase===i?p.color:'#E2E8F0'}`,background:gymPhase===i?`${p.color}0E`:'white',color:gymPhase===i?p.color:'#64748B',fontSize:11,fontWeight:600,cursor:'pointer',lineHeight:1.5}}>
                 Phase {p.phase}<br/><span style={{fontWeight:400,fontSize:10}}>{p.weeks}</span>
               </button>
             ))}
@@ -3030,43 +2217,43 @@ function RoutineTab({ userEmail, aiLoading, setAiLoading }) {
             return (
               <>
                 <div className="card" style={{borderTop:`3px solid ${ph.color}`}}>
-                  <div style={{fontSize:15,fontWeight:800,color:'#1A2412',marginBottom:2}}>{ph.label}</div>
-                  <div style={{fontSize:12,color:'#657060',marginBottom:10}}>{ph.goal}</div>
+                  <div style={{fontSize:15,fontWeight:800,color:'#0F172A',marginBottom:2}}>{ph.label}</div>
+                  <div style={{fontSize:12,color:'#64748B',marginBottom:10}}>{ph.goal}</div>
                   <div style={{padding:'9px 12px',background:`${ph.color}08`,borderRadius:9,border:`1px solid ${ph.color}20`,marginBottom:12}}>
                     <div style={{fontSize:11,fontWeight:700,color:ph.color,marginBottom:3}}>🚶 CARDIO</div>
-                    <div style={{fontSize:12,color:'#2C3822',lineHeight:1.65}}>{ph.cardio}</div>
+                    <div style={{fontSize:12,color:'#374151',lineHeight:1.65}}>{ph.cardio}</div>
                   </div>
-                  <div style={{fontSize:11,fontWeight:700,color:'#657060',textTransform:'uppercase',letterSpacing:0.4,marginBottom:8}}>STRENGTH — {ph.strength}</div>
+                  <div style={{fontSize:11,fontWeight:700,color:'#64748B',textTransform:'uppercase',letterSpacing:0.4,marginBottom:8}}>STRENGTH — {ph.strength}</div>
                   {ph.exercises.map((ex,ei)=>{
                     const key=`g${gymPhase}-${ei}`; const isOpen=gymExp===key
                     return (
-                      <div key={ei} style={{border:`1px solid ${isOpen?ph.color+'40':'#1A2412'}`,borderRadius:9,marginBottom:6,overflow:'hidden'}}>
+                      <div key={ei} style={{border:`1px solid ${isOpen?ph.color+'40':'#F1F5F9'}`,borderRadius:9,marginBottom:6,overflow:'hidden'}}>
                         <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',cursor:'pointer',background:isOpen?`${ph.color}05`:'white'}} onClick={()=>setGymExp(isOpen?null:key)}>
                           <div style={{flex:1}}>
-                            <div style={{fontSize:13,fontWeight:600,color:'#1A2412'}}>{ex.name}</div>
+                            <div style={{fontSize:13,fontWeight:600,color:'#0F172A'}}>{ex.name}</div>
                             <div style={{display:'flex',gap:10,marginTop:2}}>
                               <span style={{fontSize:11,color:ph.color,fontWeight:600}}>{ex.sets} sets × {ex.reps}</span>
-                              <span style={{fontSize:11,color:'#8A9482'}}>Rest {ex.rest}</span>
+                              <span style={{fontSize:11,color:'#94A3B8'}}>Rest {ex.rest}</span>
                             </div>
                           </div>
-                          <span style={{color:'#8A9482',fontSize:11}}>{isOpen?'▲':'ℹ'}</span>
+                          <span style={{color:'#94A3B8',fontSize:11}}>{isOpen?'▲':'ℹ'}</span>
                         </div>
-                        {isOpen && <div style={{padding:'8px 12px 12px',borderTop:`1px solid ${ph.color}20`,background:`${ph.color}04`,fontSize:12,color:'#2C3822',lineHeight:1.65}}>{ex.note}</div>}
+                        {isOpen && <div style={{padding:'8px 12px 12px',borderTop:`1px solid ${ph.color}20`,background:`${ph.color}04`,fontSize:12,color:'#374151',lineHeight:1.65}}>{ex.note}</div>}
                       </div>
                     )
                   })}
                 </div>
-                <div className="card" style={{background:'#EAF3DC',border:'1px solid #C8DDA8'}}>
-                  <div style={{fontSize:12,fontWeight:700,color:'#3C5A1E',marginBottom:5}}>⚡ Post-Workout — Within 30 Minutes (mandatory)</div>
-                  <div style={{fontSize:13,color:'#2C3822',lineHeight:1.65}}>{ph.postWorkout}</div>
+                <div className="card" style={{background:'#F0FDF4',border:'1px solid #BBF7D0'}}>
+                  <div style={{fontSize:12,fontWeight:700,color:'#059669',marginBottom:5}}>⚡ Post-Workout — Within 30 Minutes (mandatory)</div>
+                  <div style={{fontSize:13,color:'#374151',lineHeight:1.65}}>{ph.postWorkout}</div>
                 </div>
-                <div className="card" style={{background:'#FDF0EC',borderTop:'2px solid #EF4444'}}>
-                  <div className="card-title" style={{color:'#A82818'}}>⚠ Safety Rules</div>
-                  <div style={{fontSize:12,color:'#2C3822',lineHeight:1.7,marginBottom:8}}>{ph.caution}</div>
+                <div className="card" style={{background:'#FEF2F2',borderTop:'2px solid #EF4444'}}>
+                  <div className="card-title" style={{color:'#DC2626'}}>⚠ Safety Rules</div>
+                  <div style={{fontSize:12,color:'#374151',lineHeight:1.7,marginBottom:8}}>{ph.caution}</div>
                   {['Never exercise on empty stomach','Stop: sharp abdominal pain / chest tightness / dizziness','Drink water before, during, after every session','Tired day = walk + pranayama only. This IS training.'].map((r,ri)=>(
                     <div key={ri} style={{display:'flex',gap:8,marginBottom:5}}>
-                      <span style={{color:'#B83828',flexShrink:0,fontWeight:700}}>•</span>
-                      <span style={{fontSize:12,color:'#2C3822'}}>{r}</span>
+                      <span style={{color:'#EF4444',flexShrink:0,fontWeight:700}}>•</span>
+                      <span style={{fontSize:12,color:'#374151'}}>{r}</span>
                     </div>
                   ))}
                 </div>
@@ -3079,12 +2266,12 @@ function RoutineTab({ userEmail, aiLoading, setAiLoading }) {
       {/* ── DISEASE PREVENTION ── */}
       {view==='disease' && (
         <>
-          <div style={{padding:'12px 16px',background:'linear-gradient(135deg,#EAF3DC,#E8F0EC)',border:'1px solid #A7F3D0',borderRadius:12,marginBottom:14}}>
-            <div style={{fontSize:14,fontWeight:800,color:'#3C5A1E',marginBottom:4}}>🛡️ Your Cancer-Proof Life Protocol</div>
-            <div style={{fontSize:12,color:'#4A6A24',lineHeight:1.65}}>Following this recovery protocol doesn't just beat pancreatic cancer — it makes you biologically resistant to every major chronic disease. Here's exactly how each condition is prevented by what you're already doing.</div>
+          <div style={{padding:'12px 16px',background:'linear-gradient(135deg,#ECFDF5,#EFF6FF)',border:'1px solid #A7F3D0',borderRadius:12,marginBottom:14}}>
+            <div style={{fontSize:14,fontWeight:800,color:'#065F46',marginBottom:4}}>🛡️ Your Cancer-Proof Life Protocol</div>
+            <div style={{fontSize:12,color:'#047857',lineHeight:1.65}}>Following this recovery protocol doesn't just beat pancreatic cancer — it makes you biologically resistant to every major chronic disease. Here's exactly how each condition is prevented by what you're already doing.</div>
           </div>
           {[
-            { disease:'Type 2 Diabetes', risk:'High (pancreatectomy affects insulin production)', color:'#4A7090',
+            { disease:'Type 2 Diabetes', risk:'High (pancreatectomy affects insulin production)', color:'#0EA5E9',
               prevention:[
                 'Berberine 500mg with every meal = blood sugar control equal to Metformin in clinical trials',
                 'Walking after every meal blunts glucose spike by 40-50%',
@@ -3092,7 +2279,7 @@ function RoutineTab({ userEmail, aiLoading, setAiLoading }) {
                 'Cinnamon ½ tsp daily sensitises insulin receptors',
                 'Target: fasting glucose 80-90 mg/dL, HbA1c <5.5%',
               ]},
-            { disease:'Cancer Recurrence', risk:'Actively being prevented', color:'#B83828',
+            { disease:'Cancer Recurrence', risk:'Actively being prevented', color:'#EF4444',
               prevention:[
                 'Sulforaphane (broccoli) kills pancreatic cancer STEM cells — the chemo-resistant ones',
                 'Anulom Vilom 10 min daily = NK cell activity +30% (your cancer surveillance system)',
@@ -3101,7 +2288,7 @@ function RoutineTab({ userEmail, aiLoading, setAiLoading }) {
                 'Quercetin + Berberine = mTOR inhibition (cancer growth pathway suppressed)',
                 'Modified Citrus Pectin = blocks galectin-3 (metastasis protein) daily',
               ]},
-            { disease:'Heart Disease', risk:'Low (with this protocol)', color:'#B83828',
+            { disease:'Heart Disease', risk:'Low (with this protocol)', color:'#EF4444',
               prevention:[
                 'Omega-3 2-3g daily = most evidence-backed cardiovascular supplement (50+ RCTs)',
                 'Walnuts 5-7 daily = reduces LDL cholesterol by 5-10%',
@@ -3110,7 +2297,7 @@ function RoutineTab({ userEmail, aiLoading, setAiLoading }) {
                 'Turmeric + black pepper daily = arterial anti-inflammatory',
                 'Magnesium glycinate 400mg = blood pressure normalisation',
               ]},
-            { disease:'High Blood Pressure', risk:'Low (with this protocol)', color:'#B87820',
+            { disease:'High Blood Pressure', risk:'Low (with this protocol)', color:'#F59E0B',
               prevention:[
                 'Beetroot 3-4x/week = nitric oxide → arterial relaxation (proven)',
                 'Ashwagandha KSM-66 reduces cortisol by 27% → lower BP',
@@ -3119,7 +2306,7 @@ function RoutineTab({ userEmail, aiLoading, setAiLoading }) {
                 'Magnesium glycinate directly relaxes vascular smooth muscle',
                 'Deep breathing (4-7-8) activates vagus → immediate BP reduction',
               ]},
-            { disease:'Osteoporosis', risk:'Medium (steroids + chemo affect bones)', color:'#5E8030',
+            { disease:'Osteoporosis', risk:'Medium (steroids + chemo affect bones)', color:'#8B5CF6',
               prevention:[
                 'Vitamin D3 5000 IU + K2 200mcg = the exact combination for bone mineralisation',
                 'Weight-bearing exercise (squats, lunges) = osteoblast activation',
@@ -3127,7 +2314,7 @@ function RoutineTab({ userEmail, aiLoading, setAiLoading }) {
                 'Sun exposure 20 min daily = free Vitamin D3 synthesis',
                 'Magnesium: calcium cannot enter bones without adequate magnesium',
               ]},
-            { disease:'Alzheimer\'s / Dementia', risk:'Low (with this protocol)', color:'#5E8030',
+            { disease:'Alzheimer\'s / Dementia', risk:'Low (with this protocol)', color:'#10B981',
               prevention:[
                 'Omega-3 DHA = most important structural component of brain cell membranes',
                 'Walnuts contain BDNF precursors — the brain growth hormone',
@@ -3139,13 +2326,13 @@ function RoutineTab({ userEmail, aiLoading, setAiLoading }) {
           ].map((d,di)=>(
             <div key={di} className="card" style={{borderLeft:`4px solid ${d.color}`}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
-                <div style={{fontSize:15,fontWeight:800,color:'#1A2412'}}>{d.disease}</div>
+                <div style={{fontSize:15,fontWeight:800,color:'#0F172A'}}>{d.disease}</div>
                 <span style={{padding:'3px 10px',borderRadius:20,fontSize:10,fontWeight:700,background:`${d.color}10`,color:d.color,border:`1px solid ${d.color}25`,flexShrink:0,marginLeft:8}}>{d.risk}</span>
               </div>
               {d.prevention.map((p,pi)=>(
                 <div key={pi} style={{display:'flex',gap:9,marginBottom:7}}>
                   <span style={{color:d.color,flexShrink:0,fontWeight:700,marginTop:1}}>✓</span>
-                  <span style={{fontSize:12,color:'#2C3822',lineHeight:1.6}}>{p}</span>
+                  <span style={{fontSize:12,color:'#374151',lineHeight:1.6}}>{p}</span>
                 </div>
               ))}
             </div>
@@ -3167,7 +2354,6 @@ export default function JarvisHealth({ user, onLogout }) {
   const [voiceText, setVoiceText] = useState('')
   const [listening, setListening] = useState(false)
   const [visited, setVisited] = useState(new Set(['home']))
-  const [moreOpen, setMoreOpen] = useState(false)
   const recRef = useRef(null)
 
   useEffect(()=>{
@@ -3247,10 +2433,10 @@ export default function JarvisHealth({ user, onLogout }) {
   const PAGE_TITLES={home:'Dashboard',log:'Daily Log',track:'Progress',food:'Food Tracker',meds:'Medicines',blood:'Lab Reports',fit:'Yoga & Gym',heal:'Recovery Guides',ai:'JARVIS AI Coach',prof:'My Profile',super:'Superfoods & Supplements',plan:'Daily Routine & Plans'}
 
   if(!ready) return (
-    <div style={{minHeight:'100vh',background:'#F0EAE0',display:'flex',alignItems:'center',justifyContent:'center',gap:12}}>
+    <div style={{minHeight:'100vh',background:'#EEF2F7',display:'flex',alignItems:'center',justifyContent:'center',gap:12}}>
       <style>{CSS}</style>
       <div style={{width:26,height:26,border:'3px solid #BFDBFE',borderTop:'3px solid #0EA5E9',borderRadius:'50%',animation:'spin 0.8s linear infinite'}}/>
-      <span style={{fontSize:14,color:'#657060',fontWeight:500}}>Loading your health data...</span>
+      <span style={{fontSize:14,color:'#64748B',fontWeight:500}}>Loading your health data...</span>
     </div>
   )
 
@@ -3292,28 +2478,28 @@ export default function JarvisHealth({ user, onLogout }) {
             {listening&&<div className="voice-rip"/>}
             {listening?'🎙️':'🎤'}
           </button>
-          <div style={{flex:1,fontSize:12,color:'#8A9482',overflow:'hidden'}}>
-            {listening?<span style={{color:'#4A7090',fontWeight:600}}>● Listening...</span>
-              :voiceText?<span style={{color:'#2C3822'}}>"{voiceText}"</span>
+          <div style={{flex:1,fontSize:12,color:'#94A3B8',overflow:'hidden'}}>
+            {listening?<span style={{color:'#0EA5E9',fontWeight:600}}>● Listening...</span>
+              :voiceText?<span style={{color:'#374151'}}>"{voiceText}"</span>
               :'Tap mic · "log today" · "superfoods" · "daily routine"'}
           </div>
-          <button onClick={stopSpeaking} style={{padding:'6px 10px',borderRadius:7,border:'1px solid #E2DDD6',background:'#FFFFFF',color:'#657060',fontSize:13,cursor:'pointer',flexShrink:0}}>⏹</button>
+          <button onClick={stopSpeaking} style={{padding:'6px 10px',borderRadius:7,border:'1px solid #E2E8F0',background:'white',color:'#64748B',fontSize:13,cursor:'pointer',flexShrink:0}}>⏹</button>
           {db.todayLog
-            ?<div style={{fontSize:14,fontWeight:800,color:scoreColor(todaySc.overall),flexShrink:0}}>{todaySc.overall}<span style={{fontSize:10,fontWeight:500,color:'#8A9482'}}>/100</span></div>
+            ?<div style={{fontSize:14,fontWeight:800,color:scoreColor(todaySc.overall),flexShrink:0}}>{todaySc.overall}<span style={{fontSize:10,fontWeight:500,color:'#94A3B8'}}>/100</span></div>
             :<button className="btn btn-pr btn-sm" onClick={()=>handleTab('log')} style={{flexShrink:0}}>Log Today</button>
           }
         </div>
 
         <div className="page">
           <div style={{marginBottom:18}}>
-            <h1 style={{fontSize:22,fontWeight:800,color:'#1A2412',letterSpacing:'-0.4px'}}>{PAGE_TITLES[tab]||tab}</h1>
+            <h1 style={{fontSize:22,fontWeight:800,color:'#0F172A',letterSpacing:'-0.4px'}}>{PAGE_TITLES[tab]||tab}</h1>
           </div>
 
           <div style={{display:tab==='home'?'block':'none'}}>
             <Dashboard {...shared} setTab={handleTab} allLogs={allLogs}/>
           </div>
           {visited.has('log')   &&<div style={{display:tab==='log'?'block':'none'}}><LogTab {...shared}/></div>}
-          {visited.has('track') &&<div style={{display:tab==='track'?'block':'none'}}><TrackTab allLogs={allLogs} db={db}/></div>}
+          {visited.has('track') &&<div style={{display:tab==='track'?'block':'none'}}><TrackTab allLogs={allLogs}/></div>}
           {visited.has('food')  &&<div style={{display:tab==='food'?'block':'none'}}><FoodTab {...shared}/></div>}
           {visited.has('meds')  &&<div style={{display:tab==='meds'?'block':'none'}}><MedTab {...shared}/></div>}
           {visited.has('blood') &&<div style={{display:tab==='blood'?'block':'none'}}><BloodTab {...shared}/></div>}
@@ -3326,47 +2512,10 @@ export default function JarvisHealth({ user, onLogout }) {
         </div>
       </div>
 
-      {/* MOBILE MORE DRAWER */}
-      {moreOpen&&(
-        <div style={{position:'fixed',inset:0,zIndex:300,display:'flex',flexDirection:'column',justifyContent:'flex-end'}}
-          onClick={()=>setMoreOpen(false)}>
-          <div style={{position:'absolute',inset:0,background:'rgba(26,36,18,0.55)'}}/>
-          <div style={{position:'relative',background:'#FDFAF5',borderRadius:'22px 22px 0 0',
-            padding:'16px 16px 36px',boxShadow:'0 -4px 32px rgba(0,0,0,0.15)'}}
-            onClick={e=>e.stopPropagation()}>
-            <div style={{width:36,height:4,borderRadius:2,background:'#DDD8D0',margin:'0 auto 16px'}}/>
-            <div style={{fontSize:11,fontWeight:700,color:'#8A9482',letterSpacing:0.8,
-              textTransform:'uppercase',marginBottom:12}}>All Sections</div>
-            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
-              {MOB_MORE.map(t=>(
-                <button key={t.id} onClick={()=>{handleTab(t.id);setMoreOpen(false)}} style={{
-                  padding:'12px 6px',borderRadius:14,cursor:'pointer',
-                  border:`1.5px solid ${tab===t.id?'rgba(94,128,48,0.4)':'#EDE8E0'}`,
-                  background:tab===t.id?'#EAF3DC':'white',
-                  display:'flex',flexDirection:'column',alignItems:'center',gap:6,
-                  WebkitTapHighlightColor:'transparent'}}>
-                  <span style={{color:tab===t.id?'#5E8030':'#657060'}}>{t.icon}</span>
-                  <span style={{fontSize:10,fontWeight:600,
-                    color:tab===t.id?'#3C5A1E':'#657060',textAlign:'center',lineHeight:1.2}}>{t.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* MOBILE NAV */}
       <nav className="mob-nav">
-        {MOB.map(t=>t.id==='__more'?(
-          <button key="more" className="mob-ni" onClick={()=>setMoreOpen(true)}>
-            <svg viewBox="0 0 24 24" fill="currentColor" style={{width:22,height:22}}>
-              <circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>
-            </svg>
-            <span>More</span>
-          </button>
-        ):(
-          <button key={t.id} className={`mob-ni${tab===t.id?' on':''}`}
-            onClick={()=>handleTab(t.id)} style={{position:'relative'}}>
+        {MOB.map(t=>(
+          <button key={t.id} className={`mob-ni${tab===t.id?' on':''}`} onClick={()=>handleTab(t.id)} style={{position:'relative'}}>
             {t.icon}<span>{t.label}</span>
             {t.badge&&hasNoLog&&<span className="mob-badge"/>}
           </button>
