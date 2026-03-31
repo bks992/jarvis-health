@@ -572,11 +572,21 @@ const NAV = [
   { id:'prof',   label:'My Profile',           icon:I.user },
 ]
 const MOB = [
-  { id:'home',  label:'Home',   icon:I.home, badge:true },
-  { id:'log',   label:'Log',    icon:I.log,  badge:true },
-  { id:'super', label:'Supps',  icon:I.super },
-  { id:'plan',  label:'Routine',icon:I.plan },
-  { id:'ai',    label:'JARVIS', icon:I.ai },
+  { id:'home',   label:'Home',   icon:I.home, badge:true },
+  { id:'log',    label:'Log',    icon:I.log,  badge:true },
+  { id:'food',   label:'Food',   icon:I.food },
+  { id:'ai',     label:'JARVIS', icon:I.ai },
+  { id:'__more', label:'More',   icon:null },
+]
+const MOB_MORE = [
+  { id:'track', label:'Progress',      icon:I.track },
+  { id:'meds',  label:'Medicines',     icon:I.meds },
+  { id:'blood', label:'Lab Reports',   icon:I.blood },
+  { id:'super', label:'Superfoods',    icon:I.super },
+  { id:'plan',  label:'Routine',       icon:I.plan },
+  { id:'fit',   label:'Yoga & Gym',    icon:I.fit },
+  { id:'heal',  label:'Guides',        icon:I.heal },
+  { id:'prof',  label:'My Profile',    icon:I.user },
 ]
 function Spin({ size = 18, color = '#0EA5E9' }) {
   return <div style={{ width:size, height:size, border:`2px solid ${color}22`, borderTop:`2px solid ${color}`, borderRadius:'50%', animation:'spin 0.8s linear infinite', flexShrink:0 }} />
@@ -2354,6 +2364,7 @@ export default function JarvisHealth({ user, onLogout }) {
   const [voiceText, setVoiceText] = useState('')
   const [listening, setListening] = useState(false)
   const [visited, setVisited] = useState(new Set(['home']))
+  const [moreOpen, setMoreOpen] = useState(false)
   const recRef = useRef(null)
 
   useEffect(()=>{
@@ -2512,10 +2523,47 @@ export default function JarvisHealth({ user, onLogout }) {
         </div>
       </div>
 
+      {/* MOBILE MORE DRAWER */}
+      {moreOpen&&(
+        <div style={{position:'fixed',inset:0,zIndex:300,display:'flex',flexDirection:'column',justifyContent:'flex-end'}}
+          onClick={()=>setMoreOpen(false)}>
+          <div style={{position:'absolute',inset:0,background:'rgba(15,23,42,0.5)'}}/>
+          <div style={{position:'relative',background:'white',borderRadius:'20px 20px 0 0',
+            padding:'16px 16px 36px',boxShadow:'0 -4px 32px rgba(0,0,0,0.12)'}}
+            onClick={e=>e.stopPropagation()}>
+            <div style={{width:36,height:4,borderRadius:2,background:'#E2E8F0',margin:'0 auto 16px'}}/>
+            <div style={{fontSize:11,fontWeight:700,color:'#94A3B8',letterSpacing:0.8,
+              textTransform:'uppercase',marginBottom:12}}>All Sections</div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
+              {MOB_MORE.map(t=>(
+                <button key={t.id} onClick={()=>{handleTab(t.id);setMoreOpen(false)}} style={{
+                  padding:'12px 6px',borderRadius:12,cursor:'pointer',
+                  border:`1.5px solid ${tab===t.id?'#0EA5E9':'#E2E8F0'}`,
+                  background:tab===t.id?'#EFF6FF':'#FAFAFA',
+                  display:'flex',flexDirection:'column',alignItems:'center',gap:6,
+                  WebkitTapHighlightColor:'transparent'}}>
+                  <span style={{color:tab===t.id?'#0EA5E9':'#64748B'}}>{t.icon}</span>
+                  <span style={{fontSize:10,fontWeight:600,
+                    color:tab===t.id?'#0EA5E9':'#64748B',textAlign:'center',lineHeight:1.3}}>{t.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MOBILE NAV */}
       <nav className="mob-nav">
-        {MOB.map(t=>(
-          <button key={t.id} className={`mob-ni${tab===t.id?' on':''}`} onClick={()=>handleTab(t.id)} style={{position:'relative'}}>
+        {MOB.map(t=>t.id==='__more'?(
+          <button key="more" className="mob-ni" onClick={()=>setMoreOpen(true)}>
+            <svg viewBox="0 0 24 24" fill="currentColor" style={{width:22,height:22}}>
+              <circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>
+            </svg>
+            <span>More</span>
+          </button>
+        ):(
+          <button key={t.id} className={`mob-ni${tab===t.id?' on':''}`}
+            onClick={()=>handleTab(t.id)} style={{position:'relative'}}>
             {t.icon}<span>{t.label}</span>
             {t.badge&&hasNoLog&&<span className="mob-badge"/>}
           </button>
