@@ -2470,95 +2470,145 @@ You are JARVIS — the patient's personal AI cancer recovery coach. You have FUL
 
 // ─── BLOOD TAB ────────────────────────────────────────────────────────────────
 function BloodTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, showToast }) {
-  const [mode, setMode] = useState('paste')
   const [text, setText] = useState('')
-  const [img, setImg] = useState(null); const [imgData, setImgData] = useState(null)
-  const [pdfData, setPdfData] = useState(null); const [pdfName, setPdfName] = useState(null)
+  const [file, setFile] = useState(null)    // preview URL
+  const [fileData, setFileData] = useState(null)   // base64
+  const [fileType, setFileType] = useState(null)   // 'image'|'pdf'
+  const [fileName, setFileName] = useState(null)
+  const [inputMode, setInputMode] = useState('paste')  // 'paste'|'upload'
   const [result, setResult] = useState(null)
   const [expandedReport, setExpandedReport] = useState(null)
-  const fileRef = useRef(); const pdfRef = useRef()
+  const fileRef = useRef()
 
-  const ctx=()=>`Patient: Pancreatic cancer (distal pancreatectomy), liver metastasis treated with radiation + ablation, chemo complete, REMISSION. CA 19-9 target ~6. Partial pancreatectomy = blood sugar regulation affected. Liver had radiation = LFT important. Post-chemo = CBC and immunity markers matter. Medicines: ${(db.medicines||[]).map(m=>m.name).join(', ')||'none'}.`
+  const ctx = () => `Patient: Pancreatic cancer (distal pancreatectomy), liver metastasis treated with radiation + ablation, chemo complete, REMISSION. CA 19-9 target ~6 U/mL. Partial pancreatectomy means insulin affected. Liver had radiation + ablation — LFT critical. Post-chemo immunity rebuilding. Medicines: ${(db.medicines||[]).map(m=>m.name).join(', ')||'none'}.`
 
-  const ANALYSIS_PROMPT = `Analyze this lab report for a pancreatic cancer patient in remission. Respond in this EXACT structured format:
+  // Previous CA 19-9 values for trend analysis
+  const prevReports = (db.bloodReports||[]).slice(0,5)
+  const prevCA199   = prevReports.map(r=>{
+    const m = parseMarkers(r.full||'').find(m=>m.name?.toLowerCase().includes('ca'))
+    return m ? {date:r.date, val: parseFloat(m.value)||0} : null
+  }).filter(Boolean)
+
+  const ANALYSIS_PROMPT = (prevTrend) => `Analyze this lab report for a pancreatic cancer patient in remission. ${prevTrend ? `Previous CA 19-9 readings: ${prevTrend}` : ''} Respond in this EXACT structured format:
 
 ##SUMMARY##
-[2-3 sentence overall assessment]
+[2-3 sentence overall assessment mentioning specific values]
 
 ##STATUS##
 [GOOD / NEEDS_ATTENTION / CRITICAL]
 
 ##KEY_MARKERS##
-[List each marker as: MARKER_NAME | VALUE | REFERENCE | STATUS(normal/low/high/critical) | MEANING]
+[List each marker as exactly: MARKER_NAME | VALUE | REFERENCE | STATUS(normal/low/high/critical) | MEANING]
 
 ##CA199##
-[CA 19-9 specific analysis — current value vs target ~6 U/mL]
+[CA 19-9 detailed analysis — current value vs target ~6 U/mL. ${prevCA199.length>0 ? `Compare with previous readings (${prevCA199.map(p=>`${p.date}: ${p.val}`).join(', ')}) and explain trend direction.` : ''} Explain what the number means for cancer recovery.]
+
+##TREND_ANALYSIS##
+[${prevCA199.length>0 ? 'Compare this report vs previous. What has improved, what has worsened, and what is the trend direction?' : 'First report on record. Establish baseline for future comparisons.'}]
+
+##WHAT_WENT_WRONG##
+[Based on the results, identify exactly what lifestyle, diet, or supplement factors may have caused any elevated/low values. Be specific — e.g. "CA 19-9 at 17 instead of 16 could indicate blood sugar spikes — check if you missed berberine doses or had sugar" or "Low hemoglobin suggests iron absorption issue — are you taking CREON with every meal?"]
+
+##CORRECTIONS##
+[5-7 very specific, actionable corrections based on THIS patient's exact results. Connect each correction to the marker it addresses.]
 
 ##LIVER##
-[LFT analysis — ALT, AST, Bilirubin, Albumin — liver had radiation+ablation]
+[LFT analysis — ALT, AST, Bilirubin, Albumin]
 
 ##BLOOD_SUGAR##
-[Glucose, HbA1c — partial pancreatectomy means insulin affected]
+[Glucose, HbA1c — critical after pancreatectomy]
 
 ##IMMUNITY##
 [CBC — WBC, lymphocytes, neutrophils — post-chemo immune recovery]
 
 ##URGENT##
-[Any values needing immediate doctor attention, or NONE]
+[Anything needing immediate doctor contact, or NONE]
 
 ##DIET_CHANGES##
-[3-5 specific dietary changes based on these results]
+[5 specific dietary changes based on these exact results]
 
 ##ENCOURAGEMENT##
-[Warm, specific encouraging note based on the actual numbers]`
+[Warm, specific encouraging note using actual numbers from the report]`
+
+  async function handleFileUpload(f) {
+    if (!f) return
+    const isImg = f.type.startsWith('image/')
+    const isPdf = f.type === 'application/pdf'
+    if (!isImg && !isPdf) { showToast('Please upload an image or PDF'); return }
+    if (isPdf && f.size > 10*1024*1024) { showToast('PDF too large (max 10MB)'); return }
+    setFileName(f.name)
+    if (isImg) {
+      setFile(URL.createObjectURL(f))
+      setFileType('image')
+      setFileData(await imgToBase64(f))
+    } else {
+      setFile(null)
+      setFileType('pdf')
+      setFileData(await pdfToBase64(f))
+    }
+    showToast(`${isPdf ? 'PDF' : 'Image'} loaded: ${f.name}`)
+  }
+
+  function clearFile() {
+    setFile(null); setFileData(null); setFileType(null); setFileName(null)
+  }
 
   async function analyze() {
-    if (mode==='paste' && !text.trim()) { showToast('Please paste your report text first'); return }
-    if (mode==='photo' && !imgData) { showToast('Please upload a photo first'); return }
-    if (mode==='pdf' && !pdfData) { showToast('Please upload a PDF first'); return }
+    if (inputMode==='paste' && !text.trim()) { showToast('Please paste your report text'); return }
+    if (inputMode==='upload' && !fileData) { showToast('Please upload a file'); return }
     setAiLoading(true); setResult(null)
+
+    const prevTrend = prevCA199.length > 0
+      ? prevCA199.map(p=>`${p.date}: ${p.val} U/mL`).join(', ')
+      : null
+    const prompt = ANALYSIS_PROMPT(prevTrend)
+
     try {
       let msgs
-      if (mode==='paste') {
-        msgs = [{role:'user',content:`${ctx()}\n\nMy blood report:\n${text}\n\n${ANALYSIS_PROMPT}`}]
-      } else if (mode==='photo') {
+      if (inputMode==='paste') {
+        msgs = [{role:'user',content:`${ctx()}\n\nMy blood report:\n${text}\n\n${prompt}`}]
+      } else if (fileType==='image') {
         msgs = [{role:'user',content:[
-          {type:'image',source:{type:'base64',media_type:'image/jpeg',data:imgData}},
-          {type:'text',text:`${ctx()}\n\n${ANALYSIS_PROMPT}`}
+          {type:'image',source:{type:'base64',media_type:'image/jpeg',data:fileData}},
+          {type:'text',text:`${ctx()}\n\n${prompt}`}
         ]}]
-      } else if (mode==='pdf') {
+      } else if (fileType==='pdf') {
         msgs = [{role:'user',content:[
-          {type:'document',source:{type:'base64',media_type:'application/pdf',data:pdfData}},
-          {type:'text',text:`${ctx()}\n\n${ANALYSIS_PROMPT}`}
+          {type:'document',source:{type:'base64',media_type:'application/pdf',data:fileData}},
+          {type:'text',text:`${ctx()}\n\n${prompt}`}
         ]}]
       }
+
       const resp = await askJarvis(msgs,'',userEmail)
       const firestoreId = await saveBloodReport(uid, {
         date: new Date().toLocaleDateString('en-IN'),
         dateISO: new Date().toISOString().slice(0,10),
-        summary: resp.match(/##SUMMARY##\n([\s\S]*?)(?=##)/)?.[1]?.trim()?.slice(0,300) || resp.slice(0,300),
-        status: resp.match(/##STATUS##\n(\w+)/)?.[1]?.trim() || 'GOOD',
+        summary: getSection(resp,'SUMMARY')?.slice(0,300) || resp.slice(0,300),
+        status:  getSection(resp,'STATUS') || 'GOOD',
         full: resp,
-        source: mode,
-        fileName: pdfName || null
+        source: inputMode==='paste' ? 'paste' : fileType,
+        fileName: fileName || null
       })
       const entry = {
         id: firestoreId,
         date: new Date().toLocaleDateString('en-IN'),
         dateISO: new Date().toISOString().slice(0,10),
-        summary: resp.match(/##SUMMARY##\n([\s\S]*?)(?=##)/)?.[1]?.trim()?.slice(0,300) || resp.slice(0,300),
-        status: resp.match(/##STATUS##\n(\w+)/)?.[1]?.trim() || 'GOOD',
-        full: resp, source: mode, fileName: pdfName || null
+        summary: getSection(resp,'SUMMARY')?.slice(0,300) || resp.slice(0,300),
+        status:  getSection(resp,'STATUS') || 'GOOD',
+        full: resp,
+        source: inputMode==='paste' ? 'paste' : fileType,
+        fileName: fileName || null
       }
       setDb({...db, bloodReports:[entry,...(db.bloodReports||[])]})
       setResult(entry)
       setExpandedReport(firestoreId)
-    } catch(e){ showToast('Error: '+e.message); setResult({full:'Error: '+e.message, status:'ERROR'}) }
+    } catch(e){ showToast('Error: '+e.message) }
     setAiLoading(false)
   }
 
   function parseMarkers(full) {
-    const section = full?.match(/##KEY_MARKERS##\n([\s\S]*?)(?=##|$)/)?.[1] || ''
+    const section = getSection(full,'KEY_MARKERS')
+    if (!section) return []
     return section.trim().split('\n').filter(l=>l.includes('|')).map(line => {
       const [name,value,ref,status,meaning] = line.split('|').map(s=>s.trim())
       return {name,value,ref,status,meaning}
@@ -2566,36 +2616,44 @@ function BloodTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, showToas
   }
 
   function getSection(full, key) {
-    return full?.match(new RegExp(`##${key}##\n([\s\S]*?)(?=##|$)`))?.[1]?.trim() || ''
+    if (!full || typeof full !== 'string') return ''
+    return full.match(new RegExp(`##${key}##\n([\s\S]*?)(?=##|$)`))?.[1]?.trim() || ''
   }
 
-  const statusColors = {normal:'#10B981', low:'#F59E0B', high:'#EF4444', critical:'#DC2626', GOOD:'#10B981', NEEDS_ATTENTION:'#F59E0B', CRITICAL:'#EF4444', ERROR:'#DC2626'}
-  const statusBg = {normal:'#F0FDF4', low:'#FFFBEB', high:'#FEF2F2', critical:'#FEF2F2', GOOD:'#F0FDF4', NEEDS_ATTENTION:'#FFFBEB', CRITICAL:'#FEF2F2'}
+  const sC = {normal:'#10B981',low:'#F59E0B',high:'#EF4444',critical:'#DC2626',GOOD:'#10B981',NEEDS_ATTENTION:'#F59E0B',CRITICAL:'#EF4444',ERROR:'#DC2626'}
+  const sBg = {normal:'#F0FDF4',low:'#FFFBEB',high:'#FEF2F2',critical:'#FEF2F2',GOOD:'#F0FDF4',NEEDS_ATTENTION:'#FFFBEB',CRITICAL:'#FEF2F2'}
 
   return (
     <div className="fade-up">
 
-      {/* ── Upload Panel ── */}
+      {/* ── Input Panel ── */}
       <div className="card">
         <div style={{fontSize:15,fontWeight:800,color:'#0F172A',marginBottom:4}}>🧪 Lab Report Analysis</div>
-        <div style={{fontSize:12,color:'#64748B',marginBottom:14}}>Upload or paste your report — JARVIS analyzes every marker against your cancer recovery context</div>
+        <div style={{fontSize:12,color:'#64748B',marginBottom:14}}>
+          Paste report text, or upload any photo or PDF — JARVIS compares with your history and tells you exactly what changed and why
+        </div>
 
-        {/* Mode tabs */}
-        <div style={{display:'flex',gap:0,background:'#F8FAFC',border:'1px solid #E8EEF4',borderRadius:10,padding:3,marginBottom:16}}>
-          {[['paste','📋 Paste Text'],['photo','📷 Photo'],['pdf','📄 PDF']].map(([m,l])=>(
-            <button key={m} onClick={()=>setMode(m)} style={{flex:1,padding:'8px 4px',borderRadius:8,border:'none',background:mode===m?'white':'transparent',color:mode===m?'#7C3AED':'#64748B',fontSize:12,fontWeight:700,cursor:'pointer',transition:'all 0.15s',boxShadow:mode===m?'0 1px 4px rgba(0,0,0,0.1)':'none'}}>{l}</button>
+        {/* Mode toggle */}
+        <div style={{display:'flex',gap:3,background:'#F8FAFC',border:'1px solid #E8EEF4',borderRadius:10,padding:3,marginBottom:16}}>
+          {[['paste','📋 Paste Text'],['upload','📎 Photo or PDF']].map(([m,l])=>(
+            <button key={m} onClick={()=>setInputMode(m)} style={{
+              flex:1,padding:'9px 6px',borderRadius:8,border:'none',
+              background:inputMode===m?'white':'transparent',
+              color:inputMode===m?'#7C3AED':'#64748B',
+              fontSize:13,fontWeight:700,cursor:'pointer',
+              boxShadow:inputMode===m?'0 1px 4px rgba(0,0,0,0.1)':'none'}}>{l}</button>
           ))}
         </div>
 
-        {/* Paste mode */}
-        {mode==='paste'&&(
+        {/* PASTE mode */}
+        {inputMode==='paste'&&(
           <>
             <div style={{padding:'10px 12px',background:'#EFF6FF',border:'1px solid #BFDBFE',borderRadius:8,marginBottom:12,fontSize:12,color:'#1D4ED8'}}>
-              💡 Copy your entire report from Agilus, Thyrocare, SRL, or any lab → paste below. JARVIS reads everything.
+              💡 Copy your full report from Agilus, Thyrocare, SRL, Apollo, or any lab — paste everything below
             </div>
             <textarea className="fi" rows={8} value={text} onChange={e=>setText(e.target.value)}
               style={{fontFamily:'monospace',fontSize:12,height:200,marginBottom:12}}
-              placeholder="Paste full report text here...&#10;&#10;CA 19-9: 28.4 U/mL&#10;Hemoglobin: 11.5 g/dL&#10;Fasting Glucose: 98 mg/dL&#10;ALT (SGPT): 38 U/L&#10;Vitamin D: 22 ng/mL"/>
+              placeholder={"Paste full report here...\n\nCA 19-9: 17 U/mL\nHbA1c: 6.2%\nFasting Glucose: 98 mg/dL\nHemoglobin: 11.5 g/dL\nALT: 38 U/L\nVitamin D: 22 ng/mL"}/>
             <button className="btn btn-full" onClick={analyze} disabled={!text.trim()||aiLoading}
               style={{background:'#7C3AED',color:'white',border:'none',padding:'13px',fontSize:14,fontWeight:700,borderRadius:10,cursor:'pointer'}}>
               {aiLoading?<><Spin size={15} color="white"/>Analyzing your report...</>:'🔬 Analyze Report'}
@@ -2603,70 +2661,86 @@ function BloodTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, showToas
           </>
         )}
 
-        {/* Photo mode */}
-        {mode==='photo'&&(
+        {/* UPLOAD mode — handles BOTH photo and PDF in one area */}
+        {inputMode==='upload'&&(
           <>
-            <div className={`upload-z${img?' has-img':''}`} onClick={()=>!img&&fileRef.current.click()}>
-              {img?<img src={img} alt="report" style={{width:'100%',maxHeight:220,objectFit:'contain'}}/>
-                :(<><div style={{fontSize:36,marginBottom:8}}>📋</div><div style={{fontSize:14,fontWeight:600,color:'#64748B'}}>Tap to upload lab report photo</div><div style={{fontSize:12,color:'#94A3B8',marginTop:4}}>Works with Agilus, SRL, Thyrocare, any lab printout</div></>)}
-            </div>
-            <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={async e=>{const f=e.target.files[0];if(!f)return;setImg(URL.createObjectURL(f));setImgData(await imgToBase64(f))}}/>
-            <div className="upload-btns" style={{marginTop:10}}>
-              <label className="upload-lbl">📷 Camera<input type="file" accept="image/*" capture="environment" style={{display:'none'}} onChange={async e=>{const f=e.target.files[0];if(!f)return;setImg(URL.createObjectURL(f));setImgData(await imgToBase64(f))}}/></label>
-              <label className="upload-lbl">🖼 Gallery<input type="file" accept="image/*" style={{display:'none'}} onChange={async e=>{const f=e.target.files[0];if(!f)return;setImg(URL.createObjectURL(f));setImgData(await imgToBase64(f))}}/></label>
-            </div>
-            {img&&<button className="btn btn-full" style={{marginTop:10,background:'#7C3AED',color:'white',border:'none',padding:'13px',fontSize:14,fontWeight:700,borderRadius:10,cursor:'pointer'}} onClick={analyze} disabled={!imgData||aiLoading}>{aiLoading?<><Spin size={15} color="white"/>Analyzing...</>:'🔬 Analyze Report'}</button>}
-          </>
-        )}
-
-        {/* PDF mode */}
-        {mode==='pdf'&&(
-          <>
-            <div style={{padding:'10px 12px',background:'#F5F3FF',border:'1px solid #DDD6FE',borderRadius:8,marginBottom:12,fontSize:12,color:'#7C3AED'}}>
-              📄 Upload PDF from Agilus Diagnostics, SRL, Thyrocare, Apollo, or any lab. JARVIS reads the full document.
-            </div>
-            {!pdfData?(
-              <label style={{display:'block',cursor:'pointer'}}>
-                <div style={{border:'2px dashed #DDD6FE',borderRadius:12,padding:'32px 16px',textAlign:'center',background:'#FAFAFF',transition:'all 0.15s'}}
-                  onMouseEnter={e=>e.currentTarget.style.background='#F5F3FF'}
-                  onMouseLeave={e=>e.currentTarget.style.background='#FAFAFF'}>
-                  <div style={{fontSize:40,marginBottom:8}}>📄</div>
-                  <div style={{fontSize:14,fontWeight:700,color:'#7C3AED',marginBottom:4}}>Tap to upload PDF report</div>
-                  <div style={{fontSize:12,color:'#94A3B8'}}>Max 10MB · Any lab report PDF</div>
+            {!fileData ? (
+              <>
+                <div style={{padding:'10px 12px',background:'#F5F3FF',border:'1px solid #DDD6FE',borderRadius:8,marginBottom:12,fontSize:12,color:'#7C3AED'}}>
+                  📎 Upload your lab report as a <strong>photo</strong> (JPG/PNG) or <strong>PDF</strong> — both work perfectly
                 </div>
-                <input ref={pdfRef} type="file" accept="application/pdf" style={{display:'none'}} onChange={async e=>{
-                  const f=e.target.files[0]; if(!f) return
-                  if(f.size>10*1024*1024){showToast('PDF too large (max 10MB)');return}
-                  setPdfName(f.name)
-                  setPdfData(await pdfToBase64(f))
-                  showToast('PDF loaded: '+f.name)
-                }}/>
-              </label>
-            ):(
-              <div style={{padding:'14px 16px',background:'#F5F3FF',border:'1.5px solid #7C3AED',borderRadius:12,display:'flex',alignItems:'center',gap:12,marginBottom:12}}>
-                <span style={{fontSize:28}}>📄</span>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:13,fontWeight:700,color:'#7C3AED'}}>{pdfName}</div>
-                  <div style={{fontSize:11,color:'#94A3B8'}}>PDF loaded and ready to analyze</div>
+                {/* Single unified upload area */}
+                <div style={{border:'2px dashed #DDD6FE',borderRadius:14,padding:'28px 16px',textAlign:'center',background:'#FAFAFF',cursor:'pointer',marginBottom:12}}
+                  onClick={()=>fileRef.current.click()}
+                  onDragOver={e=>e.preventDefault()}
+                  onDrop={e=>{e.preventDefault();handleFileUpload(e.dataTransfer.files[0])}}>
+                  <div style={{fontSize:40,marginBottom:8}}>📋</div>
+                  <div style={{fontSize:14,fontWeight:700,color:'#7C3AED',marginBottom:4}}>Tap to upload lab report</div>
+                  <div style={{fontSize:12,color:'#94A3B8',marginBottom:8}}>Accepts: JPG · PNG · PDF · any lab format</div>
+                  <div style={{display:'flex',justifyContent:'center',gap:8}}>
+                    {['📷 Photo','📄 PDF','🖼 Gallery'].map(t=>(
+                      <span key={t} style={{padding:'4px 10px',borderRadius:20,background:'white',border:'1px solid #DDD6FE',fontSize:11,color:'#7C3AED',fontWeight:600}}>{t}</span>
+                    ))}
+                  </div>
                 </div>
-                <button onClick={()=>{setPdfData(null);setPdfName(null)}} style={{padding:'5px 10px',borderRadius:7,border:'1px solid #DDD6FE',background:'white',color:'#EF4444',fontSize:12,cursor:'pointer'}}>Remove</button>
-              </div>
+                {/* Hidden file input — accepts both images and PDFs */}
+                <input ref={fileRef} type="file" accept="image/*,application/pdf" style={{display:'none'}}
+                  onChange={e=>handleFileUpload(e.target.files[0])}/>
+                {/* Mobile camera shortcut */}
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                  <label style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'10px',borderRadius:10,border:'1.5px solid #DDD6FE',background:'white',color:'#7C3AED',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+                    📷 Camera
+                    <input type="file" accept="image/*" capture="environment" style={{display:'none'}} onChange={e=>handleFileUpload(e.target.files[0])}/>
+                  </label>
+                  <label style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'10px',borderRadius:10,border:'1.5px solid #DDD6FE',background:'white',color:'#7C3AED',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+                    📄 PDF
+                    <input type="file" accept="application/pdf" style={{display:'none'}} onChange={e=>handleFileUpload(e.target.files[0])}/>
+                  </label>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* File loaded preview */}
+                {fileType==='image' && file && (
+                  <div style={{borderRadius:12,overflow:'hidden',marginBottom:12,border:'1.5px solid #DDD6FE'}}>
+                    <img src={file} alt="report" style={{width:'100%',maxHeight:220,objectFit:'contain',background:'#F8FAFC'}}/>
+                  </div>
+                )}
+                {fileType==='pdf' && (
+                  <div style={{padding:'14px 16px',background:'#F5F3FF',border:'1.5px solid #7C3AED',borderRadius:12,display:'flex',alignItems:'center',gap:12,marginBottom:12}}>
+                    <span style={{fontSize:32}}>📄</span>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:13,fontWeight:700,color:'#7C3AED'}}>{fileName}</div>
+                      <div style={{fontSize:11,color:'#94A3B8'}}>PDF ready to analyze</div>
+                    </div>
+                  </div>
+                )}
+                <div style={{display:'flex',gap:8,marginBottom:12}}>
+                  <button onClick={clearFile} style={{padding:'8px 14px',borderRadius:9,border:'1px solid #E2E8F0',background:'white',color:'#EF4444',fontSize:13,cursor:'pointer',fontWeight:600}}>✕ Remove</button>
+                  <div style={{flex:1,padding:'8px 12px',background:'#F0FDF4',borderRadius:9,border:'1px solid #BBF7D0',fontSize:12,color:'#059669',fontWeight:600}}>
+                    ✓ {fileName || (fileType==='image' ? 'Image loaded' : 'File loaded')}
+                  </div>
+                </div>
+                <button className="btn btn-full" onClick={analyze} disabled={aiLoading}
+                  style={{background:'#7C3AED',color:'white',border:'none',padding:'13px',fontSize:14,fontWeight:700,borderRadius:10,cursor:'pointer'}}>
+                  {aiLoading?<><Spin size={15} color="white"/>Reading & Analyzing...</>:'🔬 Analyze Report'}
+                </button>
+              </>
             )}
-            {pdfData&&<button className="btn btn-full" style={{background:'#7C3AED',color:'white',border:'none',padding:'13px',fontSize:14,fontWeight:700,borderRadius:10,cursor:'pointer'}} onClick={analyze} disabled={aiLoading}>{aiLoading?<><Spin size={15} color="white"/>Reading PDF & Analyzing...</>:'🔬 Analyze PDF Report'}</button>}
           </>
         )}
       </div>
 
-      {/* ── Current Analysis Result ── */}
-      {result&&!result.full?.startsWith('Error')&&(
-        <div className="card fade-up" style={{borderTop:`4px solid ${statusColors[result.status]||'#7C3AED'}`}}>
+      {/* ── Analysis Result ── */}
+      {result&&typeof result.full==='string'&&!result.full.startsWith('Error')&&(
+        <div className="card fade-up" style={{borderTop:`4px solid ${sC[result.status]||'#7C3AED'}`}}>
           <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:16}}>
-            <div style={{width:52,height:52,borderRadius:14,background:statusBg[result.status]||'#F5F3FF',border:`2px solid ${statusColors[result.status]||'#7C3AED'}30`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,flexShrink:0}}>
+            <div style={{width:52,height:52,borderRadius:14,background:sBg[result.status]||'#F5F3FF',border:`2px solid ${sC[result.status]||'#7C3AED'}30`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,flexShrink:0}}>
               {result.status==='GOOD'?'✅':result.status==='CRITICAL'?'🚨':'⚠️'}
             </div>
             <div style={{flex:1}}>
               <div style={{fontSize:16,fontWeight:800,color:'#0F172A'}}>Lab Report — {result.date}</div>
-              <div style={{fontSize:12,fontWeight:700,color:statusColors[result.status]||'#7C3AED',marginTop:2}}>{result.status?.replace('_',' ')}</div>
+              <div style={{fontSize:12,fontWeight:700,color:sC[result.status]||'#7C3AED',marginTop:2}}>{result.status?.replace('_',' ')}</div>
             </div>
             <button onClick={()=>speak(result.full,{max:480})} className="btn btn-ou btn-sm">🔊</button>
           </div>
@@ -2676,7 +2750,7 @@ function BloodTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, showToas
             {getSection(result.full,'SUMMARY')}
           </div>
 
-          {/* Key Markers Table - Agilus style */}
+          {/* Key Markers Table */}
           {parseMarkers(result.full).length>0&&(
             <div style={{marginBottom:14}}>
               <div style={{fontSize:11,fontWeight:700,color:'#64748B',textTransform:'uppercase',letterSpacing:0.6,marginBottom:8}}>Key Markers</div>
@@ -2684,34 +2758,48 @@ function BloodTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, showToas
                 <div style={{display:'grid',gridTemplateColumns:'1.5fr 1fr 1fr 0.8fr',background:'#F8FAFC',padding:'8px 12px',borderBottom:'1px solid #E8EEF4'}}>
                   {['Test','Result','Reference','Status'].map(h=><div key={h} style={{fontSize:10,fontWeight:700,color:'#94A3B8',textTransform:'uppercase'}}>{h}</div>)}
                 </div>
-                {parseMarkers(result.full).map((m,i)=>(
-                  <div key={i} style={{display:'grid',gridTemplateColumns:'1.5fr 1fr 1fr 0.8fr',padding:'10px 12px',borderBottom:i<parseMarkers(result.full).length-1?'1px solid #F8FAFC':'none',background:i%2===0?'white':'#FAFAFA',alignItems:'center'}}>
+                {parseMarkers(result.full).map((m,i,arr)=>(
+                  <div key={i} style={{display:'grid',gridTemplateColumns:'1.5fr 1fr 1fr 0.8fr',padding:'10px 12px',borderBottom:i<arr.length-1?'1px solid #F8FAFC':'none',background:i%2===0?'white':'#FAFAFA',alignItems:'center'}}>
                     <div style={{fontSize:12,fontWeight:600,color:'#0F172A'}}>{m.name}</div>
-                    <div style={{fontSize:13,fontWeight:800,color:statusColors[m.status]||'#0F172A'}}>{m.value}</div>
+                    <div style={{fontSize:13,fontWeight:800,color:sC[m.status]||'#0F172A'}}>{m.value}</div>
                     <div style={{fontSize:11,color:'#94A3B8'}}>{m.ref}</div>
-                    <div style={{padding:'2px 7px',borderRadius:5,background:statusBg[m.status]||'#F8FAFC',color:statusColors[m.status]||'#64748B',fontSize:10,fontWeight:700,textTransform:'uppercase',display:'inline-block'}}>{m.status}</div>
+                    <div style={{padding:'2px 7px',borderRadius:5,background:sBg[m.status]||'#F8FAFC',color:sC[m.status]||'#64748B',fontSize:10,fontWeight:700,textTransform:'uppercase',display:'inline-block'}}>{m.status}</div>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Sections */}
-          {[['CA 19-9','CA199','#7C3AED'],['Liver Health','LIVER','#F59E0B'],['Blood Sugar','BLOOD_SUGAR','#0EA5E9'],['Immunity','IMMUNITY','#10B981'],['Urgent Actions','URGENT','#EF4444'],['Diet Changes','DIET_CHANGES','#10B981'],['Encouragement','ENCOURAGEMENT','#10B981']].map(([label,key,color])=>{
+          {/* Sections with rich formatting */}
+          {[
+            ['🎯 CA 19-9 Analysis','CA199','#7C3AED'],
+            ['📈 Trend vs Previous Reports','TREND_ANALYSIS','#0EA5E9'],
+            ['🔍 What May Have Gone Wrong','WHAT_WENT_WRONG','#EF4444'],
+            ['✅ How to Correct It','CORRECTIONS','#10B981'],
+            ['🫀 Liver Health','LIVER','#F59E0B'],
+            ['🩸 Blood Sugar','BLOOD_SUGAR','#0EA5E9'],
+            ['🛡️ Immunity','IMMUNITY','#10B981'],
+            ['🚨 Urgent Actions','URGENT','#EF4444'],
+            ['🥗 Diet Changes','DIET_CHANGES','#10B981'],
+            ['💚 Encouragement','ENCOURAGEMENT','#10B981'],
+          ].map(([label,key,color])=>{
             const content = getSection(result.full, key)
-            if (!content) return null
+            if (!content || content==='NONE') return null
             return (
-              <div key={key} style={{marginBottom:10,padding:'10px 12px',background:`${color}07`,border:`1px solid ${color}20`,borderRadius:9,borderLeft:`3px solid ${color}`}}>
-                <div style={{fontSize:10,fontWeight:700,color:color,marginBottom:4,textTransform:'uppercase'}}>{label}</div>
-                <div style={{fontSize:12,color:'#374151',lineHeight:1.7}}>{content}</div>
+              <div key={key} style={{marginBottom:10,padding:'12px 14px',background:`${color}07`,border:`1px solid ${color}20`,borderRadius:10,borderLeft:`4px solid ${color}`}}>
+                <div style={{fontSize:11,fontWeight:700,color:color,marginBottom:6,textTransform:'uppercase',letterSpacing:0.4}}>{label}</div>
+                <div style={{fontSize:13,color:'#374151',lineHeight:1.75,whiteSpace:'pre-line'}}>{content}</div>
               </div>
             )
           })}
-          <div style={{marginTop:10,padding:'10px 12px',background:'#FFFBEB',border:'1px solid #FDE68A',borderRadius:8,fontSize:11,color:'#92400E'}}>⚠ Always share with your oncologist before changing any medication or treatment.</div>
+
+          <div style={{marginTop:10,padding:'10px 12px',background:'#FFFBEB',border:'1px solid #FDE68A',borderRadius:8,fontSize:11,color:'#92400E'}}>
+            ⚠ Always share results with your oncologist before changing any medication or treatment.
+          </div>
         </div>
       )}
 
-      {/* ── Report History - Agilus style ── */}
+      {/* ── Report History ── */}
       {(db.bloodReports||[]).length>0&&(
         <div className="card">
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
@@ -2721,55 +2809,62 @@ function BloodTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, showToas
           {(db.bloodReports||[]).map((r,i)=>{
             const isOpen = expandedReport===r.id
             const markers = parseMarkers(r.full||'')
-            const urgent = getSection(r.full||'','URGENT')
+            const urgent  = getSection(r.full||'','URGENT')
             return (
-              <div key={r.id} style={{border:`1.5px solid ${isOpen?statusColors[r.status]+'40':'#E8EEF4'}`,borderRadius:12,marginBottom:8,overflow:'hidden'}}>
-                {/* Row header */}
-                <div style={{display:'flex',alignItems:'center',gap:10,padding:'12px 14px',cursor:'pointer',background:isOpen?`${statusColors[r.status]||'#7C3AED'}06`:'white'}} onClick={()=>setExpandedReport(isOpen?null:r.id)}>
-                  <div style={{width:10,height:10,borderRadius:'50%',background:statusColors[r.status]||'#7C3AED',flexShrink:0}}/>
+              <div key={String(r.id)} style={{border:`1.5px solid ${isOpen?(sC[r.status]||'#7C3AED')+'40':'#E8EEF4'}`,borderRadius:12,marginBottom:8,overflow:'hidden'}}>
+                <div style={{display:'flex',alignItems:'center',gap:10,padding:'12px 14px',cursor:'pointer',background:isOpen?`${sC[r.status]||'#7C3AED'}06`:'white'}} onClick={()=>setExpandedReport(isOpen?null:r.id)}>
+                  <div style={{width:10,height:10,borderRadius:'50%',background:sC[r.status]||'#7C3AED',flexShrink:0}}/>
                   <div style={{flex:1}}>
                     <div style={{fontSize:13,fontWeight:700,color:'#0F172A'}}>Lab Report — {r.date}</div>
-                    <div style={{fontSize:11,color:'#94A3B8',marginTop:1}}>{r.source==='pdf'?`📄 ${r.fileName||'PDF'}`:'Text/Photo'} · {markers.length} markers analyzed</div>
+                    <div style={{fontSize:11,color:'#94A3B8',marginTop:1}}>
+                      {r.source==='pdf'?`📄 ${r.fileName||'PDF'}`:r.source==='image'?'📷 Photo':'📋 Text'} · {markers.length} markers
+                    </div>
                   </div>
                   <div style={{display:'flex',alignItems:'center',gap:8}}>
-                    <span style={{padding:'3px 9px',borderRadius:20,fontSize:10,fontWeight:700,background:statusBg[r.status]||'#F5F3FF',color:statusColors[r.status]||'#7C3AED'}}>{r.status?.replace('_',' ')||'ANALYZED'}</span>
+                    <span style={{padding:'3px 9px',borderRadius:20,fontSize:10,fontWeight:700,background:sBg[r.status]||'#F5F3FF',color:sC[r.status]||'#7C3AED'}}>{r.status?.replace('_',' ')||'ANALYZED'}</span>
                     <button onClick={async e=>{
                       e.stopPropagation()
-                      if(!confirm('Delete this report?')) return
                       try{
-                        await deleteBloodReport(uid,r.id)
-                        setDb({...db,bloodReports:(db.bloodReports||[]).filter(x=>x.id!==r.id)})
+                        await deleteBloodReport(uid, String(r.id))
+                        setDb({...db,bloodReports:(db.bloodReports||[]).filter(x=>String(x.id)!==String(r.id))})
                         showToast('Report deleted ✓')
-                        if(expandedReport===r.id) setExpandedReport(null)
+                        if(String(expandedReport)===String(r.id)) setExpandedReport(null)
                       }catch(err){showToast('Error: '+err.message)}
                     }} style={{width:28,height:28,borderRadius:7,border:'1px solid #FECACA',background:'#FEF2F2',color:'#EF4444',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',WebkitTapHighlightColor:'transparent'}}>×</button>
                     <span style={{color:'#94A3B8',fontSize:11}}>{isOpen?'▲':'▼'}</span>
                   </div>
                 </div>
-
-                {/* Expanded view */}
                 {isOpen&&(
-                  <div style={{borderTop:`1px solid ${statusColors[r.status]||'#7C3AED'}20`,padding:'14px'}}>
-                    <div style={{fontSize:12,color:'#374151',lineHeight:1.7,marginBottom:12}}>{getSection(r.full,'SUMMARY')||r.summary}</div>
+                  <div style={{borderTop:`1px solid ${sC[r.status]||'#7C3AED'}20`,padding:'14px'}}>
+                    {getSection(r.full||'','SUMMARY')&&(
+                      <div style={{fontSize:12,color:'#374151',lineHeight:1.7,marginBottom:10}}>{getSection(r.full,'SUMMARY')}</div>
+                    )}
                     {markers.length>0&&(
                       <div style={{border:'1px solid #E8EEF4',borderRadius:9,overflow:'hidden',marginBottom:10}}>
                         <div style={{display:'grid',gridTemplateColumns:'1.5fr 1fr 1fr 0.8fr',background:'#F8FAFC',padding:'7px 12px',borderBottom:'1px solid #E8EEF4'}}>
                           {['Test','Result','Reference','Status'].map(h=><div key={h} style={{fontSize:9,fontWeight:700,color:'#94A3B8',textTransform:'uppercase'}}>{h}</div>)}
                         </div>
-                        {markers.map((m,mi)=>(
-                          <div key={mi} style={{display:'grid',gridTemplateColumns:'1.5fr 1fr 1fr 0.8fr',padding:'8px 12px',borderBottom:mi<markers.length-1?'1px solid #F8FAFC':'none',background:mi%2===0?'white':'#FAFAFA',alignItems:'center'}}>
+                        {markers.map((m,mi,arr)=>(
+                          <div key={mi} style={{display:'grid',gridTemplateColumns:'1.5fr 1fr 1fr 0.8fr',padding:'8px 12px',borderBottom:mi<arr.length-1?'1px solid #F8FAFC':'none',background:mi%2===0?'white':'#FAFAFA',alignItems:'center'}}>
                             <div style={{fontSize:11,fontWeight:600,color:'#0F172A'}}>{m.name}</div>
-                            <div style={{fontSize:12,fontWeight:800,color:statusColors[m.status]||'#0F172A'}}>{m.value}</div>
+                            <div style={{fontSize:12,fontWeight:800,color:sC[m.status]||'#0F172A'}}>{m.value}</div>
                             <div style={{fontSize:10,color:'#94A3B8'}}>{m.ref}</div>
-                            <div style={{padding:'2px 6px',borderRadius:4,background:statusBg[m.status]||'#F8FAFC',color:statusColors[m.status]||'#64748B',fontSize:9,fontWeight:700,textTransform:'uppercase',display:'inline-block'}}>{m.status}</div>
+                            <div style={{padding:'2px 6px',borderRadius:4,background:sBg[m.status]||'#F8FAFC',color:sC[m.status]||'#64748B',fontSize:9,fontWeight:700,textTransform:'uppercase',display:'inline-block'}}>{m.status}</div>
                           </div>
                         ))}
                       </div>
                     )}
-                    {urgent&&urgent.toUpperCase()!=='NONE'&&<div style={{padding:'9px 12px',background:'#FEF2F2',border:'1px solid #FECACA',borderRadius:8,fontSize:12,color:'#DC2626',marginBottom:8}}><strong>⚠ Urgent:</strong> {urgent}</div>}
-                    <div style={{display:'flex',gap:8}}>
-                      <button onClick={()=>speak(r.full,{max:500})} className="btn btn-ou btn-sm" style={{flex:1}}>🔊 Listen to full analysis</button>
-                    </div>
+                    {getSection(r.full||'','WHAT_WENT_WRONG')&&(
+                      <div style={{padding:'10px 12px',background:'#FEF2F2',border:'1px solid #FECACA',borderRadius:8,fontSize:12,color:'#DC2626',marginBottom:8,lineHeight:1.65}}>
+                        <strong>🔍 What may have gone wrong:</strong><br/>{getSection(r.full,'WHAT_WENT_WRONG')}
+                      </div>
+                    )}
+                    {urgent&&urgent.toUpperCase()!=='NONE'&&(
+                      <div style={{padding:'9px 12px',background:'#FEF2F2',border:'1px solid #FECACA',borderRadius:8,fontSize:12,color:'#DC2626',marginBottom:8}}>
+                        <strong>⚠ Urgent:</strong> {urgent}
+                      </div>
+                    )}
+                    <button onClick={()=>speak(r.full||'',{max:500})} className="btn btn-ou btn-sm" style={{width:'100%'}}>🔊 Listen to full analysis</button>
                   </div>
                 )}
               </div>

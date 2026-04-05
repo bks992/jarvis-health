@@ -47,7 +47,7 @@ export const saveFoodLog = async (uid, data) => {
 export const getFoodLogs = async (uid) => {
   const q = query(col(uid, 'foodLogs'), orderBy('ts','desc'), limit(100))
   const s = await getDocs(q)
-  return s.docs.map(d => ({ id: d.id, ...d.data() }))
+  return s.docs.map(d => ({ ...d.data(), id: d.id }))
 }
 
 // ── BLOOD REPORTS ────────────────────────────────────────────────────────────
@@ -58,16 +58,16 @@ export const saveBloodReport = async (uid, data) => {
 export const getBloodReports = async (uid) => {
   const q = query(col(uid, 'bloodReports'), orderBy('ts','desc'))
   const s = await getDocs(q)
-  return s.docs.map(d => ({ id: d.id, ...d.data() }))
+  return s.docs.map(d => ({ ...d.data(), id: d.id }))
 }
-export const deleteBloodReport = (uid, id) => deleteDoc(ref(uid, 'bloodReports', id))
+export const deleteBloodReport = (uid, id) => deleteDoc(ref(uid, 'bloodReports', String(id)))
 
 // ── MEDICINES ────────────────────────────────────────────────────────────────
 export const saveMedicine     = (uid, id, data) => setDoc(ref(uid, 'medicines', id), { ...data, ts: ts() })
-export const deleteMedicine   = (uid, id) => deleteDoc(ref(uid, 'medicines', id))
+export const deleteMedicine   = (uid, id) => deleteDoc(ref(uid, 'medicines', String(id)))
 export const getMedicines     = async (uid) => {
   const s = await getDocs(col(uid, 'medicines'))
-  return s.docs.map(d => ({ id: d.id, ...d.data() }))
+  return s.docs.map(d => ({ ...d.data(), id: d.id }))
 }
 export const saveMedLog       = (uid, date, data) => setDoc(ref(uid, 'medLogs', date), { ...data, ts: ts() })
 export const getMedLog        = async (uid, date) => {
@@ -119,4 +119,4 @@ export const getDailyLog  = async (uid, date) => {
 // ── CONVERSATIONS (full AI sessions stored) ───────────────────────────────────
 export const saveConversation = (uid, data) => addDoc(col(uid, 'conversations'), { ...data, ts: ts() })
 
-export const deleteFoodLog = (uid, id) => deleteDoc(ref(uid, 'foodLogs', id))
+export const deleteFoodLog = (uid, id) => deleteDoc(ref(uid, 'foodLogs', String(id)))
