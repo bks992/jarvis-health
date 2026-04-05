@@ -40,7 +40,10 @@ const ref = (uid, name, id) => doc(db, 'users', uid, name, id)
 const ts  = ()              => serverTimestamp()
 
 // ── FOOD LOGS ────────────────────────────────────────────────────────────────
-export const saveFoodLog = (uid, data) => addDoc(col(uid, 'foodLogs'), { ...data, ts: ts() })
+export const saveFoodLog = async (uid, data) => {
+  const docRef = await addDoc(col(uid, 'foodLogs'), { ...data, ts: ts() })
+  return docRef.id
+}
 export const getFoodLogs = async (uid) => {
   const q = query(col(uid, 'foodLogs'), orderBy('ts','desc'), limit(100))
   const s = await getDocs(q)

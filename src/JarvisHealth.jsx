@@ -866,6 +866,46 @@ const FOOD_DB = [
   {n:'Thali (veg, light)',        p:16, fi:10, u:'thali',  def:1,   cat:'Mixed'   },
   {n:'Thali (veg, full)',         p:22, fi:12, u:'thali',  def:1,   cat:'Mixed'   },
   {n:'Pav bhaji',                 p:8,  fi:7,  u:'plate',  def:1,   cat:'Mixed'   },
+  // ── PACKAGED & PROCESSED ──────────────────────────────────────────────────
+  {n:'Glucose biscuits (Parle-G)', p:2, fi:0,  u:'pieces', def:4,   cat:'Packed'  },
+  {n:'Marie biscuits',             p:2, fi:1,  u:'pieces', def:4,   cat:'Packed'  },
+  {n:'Digestive biscuits',         p:2, fi:2,  u:'pieces', def:3,   cat:'Packed'  },
+  {n:'Cream biscuits',             p:2, fi:0,  u:'pieces', def:3,   cat:'Packed'  },
+  {n:'Namkeen / salted mixture',   p:4, fi:2,  u:'g',      def:30,  cat:'Packed'  },
+  {n:'Bhujia / sev',               p:5, fi:2,  u:'g',      def:30,  cat:'Packed'  },
+  {n:'Chivda / poha mixture',      p:4, fi:3,  u:'g',      def:30,  cat:'Packed'  },
+  {n:'Khakhra (plain)',            p:4, fi:3,  u:'pieces', def:2,   cat:'Packed'  },
+  {n:'Khakhra (masala)',           p:4, fi:3,  u:'pieces', def:2,   cat:'Packed'  },
+  {n:'Rice cakes / rice crackers', p:2, fi:1,  u:'pieces', def:3,   cat:'Packed'  },
+  {n:'Makhana (packaged, salted)', p:3, fi:1,  u:'g',      def:30,  cat:'Packed'  },
+  {n:'Roasted chana (packaged)',   p:9, fi:5,  u:'g',      def:30,  cat:'Packed'  },
+  {n:'Trail mix (nuts+raisins)',   p:4, fi:2,  u:'g',      def:30,  cat:'Packed'  },
+  {n:'Granola bar',                p:3, fi:2,  u:'bar',    def:1,   cat:'Packed'  },
+  {n:'Protein bar',                p:10,fi:3,  u:'bar',    def:1,   cat:'Packed'  },
+  {n:'Instant oats (packet)',      p:4, fi:3,  u:'packet', def:1,   cat:'Packed'  },
+  {n:'Cornflakes (plain)',         p:3, fi:1,  u:'cup',    def:0.5, cat:'Packed'  },
+  {n:'Muesli',                     p:5, fi:4,  u:'cup',    def:0.5, cat:'Packed'  },
+  {n:'Bread (packaged, white)',    p:3, fi:1,  u:'slice',  def:2,   cat:'Packed'  },
+  {n:'Brown bread (packaged)',     p:4, fi:2,  u:'slice',  def:2,   cat:'Packed'  },
+  {n:'Peanut butter (packaged)',   p:4, fi:1,  u:'tbsp',   def:2,   cat:'Packed'  },
+  {n:'Jam (fruit)',                p:0, fi:0,  u:'tsp',    def:2,   cat:'Packed'  },
+  {n:'Cheese slice (processed)',   p:4, fi:0,  u:'slice',  def:1,   cat:'Packed'  },
+  {n:'Butter (packaged)',          p:0, fi:0,  u:'tsp',    def:1,   cat:'Packed'  },
+  {n:'Chips / crisps (avoid)',     p:2, fi:1,  u:'g',      def:30,  cat:'Packed'  },
+  {n:'Kurkure / corn puffs',       p:2, fi:1,  u:'g',      def:30,  cat:'Packed'  },
+  {n:'Nachos / tortilla chips',    p:2, fi:1,  u:'g',      def:30,  cat:'Packed'  },
+  {n:'Instant noodles (Maggi)',    p:5, fi:1,  u:'packet', def:1,   cat:'Packed'  },
+  {n:'Vermicelli (packaged,dry)',  p:4, fi:1,  u:'g',      def:50,  cat:'Packed'  },
+  {n:'Suji / semolina (dry)',      p:4, fi:1,  u:'tbsp',   def:2,   cat:'Packed'  },
+  {n:'Besan / gram flour (dry)',   p:6, fi:3,  u:'tbsp',   def:2,   cat:'Packed'  },
+  {n:'Coconut milk (tetrapak)',    p:2, fi:0,  u:'ml',     def:100, cat:'Packed'  },
+  {n:'Almond milk (packaged)',     p:1, fi:0,  u:'ml',     def:200, cat:'Packed'  },
+  {n:'Protein powder (scoop)',     p:25,fi:1,  u:'scoop',  def:1,   cat:'Packed'  },
+  {n:'Electrolyte drink (ORS)',    p:0, fi:0,  u:'glass',  def:1,   cat:'Packed'  },
+  {n:'Fruit juice (packaged)',     p:0, fi:0,  u:'ml',     def:200, cat:'Packed'  },
+  {n:'Canned tomatoes',            p:2, fi:2,  u:'g',      def:100, cat:'Packed'  },
+  {n:'Canned corn',                p:3, fi:2,  u:'g',      def:100, cat:'Packed'  },
+  {n:'Canned tuna (in water)',     p:25,fi:0,  u:'g',      def:100, cat:'Packed'  },
 ]
 const MEALS_OF_DAY = ['Breakfast','Mid-morning snack','Lunch','Evening snack','Dinner','Bedtime snack']
 const GYM_GROUPS = ['None today','Chest','Back','Legs','Shoulders','Arms','Full body','Cardio']
@@ -948,8 +988,8 @@ function LogTab({ uid, db, setDb, showToast }) {
   const sc = scorePillars({...f,proteinG:Math.round(totalProtein),fiberG:Math.round(totalFiber),veggieServings:totalVeggies},db.medLog)
 
   // Category list for filter pills
-  const CATEGORIES = ['All','Protein','Dal','Veggie','Grains','Roti','Fruit','Dairy','Nuts','Snack','NonVeg','Drinks','SouthI','Fats','Mixed']
-  const CAT_LABELS = {All:'All',Protein:'🥚 Protein',Dal:'🫘 Dal',Veggie:'🥦 Veggies',Grains:'🍚 Rice & Grains',Roti:'🫓 Roti',Fruit:'🍌 Fruits',Dairy:'🥛 Dairy',Nuts:'🥜 Nuts & Seeds',Snack:'🧆 Snacks',NonVeg:'🍗 Non-Veg',Drinks:'🫖 Drinks',SouthI:'🥘 South Indian',Fats:'🧈 Fats',Mixed:'🍱 Dishes'}
+  const CATEGORIES = ['All','Protein','Dal','Veggie','Grains','Roti','Fruit','Dairy','Nuts','Snack','NonVeg','Drinks','SouthI','Fats','Mixed','Packed']
+  const CAT_LABELS = {All:'All',Protein:'🥚 Protein',Dal:'🫘 Dal',Veggie:'🥦 Veggies',Grains:'🍚 Rice & Grains',Roti:'🫓 Roti',Fruit:'🍌 Fruits',Dairy:'🥛 Dairy',Nuts:'🥜 Nuts & Seeds',Snack:'🧆 Snacks',NonVeg:'🍗 Non-Veg',Drinks:'🫖 Drinks',SouthI:'🥘 South Indian',Fats:'🧈 Fats',Mixed:'🍱 Dishes',Packed:'📦 Packaged'}
 
   function search(q){
     setQuery(q)
@@ -1100,14 +1140,14 @@ function LogTab({ uid, db, setDb, showToast }) {
         ))}
       </div>
 
-      {/* Section pills */}
-      <div style={{display:'flex',gap:5,overflowX:'auto',paddingBottom:8,scrollbarWidth:'none',WebkitOverflowScrolling:'touch',marginBottom:6}}>
+      {/* Section tabs */}
+      <div style={{display:'flex',gap:0,background:'white',border:'1px solid #E8EEF4',borderRadius:12,padding:4,marginBottom:14}}>
         {SECS.map(s=>(
           <button key={s.id} onClick={()=>setSec(s.id)} style={{
-            flexShrink:0,padding:'7px 14px',borderRadius:20,border:'none',
-            background:sec===s.id?'#10B981':'#F1F5F9',
+            flex:1,padding:'8px 4px',borderRadius:9,border:'none',
+            background:sec===s.id?'#10B981':'transparent',
             color:sec===s.id?'white':'#64748B',
-            fontSize:12,fontWeight:700,cursor:'pointer',whiteSpace:'nowrap'}}>{s.l}</button>
+            fontSize:11,fontWeight:700,cursor:'pointer',whiteSpace:'nowrap',transition:'all 0.15s'}}>{s.l}</button>
         ))}
       </div>
 
@@ -1202,7 +1242,7 @@ function LogTab({ uid, db, setDb, showToast }) {
                 <div style={{width:28,height:28,borderRadius:8,background:'#10B981',display:'flex',alignItems:'center',justifyContent:'center',color:'white',fontSize:16,fontWeight:800}}>+</div>
                 <div>
                   <div style={{fontSize:13,fontWeight:700,color:'#0F172A'}}>Add food to {activeMeal}</div>
-                  <div style={{fontSize:11,color:'#94A3B8'}}>Search 40+ foods — nutrition auto-fills</div>
+                  <div style={{fontSize:11,color:'#94A3B8'}}>Search 200+ foods — tap to expand</div>
                 </div>
               </div>
               <span style={{color:'#94A3B8',fontSize:12}}>{adding?'▲':'▼'}</span>
@@ -1274,10 +1314,10 @@ function LogTab({ uid, db, setDb, showToast }) {
                       </div>
                       <div>
                         <label className="fl" style={{fontSize:11}}>Unit</label>
-                        <input type="text" className="fi"
-                          placeholder={draft.unit||'cup / g / piece'}
-                          value={draft.unit}
-                          onChange={e=>setDraft(p=>({...p,unit:e.target.value}))}/>
+                        <select className="fi" value={draft.unit||'piece'}
+                          onChange={e=>setDraft(p=>({...p,unit:e.target.value}))}>
+                          {['piece','pieces','g','kg','ml','L','cup','bowl','plate','slice','tsp','tbsp','scoop','glass','packet','bar','medium','half','cob','thali','cloves','handful','serving'].map(u=><option key={u}>{u}</option>)}
+                        </select>
                       </div>
                     </div>
 
@@ -1520,24 +1560,24 @@ function FoodTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, showToast
     const verdict = resp.match(/VERDICT:\s*(OPTIMAL|ACCEPTABLE|INADVISABLE)/i)?.[1]?.toLowerCase()||'acceptable'
     const score   = parseInt(resp.match(/SCORE:\s*(\d+)/i)?.[1]||'5')
     const name    = resp.match(/MEAL NAME:\s*([^\n]+)/i)?.[1]?.trim()||manualName||'Meal'
-    // FIX #7: extract nutrition values from AI response
     const proteinEst = parseFloat(resp.match(/PROTEIN EST:\s*(\d+(?:\.\d+)?)/i)?.[1]||'0')
     const carbsEst   = parseFloat(resp.match(/CARBS EST:\s*(\d+(?:\.\d+)?)/i)?.[1]||'0')
     const fatEst     = parseFloat(resp.match(/FAT EST:\s*(\d+(?:\.\d+)?)/i)?.[1]||'0')
     const fiberEst   = parseFloat(resp.match(/FIBER EST:\s*(\d+(?:\.\d+)?)/i)?.[1]||'0')
     const fMatch  = resp.match(/INTOLERANCE FLAG:\s*([^\n]+)/i)
     const flagged = fMatch&&fMatch[1].trim().toUpperCase()!=='NONE'?fMatch[1].split(',').map(s=>s.trim()).filter(Boolean):[]
-    const entry = {
-      id:Date.now(), date:new Date().toLocaleDateString('en-IN'),
+    const entryData = {
+      date:new Date().toLocaleDateString('en-IN'),
       time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),
       mealType, name, verdict, score, analysis:resp, flagged,
       proteinEst, carbsEst, fatEst, fiberEst
     }
-    await saveFoodLog(uid, entry)
+    // Save to Firestore and get back the real doc ID
+    const firestoreId = await saveFoodLog(uid, entryData)
+    const entry = { ...entryData, id: firestoreId }
     for (const fl of flagged) await saveIntolerance(uid, fl)
     setDb({...db, foodLogs:[entry,...(db.foodLogs||[])].slice(0,100), intolerances:[...new Set([...(db.intolerances||[]),...flagged])]})
     setResult(entry)
-    // FIX #10: NO auto-speak — only speak when user presses 🔊
     if (flagged.length) showToast('⚠ Intolerance detected: '+flagged.join(', '))
   }
 
@@ -1621,7 +1661,7 @@ function FoodTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, showToast
               <div className="fg">
                 <label className="fl">Unit</label>
                 <select className="fi" value={manualUnit} onChange={e=>setManualUnit(e.target.value)}>
-                  {['g','ml','cup','bowl','plate','piece','tsp','tbsp'].map(u=><option key={u}>{u}</option>)}
+                  {['g','kg','ml','L','cup','bowl','plate','piece','pieces','slice','tsp','tbsp','scoop','glass','packet','bar','medium','half','cob','thali','cloves','handful','serving'].map(u=><option key={u}>{u}</option>)}
                 </select>
               </div>
             </div>
