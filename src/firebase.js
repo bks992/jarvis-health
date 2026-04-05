@@ -7,7 +7,7 @@ import {
   getFirestore,
   doc, setDoc, getDoc,
   collection, addDoc, getDocs,
-  query, orderBy, limit, serverTimestamp
+  query, orderBy, limit, serverTimestamp, deleteDoc
 } from 'firebase/firestore'
 
 const app = initializeApp({
@@ -57,7 +57,7 @@ export const getBloodReports = async (uid) => {
 
 // ── MEDICINES ────────────────────────────────────────────────────────────────
 export const saveMedicine     = (uid, id, data) => setDoc(ref(uid, 'medicines', id), { ...data, ts: ts() })
-export const deleteMedicine   = (uid, id) => import('firebase/firestore').then(({deleteDoc}) => deleteDoc(ref(uid, 'medicines', id)))
+export const deleteMedicine   = (uid, id) => deleteDoc(ref(uid, 'medicines', id))
 export const getMedicines     = async (uid) => {
   const s = await getDocs(col(uid, 'medicines'))
   return s.docs.map(d => ({ id: d.id, ...d.data() }))
@@ -112,5 +112,4 @@ export const getDailyLog  = async (uid, date) => {
 // ── CONVERSATIONS (full AI sessions stored) ───────────────────────────────────
 export const saveConversation = (uid, data) => addDoc(col(uid, 'conversations'), { ...data, ts: ts() })
 
-export const deleteFoodLog = (uid, id) =>
-  import("firebase/firestore").then(({deleteDoc}) => deleteDoc(ref(uid, "foodLogs", id)))
+export const deleteFoodLog = (uid, id) => deleteDoc(ref(uid, 'foodLogs', id))
