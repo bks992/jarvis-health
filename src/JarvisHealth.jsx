@@ -636,49 +636,236 @@ function NumInput({ label, hint, value, onChange, placeholder, unit }) {
 // ─── DAILY LOG TAB ─────────────────────────────────────────────────────────────
 // FIX #8: Yoga and Pranayama split | FIX #9: Water and Health Drinks split
 const FOOD_DB = [
-  {n:'Eggs (boiled)',           p:13, fi:0,  u:'eggs',   def:2  },
-  {n:'Scrambled eggs',          p:12, fi:0,  u:'eggs',   def:2  },
-  {n:'Moong dal (cooked)',      p:7,  fi:8,  u:'bowl',   def:1  },
-  {n:'Paneer',                  p:18, fi:0,  u:'g',      def:100},
-  {n:'Curd / dahi',             p:11, fi:0,  u:'cup',    def:1  },
-  {n:'Greek yogurt',            p:17, fi:0,  u:'cup',    def:1  },
-  {n:'Chicken (cooked)',        p:31, fi:0,  u:'g',      def:100},
-  {n:'Fish (rohu/pomfret)',     p:22, fi:0,  u:'g',      def:100},
-  {n:'Whey protein shake',      p:25, fi:1,  u:'scoop',  def:1  },
-  {n:'Dal (any, cooked)',       p:9,  fi:8,  u:'bowl',   def:1  },
-  {n:'Roti / chapati',          p:3,  fi:2,  u:'piece',  def:1  },
-  {n:'Rice (cooked)',           p:3,  fi:1,  u:'cup',    def:0.5},
-  {n:'Moong dal khichdi',       p:8,  fi:5,  u:'bowl',   def:1  },
-  {n:'Idli',                    p:2,  fi:1,  u:'piece',  def:1  },
-  {n:'Oats (cooked)',           p:5,  fi:4,  u:'bowl',   def:1  },
-  {n:'Banana',                  p:1,  fi:3,  u:'piece',  def:1  },
-  {n:'Apple',                   p:0,  fi:4,  u:'piece',  def:1  },
-  {n:'Soaked almonds',          p:3,  fi:2,  u:'pieces', def:5  },
-  {n:'Walnuts (soaked)',        p:2,  fi:1,  u:'pieces', def:5  },
-  {n:'Peanut butter',           p:4,  fi:1,  u:'tbsp',   def:2  },
-  {n:'Flaxseed (ground)',       p:1,  fi:3,  u:'tbsp',   def:1  },
-  {n:'Isabgol / psyllium husk', p:0,  fi:5,  u:'tsp',    def:1  },
-  {n:'Spinach (cooked)',        p:3,  fi:2,  u:'cup',    def:1  },
-  {n:'Broccoli (steamed)',      p:3,  fi:3,  u:'cup',    def:1  },
-  {n:'Lauki / bottle gourd',    p:1,  fi:2,  u:'cup',    def:1  },
-  {n:'Carrots (cooked)',        p:1,  fi:3,  u:'cup',    def:1  },
-  {n:'Beetroot (steamed)',      p:2,  fi:2,  u:'cup',    def:0.5},
-  {n:'Sweet potato',            p:2,  fi:3,  u:'medium', def:1  },
-  {n:'Mushrooms (cooked)',      p:3,  fi:1,  u:'cup',    def:1  },
-  {n:'Milk (warm)',             p:8,  fi:0,  u:'cup',    def:1  },
-  {n:'Golden milk',             p:8,  fi:0,  u:'cup',    def:1  },
-  {n:'Protein smoothie',        p:20, fi:2,  u:'glass',  def:1  },
-  {n:'Makhana (roasted)',       p:3,  fi:1,  u:'cup',    def:0.5},
-  {n:'Peanuts / chana',         p:7,  fi:3,  u:'cup',    def:0.25},
-  {n:'Chana dal (cooked)',      p:15, fi:12, u:'cup',    def:0.5},
-  {n:'Tofu',                    p:17, fi:1,  u:'g',      def:100},
-  {n:'Dahi rice',               p:5,  fi:1,  u:'bowl',   def:1  },
-  {n:'Upma',                    p:4,  fi:2,  u:'bowl',   def:1  },
-  {n:'Poha',                    p:3,  fi:2,  u:'bowl',   def:1  },
-  {n:'Ghee',                    p:0,  fi:0,  u:'tsp',    def:1  },
-  {n:'Lemon water',             p:0,  fi:0,  u:'glass',  def:1  },
-  {n:'Ash gourd juice',         p:0,  fi:1,  u:'ml',     def:200},
-  {n:'Vasavaleha',              p:0,  fi:0,  u:'tsp',    def:1  },
+  // ── EGGS & DAIRY ──────────────────────────────────────────────────────────
+  {n:'Eggs (boiled)',              p:13, fi:0,  u:'eggs',   def:2,   cat:'Protein' },
+  {n:'Eggs (scrambled, with ghee)',p:12, fi:0,  u:'eggs',   def:2,   cat:'Protein' },
+  {n:'Egg white (boiled)',         p:11, fi:0,  u:'whites', def:3,   cat:'Protein' },
+  {n:'Egg omelette (plain)',       p:14, fi:0,  u:'piece',  def:1,   cat:'Protein' },
+  {n:'Paneer (raw)',               p:18, fi:0,  u:'g',      def:100, cat:'Protein' },
+  {n:'Paneer bhurji',              p:14, fi:1,  u:'bowl',   def:1,   cat:'Protein' },
+  {n:'Paneer tikka',               p:16, fi:0,  u:'pieces', def:4,   cat:'Protein' },
+  {n:'Curd / dahi',                p:11, fi:0,  u:'cup',    def:1,   cat:'Dairy'   },
+  {n:'Greek yogurt',               p:17, fi:0,  u:'cup',    def:1,   cat:'Dairy'   },
+  {n:'Milk (full fat)',            p:8,  fi:0,  u:'cup',    def:1,   cat:'Dairy'   },
+  {n:'Milk (toned)',               p:6,  fi:0,  u:'cup',    def:1,   cat:'Dairy'   },
+  {n:'Golden milk (haldi doodh)',  p:8,  fi:0,  u:'cup',    def:1,   cat:'Dairy'   },
+  {n:'Buttermilk (chaas)',         p:3,  fi:0,  u:'glass',  def:1,   cat:'Dairy'   },
+  {n:'Lassi (plain, unsweetened)', p:5,  fi:0,  u:'glass',  def:1,   cat:'Dairy'   },
+  {n:'Cottage cheese (low fat)',   p:14, fi:0,  u:'g',      def:100, cat:'Dairy'   },
+  {n:'Whey protein shake',         p:25, fi:1,  u:'scoop',  def:1,   cat:'Protein' },
+  {n:'Protein smoothie',           p:20, fi:2,  u:'glass',  def:1,   cat:'Protein' },
+  // ── DALS & LEGUMES ────────────────────────────────────────────────────────
+  {n:'Moong dal (cooked)',         p:7,  fi:8,  u:'bowl',   def:1,   cat:'Dal'     },
+  {n:'Moong dal (whole, cooked)',  p:9,  fi:7,  u:'bowl',   def:1,   cat:'Dal'     },
+  {n:'Toor dal / arhar dal',       p:8,  fi:6,  u:'bowl',   def:1,   cat:'Dal'     },
+  {n:'Masoor dal (red lentil)',     p:9,  fi:8,  u:'bowl',   def:1,   cat:'Dal'     },
+  {n:'Urad dal',                   p:8,  fi:7,  u:'bowl',   def:1,   cat:'Dal'     },
+  {n:'Chana dal (cooked)',         p:15, fi:12, u:'cup',    def:0.5, cat:'Dal'     },
+  {n:'Dal (mixed, cooked)',        p:9,  fi:8,  u:'bowl',   def:1,   cat:'Dal'     },
+  {n:'Dal makhani',                p:8,  fi:6,  u:'bowl',   def:1,   cat:'Dal'     },
+  {n:'Dal tadka',                  p:8,  fi:6,  u:'bowl',   def:1,   cat:'Dal'     },
+  {n:'Rajma (cooked)',             p:9,  fi:13, u:'bowl',   def:1,   cat:'Dal'     },
+  {n:'Chole / chickpeas (cooked)', p:9,  fi:12, u:'bowl',   def:1,   cat:'Dal'     },
+  {n:'Black chana (kala chana)',   p:10, fi:11, u:'bowl',   def:1,   cat:'Dal'     },
+  {n:'Lobia / black-eyed peas',    p:8,  fi:11, u:'bowl',   def:1,   cat:'Dal'     },
+  {n:'Lobia curry',                p:7,  fi:9,  u:'bowl',   def:1,   cat:'Dal'     },
+  {n:'Peanuts / moongfali',        p:7,  fi:3,  u:'tbsp',   def:2,   cat:'Dal'     },
+  {n:'Peanut butter',              p:4,  fi:1,  u:'tbsp',   def:2,   cat:'Dal'     },
+  {n:'Tofu (firm)',                p:17, fi:1,  u:'g',      def:100, cat:'Protein' },
+  {n:'Soya chunks (cooked)',       p:17, fi:4,  u:'g',      def:50,  cat:'Protein' },
+  {n:'Tempeh',                     p:15, fi:3,  u:'g',      def:100, cat:'Protein' },
+  // ── NON-VEG ───────────────────────────────────────────────────────────────
+  {n:'Chicken breast (grilled)',   p:31, fi:0,  u:'g',      def:100, cat:'NonVeg'  },
+  {n:'Chicken (curry, with bone)', p:22, fi:0,  u:'pieces', def:2,   cat:'NonVeg'  },
+  {n:'Chicken tikka',              p:26, fi:0,  u:'pieces', def:4,   cat:'NonVeg'  },
+  {n:'Chicken soup (clear)',       p:10, fi:0,  u:'bowl',   def:1,   cat:'NonVeg'  },
+  {n:'Fish (rohu)',                p:20, fi:0,  u:'g',      def:100, cat:'NonVeg'  },
+  {n:'Fish (pomfret)',             p:22, fi:0,  u:'g',      def:100, cat:'NonVeg'  },
+  {n:'Fish (hilsa / ilish)',       p:20, fi:0,  u:'g',      def:100, cat:'NonVeg'  },
+  {n:'Fish (salmon)',              p:25, fi:0,  u:'g',      def:100, cat:'NonVeg'  },
+  {n:'Fish (tuna, canned)',        p:29, fi:0,  u:'g',      def:100, cat:'NonVeg'  },
+  {n:'Fish curry (light gravy)',   p:18, fi:0,  u:'bowl',   def:1,   cat:'NonVeg'  },
+  {n:'Steamed fish',               p:22, fi:0,  u:'g',      def:100, cat:'NonVeg'  },
+  {n:'Prawn / shrimp (cooked)',    p:24, fi:0,  u:'g',      def:100, cat:'NonVeg'  },
+  {n:'Egg curry',                  p:12, fi:0,  u:'bowl',   def:1,   cat:'NonVeg'  },
+  // ── RICE & GRAINS ─────────────────────────────────────────────────────────
+  {n:'Rice (white, cooked)',       p:3,  fi:1,  u:'cup',    def:0.5, cat:'Grains'  },
+  {n:'Brown rice (cooked)',        p:3,  fi:2,  u:'cup',    def:0.5, cat:'Grains'  },
+  {n:'Basmati rice (cooked)',      p:3,  fi:1,  u:'cup',    def:0.5, cat:'Grains'  },
+  {n:'Jeera rice',                 p:3,  fi:1,  u:'cup',    def:0.5, cat:'Grains'  },
+  {n:'Khichdi (rice-dal)',         p:8,  fi:5,  u:'bowl',   def:1,   cat:'Grains'  },
+  {n:'Moong dal khichdi',          p:8,  fi:5,  u:'bowl',   def:1,   cat:'Grains'  },
+  {n:'Vegetable khichdi',          p:7,  fi:6,  u:'bowl',   def:1,   cat:'Grains'  },
+  {n:'Dahi rice',                  p:5,  fi:1,  u:'bowl',   def:1,   cat:'Grains'  },
+  {n:'Oats (cooked)',              p:5,  fi:4,  u:'bowl',   def:1,   cat:'Grains'  },
+  {n:'Oats with milk',             p:8,  fi:4,  u:'bowl',   def:1,   cat:'Grains'  },
+  {n:'Oats porridge',              p:5,  fi:4,  u:'bowl',   def:1,   cat:'Grains'  },
+  {n:'Daliya / broken wheat',      p:5,  fi:5,  u:'bowl',   def:1,   cat:'Grains'  },
+  {n:'Daliya khichdi',             p:7,  fi:5,  u:'bowl',   def:1,   cat:'Grains'  },
+  {n:'Quinoa (cooked)',            p:5,  fi:3,  u:'cup',    def:0.5, cat:'Grains'  },
+  {n:'Millet / bajra (cooked)',    p:3,  fi:4,  u:'cup',    def:0.5, cat:'Grains'  },
+  {n:'Jowar roti',                 p:3,  fi:3,  u:'piece',  def:1,   cat:'Grains'  },
+  {n:'Nachni / ragi roti',         p:3,  fi:4,  u:'piece',  def:1,   cat:'Grains'  },
+  {n:'Vermicelli / sevai (cooked)',p:4,  fi:1,  u:'bowl',   def:1,   cat:'Grains'  },
+  {n:'Sabudana khichdi',           p:3,  fi:1,  u:'bowl',   def:1,   cat:'Grains'  },
+  // ── ROTIS & BREADS ────────────────────────────────────────────────────────
+  {n:'Roti / chapati (plain)',     p:3,  fi:2,  u:'piece',  def:1,   cat:'Roti'    },
+  {n:'Phulka (thin roti)',         p:3,  fi:2,  u:'piece',  def:1,   cat:'Roti'    },
+  {n:'Paratha (plain)',            p:4,  fi:2,  u:'piece',  def:1,   cat:'Roti'    },
+  {n:'Aloo paratha',               p:4,  fi:2,  u:'piece',  def:1,   cat:'Roti'    },
+  {n:'Methi paratha',              p:4,  fi:3,  u:'piece',  def:1,   cat:'Roti'    },
+  {n:'Missi roti',                 p:5,  fi:3,  u:'piece',  def:1,   cat:'Roti'    },
+  {n:'Whole wheat bread',          p:4,  fi:2,  u:'slice',  def:2,   cat:'Roti'    },
+  {n:'Multigrain bread',           p:5,  fi:3,  u:'slice',  def:2,   cat:'Roti'    },
+  // ── SOUTH INDIAN ──────────────────────────────────────────────────────────
+  {n:'Idli',                       p:2,  fi:1,  u:'piece',  def:2,   cat:'SouthI'  },
+  {n:'Dosa (plain)',               p:3,  fi:1,  u:'piece',  def:1,   cat:'SouthI'  },
+  {n:'Dosa (egg)',                 p:10, fi:1,  u:'piece',  def:1,   cat:'SouthI'  },
+  {n:'Pesarattu (moong dosa)',     p:7,  fi:3,  u:'piece',  def:1,   cat:'SouthI'  },
+  {n:'Uttapam',                    p:4,  fi:2,  u:'piece',  def:1,   cat:'SouthI'  },
+  {n:'Upma',                       p:4,  fi:2,  u:'bowl',   def:1,   cat:'SouthI'  },
+  {n:'Pongal (ven)',               p:6,  fi:3,  u:'bowl',   def:1,   cat:'SouthI'  },
+  {n:'Sambar',                     p:4,  fi:5,  u:'cup',    def:1,   cat:'SouthI'  },
+  {n:'Coconut chutney',            p:1,  fi:2,  u:'tbsp',   def:2,   cat:'SouthI'  },
+  {n:'Rasam',                      p:1,  fi:1,  u:'cup',    def:1,   cat:'SouthI'  },
+  // ── SNACKS & BREAKFAST ────────────────────────────────────────────────────
+  {n:'Poha',                       p:3,  fi:2,  u:'bowl',   def:1,   cat:'Snack'   },
+  {n:'Poha with vegetables',       p:4,  fi:3,  u:'bowl',   def:1,   cat:'Snack'   },
+  {n:'Makhana (roasted)',          p:3,  fi:1,  u:'cup',    def:0.5, cat:'Snack'   },
+  {n:'Roasted chana',              p:10, fi:6,  u:'cup',    def:0.25,cat:'Snack'   },
+  {n:'Dhokla',                     p:5,  fi:2,  u:'pieces', def:3,   cat:'Snack'   },
+  {n:'Khandvi',                    p:4,  fi:1,  u:'pieces', def:4,   cat:'Snack'   },
+  {n:'Handvo (baked)',             p:5,  fi:3,  u:'slice',  def:1,   cat:'Snack'   },
+  {n:'Murmura / puffed rice',      p:2,  fi:1,  u:'cup',    def:1,   cat:'Snack'   },
+  {n:'Roasted flattened rice',     p:3,  fi:2,  u:'cup',    def:0.5, cat:'Snack'   },
+  {n:'Sprouts (moong, raw)',       p:4,  fi:2,  u:'cup',    def:0.5, cat:'Snack'   },
+  {n:'Sprouts salad',              p:5,  fi:3,  u:'bowl',   def:1,   cat:'Snack'   },
+  {n:'Besan chilla (gramflour)',   p:8,  fi:3,  u:'piece',  def:1,   cat:'Snack'   },
+  {n:'Moong dal chilla',           p:9,  fi:4,  u:'piece',  def:1,   cat:'Snack'   },
+  // ── VEGETABLES (cooked) ───────────────────────────────────────────────────
+  {n:'Spinach / palak (cooked)',   p:3,  fi:2,  u:'cup',    def:1,   cat:'Veggie'  },
+  {n:'Palak paneer',               p:12, fi:3,  u:'bowl',   def:1,   cat:'Veggie'  },
+  {n:'Palak dal',                  p:8,  fi:5,  u:'bowl',   def:1,   cat:'Veggie'  },
+  {n:'Broccoli (steamed)',         p:3,  fi:3,  u:'cup',    def:1,   cat:'Veggie'  },
+  {n:'Broccoli sabzi',             p:4,  fi:3,  u:'bowl',   def:1,   cat:'Veggie'  },
+  {n:'Lauki / bottle gourd',       p:1,  fi:2,  u:'cup',    def:1,   cat:'Veggie'  },
+  {n:'Lauki sabzi',                p:2,  fi:2,  u:'bowl',   def:1,   cat:'Veggie'  },
+  {n:'Lauki dal',                  p:7,  fi:4,  u:'bowl',   def:1,   cat:'Veggie'  },
+  {n:'Tinda / Indian round gourd', p:1,  fi:2,  u:'cup',    def:1,   cat:'Veggie'  },
+  {n:'Turai / ridge gourd',        p:1,  fi:2,  u:'cup',    def:1,   cat:'Veggie'  },
+  {n:'Karela / bitter gourd',      p:2,  fi:3,  u:'cup',    def:0.5, cat:'Veggie'  },
+  {n:'Bhindi / okra (cooked)',     p:2,  fi:3,  u:'cup',    def:1,   cat:'Veggie'  },
+  {n:'Cauliflower / gobi (cooked)',p:2,  fi:3,  u:'cup',    def:1,   cat:'Veggie'  },
+  {n:'Gobi sabzi',                 p:2,  fi:3,  u:'bowl',   def:1,   cat:'Veggie'  },
+  {n:'Aloo gobi',                  p:3,  fi:4,  u:'bowl',   def:1,   cat:'Veggie'  },
+  {n:'Cabbage (cooked)',           p:1,  fi:2,  u:'cup',    def:1,   cat:'Veggie'  },
+  {n:'French beans (cooked)',      p:2,  fi:4,  u:'cup',    def:1,   cat:'Veggie'  },
+  {n:'Capsicum / bell pepper',     p:1,  fi:2,  u:'piece',  def:1,   cat:'Veggie'  },
+  {n:'Tomato (cooked)',            p:1,  fi:1,  u:'medium', def:1,   cat:'Veggie'  },
+  {n:'Tomato soup',                p:2,  fi:2,  u:'bowl',   def:1,   cat:'Veggie'  },
+  {n:'Onion',                      p:1,  fi:1,  u:'medium', def:1,   cat:'Veggie'  },
+  {n:'Garlic',                     p:0,  fi:0,  u:'cloves', def:3,   cat:'Veggie'  },
+  {n:'Ginger',                     p:0,  fi:0,  u:'tsp',    def:1,   cat:'Veggie'  },
+  {n:'Green peas (cooked)',        p:5,  fi:5,  u:'cup',    def:0.5, cat:'Veggie'  },
+  {n:'Corn / maize (boiled)',      p:3,  fi:3,  u:'cob',    def:1,   cat:'Veggie'  },
+  {n:'Pumpkin / kaddu (cooked)',   p:1,  fi:2,  u:'cup',    def:1,   cat:'Veggie'  },
+  {n:'Drumstick / moringa pods',  p:2,  fi:3,  u:'pieces', def:4,   cat:'Veggie'  },
+  {n:'Drumstick leaves sabzi',     p:4,  fi:3,  u:'cup',    def:0.5, cat:'Veggie'  },
+  {n:'Fenugreek / methi leaves',  p:3,  fi:3,  u:'cup',    def:0.5, cat:'Veggie'  },
+  {n:'Methi dal',                  p:8,  fi:6,  u:'bowl',   def:1,   cat:'Veggie'  },
+  {n:'Amaranth / rajgira leaves', p:3,  fi:2,  u:'cup',    def:0.5, cat:'Veggie'  },
+  {n:'Lotus stem / kamal kakdi',  p:2,  fi:3,  u:'cup',    def:0.5, cat:'Veggie'  },
+  {n:'Raw banana (cooked)',        p:1,  fi:3,  u:'piece',  def:1,   cat:'Veggie'  },
+  {n:'Jackfruit (young, cooked)', p:2,  fi:3,  u:'cup',    def:0.5, cat:'Veggie'  },
+  {n:'Colocasia / arbi (cooked)', p:2,  fi:4,  u:'cup',    def:0.5, cat:'Veggie'  },
+  {n:'Suran / elephant yam',      p:2,  fi:4,  u:'cup',    def:0.5, cat:'Veggie'  },
+  {n:'Ash gourd (cooked)',        p:1,  fi:1,  u:'cup',    def:1,   cat:'Veggie'  },
+  {n:'Zucchini (cooked)',         p:1,  fi:1,  u:'cup',    def:1,   cat:'Veggie'  },
+  {n:'Cucumber',                  p:1,  fi:1,  u:'medium', def:1,   cat:'Veggie'  },
+  {n:'Mixed vegetable sabzi',     p:3,  fi:4,  u:'bowl',   def:1,   cat:'Veggie'  },
+  {n:'Vegetable soup (clear)',    p:3,  fi:3,  u:'bowl',   def:1,   cat:'Veggie'  },
+  {n:'Vegetable stew',            p:4,  fi:4,  u:'bowl',   def:1,   cat:'Veggie'  },
+  // ── ROOT VEGETABLES ───────────────────────────────────────────────────────
+  {n:'Aloo / potato (boiled)',    p:2,  fi:2,  u:'medium', def:1,   cat:'Veggie'  },
+  {n:'Sweet potato (boiled)',     p:2,  fi:3,  u:'medium', def:1,   cat:'Veggie'  },
+  {n:'Yam / suran (boiled)',      p:2,  fi:4,  u:'g',      def:100, cat:'Veggie'  },
+  {n:'Carrots (cooked)',          p:1,  fi:3,  u:'cup',    def:1,   cat:'Veggie'  },
+  {n:'Beetroot (steamed)',        p:2,  fi:2,  u:'medium', def:1,   cat:'Veggie'  },
+  {n:'Radish / mooli (cooked)',   p:1,  fi:2,  u:'cup',    def:0.5, cat:'Veggie'  },
+  {n:'Turnip (cooked)',           p:1,  fi:2,  u:'cup',    def:0.5, cat:'Veggie'  },
+  // ── FRUITS ────────────────────────────────────────────────────────────────
+  {n:'Banana',                    p:1,  fi:3,  u:'piece',  def:1,   cat:'Fruit'   },
+  {n:'Apple',                     p:0,  fi:4,  u:'piece',  def:1,   cat:'Fruit'   },
+  {n:'Pomegranate (arils)',        p:2,  fi:4,  u:'cup',    def:0.5, cat:'Fruit'   },
+  {n:'Papaya',                    p:1,  fi:3,  u:'cup',    def:1,   cat:'Fruit'   },
+  {n:'Mango',                     p:1,  fi:2,  u:'cup',    def:0.5, cat:'Fruit'   },
+  {n:'Guava',                     p:3,  fi:5,  u:'piece',  def:1,   cat:'Fruit'   },
+  {n:'Oranges',                   p:1,  fi:3,  u:'piece',  def:1,   cat:'Fruit'   },
+  {n:'Amla / Indian gooseberry',  p:0,  fi:3,  u:'piece',  def:2,   cat:'Fruit'   },
+  {n:'Berries (blueberry/straw)', p:1,  fi:3,  u:'cup',    def:0.5, cat:'Fruit'   },
+  {n:'Watermelon',                p:1,  fi:1,  u:'cup',    def:1,   cat:'Fruit'   },
+  {n:'Chikoo / sapodilla',        p:0,  fi:3,  u:'piece',  def:1,   cat:'Fruit'   },
+  {n:'Dates (soaked)',            p:1,  fi:3,  u:'pieces', def:3,   cat:'Fruit'   },
+  {n:'Figs (fresh)',              p:1,  fi:3,  u:'pieces', def:2,   cat:'Fruit'   },
+  {n:'Anjeer / dried fig',        p:2,  fi:4,  u:'pieces', def:2,   cat:'Fruit'   },
+  {n:'Coconut (fresh grated)',    p:2,  fi:5,  u:'tbsp',   def:2,   cat:'Fruit'   },
+  {n:'Avocado',                   p:2,  fi:7,  u:'half',   def:1,   cat:'Fruit'   },
+  {n:'Pear',                      p:0,  fi:4,  u:'piece',  def:1,   cat:'Fruit'   },
+  {n:'Kiwi',                      p:1,  fi:3,  u:'piece',  def:1,   cat:'Fruit'   },
+  // ── NUTS & SEEDS ──────────────────────────────────────────────────────────
+  {n:'Almonds (soaked)',          p:3,  fi:2,  u:'pieces', def:10,  cat:'Nuts'    },
+  {n:'Walnuts (soaked)',          p:2,  fi:1,  u:'pieces', def:5,   cat:'Nuts'    },
+  {n:'Cashews',                   p:3,  fi:1,  u:'pieces', def:10,  cat:'Nuts'    },
+  {n:'Pistachios',                p:3,  fi:2,  u:'pieces', def:20,  cat:'Nuts'    },
+  {n:'Mixed nuts',                p:4,  fi:2,  u:'tbsp',   def:2,   cat:'Nuts'    },
+  {n:'Flaxseed (ground)',         p:1,  fi:3,  u:'tbsp',   def:1,   cat:'Nuts'    },
+  {n:'Chia seeds',                p:2,  fi:5,  u:'tbsp',   def:1,   cat:'Nuts'    },
+  {n:'Sunflower seeds',           p:3,  fi:2,  u:'tbsp',   def:2,   cat:'Nuts'    },
+  {n:'Pumpkin seeds',             p:5,  fi:2,  u:'tbsp',   def:2,   cat:'Nuts'    },
+  {n:'Sesame seeds / til',        p:3,  fi:2,  u:'tbsp',   def:1,   cat:'Nuts'    },
+  {n:'Hemp seeds',                p:5,  fi:1,  u:'tbsp',   def:2,   cat:'Nuts'    },
+  {n:'Isabgol / psyllium husk',  p:0,  fi:5,  u:'tsp',    def:1,   cat:'Nuts'    },
+  // ── FATS & CONDIMENTS ─────────────────────────────────────────────────────
+  {n:'Ghee',                      p:0,  fi:0,  u:'tsp',    def:1,   cat:'Fats'    },
+  {n:'Coconut oil',               p:0,  fi:0,  u:'tsp',    def:1,   cat:'Fats'    },
+  {n:'Olive oil',                 p:0,  fi:0,  u:'tsp',    def:1,   cat:'Fats'    },
+  {n:'Mustard oil',               p:0,  fi:0,  u:'tsp',    def:1,   cat:'Fats'    },
+  {n:'Honey (raw)',               p:0,  fi:0,  u:'tsp',    def:1,   cat:'Fats'    },
+  {n:'Jaggery / gud',             p:0,  fi:0,  u:'g',      def:10,  cat:'Fats'    },
+  {n:'Cinnamon (powder)',         p:0,  fi:1,  u:'tsp',    def:0.5, cat:'Fats'    },
+  {n:'Turmeric (haldi)',          p:0,  fi:0,  u:'tsp',    def:1,   cat:'Fats'    },
+  {n:'Coconut chutney',           p:1,  fi:2,  u:'tbsp',   def:2,   cat:'Fats'    },
+  {n:'Mint chutney',              p:0,  fi:1,  u:'tbsp',   def:2,   cat:'Fats'    },
+  // ── DRINKS & FUNCTIONAL ───────────────────────────────────────────────────
+  {n:'Lemon water (warm)',        p:0,  fi:0,  u:'glass',  def:1,   cat:'Drinks'  },
+  {n:'Ash gourd juice',           p:0,  fi:1,  u:'ml',     def:200, cat:'Drinks'  },
+  {n:'Amla juice / powder',       p:0,  fi:1,  u:'tsp',    def:1,   cat:'Drinks'  },
+  {n:'Ginger water',              p:0,  fi:0,  u:'glass',  def:1,   cat:'Drinks'  },
+  {n:'Tulsi tea',                 p:0,  fi:0,  u:'cup',    def:1,   cat:'Drinks'  },
+  {n:'Green tea',                 p:0,  fi:0,  u:'cup',    def:1,   cat:'Drinks'  },
+  {n:'Barley water',              p:1,  fi:1,  u:'glass',  def:1,   cat:'Drinks'  },
+  {n:'Coconut water',             p:1,  fi:1,  u:'glass',  def:1,   cat:'Drinks'  },
+  {n:'Triphala water',            p:0,  fi:0,  u:'glass',  def:1,   cat:'Drinks'  },
+  {n:'Ginger tulsi tea',          p:0,  fi:0,  u:'cup',    def:1,   cat:'Drinks'  },
+  {n:'Jeera water',               p:0,  fi:0,  u:'glass',  def:1,   cat:'Drinks'  },
+  {n:'Ajwain water',              p:0,  fi:0,  u:'glass',  def:1,   cat:'Drinks'  },
+  {n:'Moringa tea',               p:1,  fi:0,  u:'cup',    def:1,   cat:'Drinks'  },
+  {n:'Turmeric tea',              p:0,  fi:0,  u:'cup',    def:1,   cat:'Drinks'  },
+  {n:'Vegetable broth',           p:1,  fi:1,  u:'cup',    def:1,   cat:'Drinks'  },
+  {n:'Vasavaleha',                p:0,  fi:0,  u:'tsp',    def:1,   cat:'Drinks'  },
+  // ── MUSHROOMS ─────────────────────────────────────────────────────────────
+  {n:'Button mushrooms (cooked)', p:3,  fi:1,  u:'cup',    def:1,   cat:'Veggie'  },
+  {n:'Shiitake mushrooms',        p:3,  fi:2,  u:'cup',    def:0.5, cat:'Veggie'  },
+  {n:'Oyster mushrooms',          p:3,  fi:2,  u:'cup',    def:0.5, cat:'Veggie'  },
+  // ── MIXED DISHES ──────────────────────────────────────────────────────────
+  {n:'Chole bhature (1 serving)', p:14, fi:10, u:'plate',  def:1,   cat:'Mixed'   },
+  {n:'Rajma chawal',              p:12, fi:13, u:'plate',  def:1,   cat:'Mixed'   },
+  {n:'Dal chawal',                p:11, fi:8,  u:'plate',  def:1,   cat:'Mixed'   },
+  {n:'Dal roti (2 roti+dal)',     p:14, fi:10, u:'plate',  def:1,   cat:'Mixed'   },
+  {n:'Sabzi roti (1 roti+sabzi)', p:5,  fi:4,  u:'plate',  def:1,   cat:'Mixed'   },
+  {n:'Thali (veg, light)',        p:16, fi:10, u:'thali',  def:1,   cat:'Mixed'   },
+  {n:'Thali (veg, full)',         p:22, fi:12, u:'thali',  def:1,   cat:'Mixed'   },
+  {n:'Pav bhaji',                 p:8,  fi:7,  u:'plate',  def:1,   cat:'Mixed'   },
 ]
 const MEALS_OF_DAY = ['Breakfast','Mid-morning snack','Lunch','Evening snack','Dinner','Bedtime snack']
 const GYM_GROUPS = ['None today','Chest','Back','Legs','Shoulders','Arms','Full body','Cardio']
@@ -692,7 +879,28 @@ const HABITS = [
 // ── HealthifyMe-style food logger ─────────────────────────────────────────────
 function LogTab({ uid, db, setDb, showToast }) {
   const today = new Date().toISOString().slice(0,10)
-  const ex    = db.todayLog || {}
+
+  // ── Date picker: allow logging for any past date ──────────────────────────
+  const [logDate, setLogDate] = useState(today)
+  const isToday = logDate === today
+
+  // Load log for selected date
+  const [dateLog, setDateLog] = useState(null)
+  const [dateLoading, setDateLoading] = useState(false)
+
+  useEffect(() => {
+    if (isToday) {
+      setDateLog(db.todayLog || null)
+      return
+    }
+    setDateLoading(true)
+    getDailyLog(uid, logDate).then(l => {
+      setDateLog(l && Object.keys(l).length > 3 ? l : null)
+      setDateLoading(false)
+    }).catch(() => setDateLoading(false))
+  }, [logDate])
+
+  const ex = dateLog || {}
 
   // section tabs
   const [sec, setSec] = useState('food')
@@ -702,9 +910,23 @@ function LogTab({ uid, db, setDb, showToast }) {
   const [activeMeal, setActiveMeal] = useState('Breakfast')
   const [query, setQuery]     = useState('')
   const [sugg, setSugg]       = useState([])
-  const [adding, setAdding]   = useState(false)   // show add panel?
+  const [adding, setAdding]   = useState(false)
   const [draft, setDraft]     = useState({qty:'1',unit:'',protein:'',fiber:''})
-  const [selected, setSelected] = useState(null)  // selected FOOD_DB item
+  const [selected, setSelected] = useState(null)
+  const [activeCategory, setActiveCategory] = useState('All')
+
+  // Reset food items when date changes
+  useEffect(() => {
+    setItems(ex.foodItems || [])
+    sf(prev => ({
+      sleepH:'',energyAM:5,energyPM:5,
+      waterL:'',healthDrinksMl:'',
+      creonDoses:3,gasLevel:0,bloating:0,digestComfort:5,
+      yogaMins:'',pranayamaMins:'',
+      walkingSteps:'',weightKg:'',gymGroup:'None today',
+      symptoms:'',notes:'',habits:{}, ...ex
+    }))
+  }, [logDate, dateLog])
 
   // other fields
   const [f, sf] = useState({
@@ -725,9 +947,31 @@ function LogTab({ uid, db, setDb, showToast }) {
   const totalFluid   = (+f.waterL||0)+(+f.healthDrinksMl||0)/1000
   const sc = scorePillars({...f,proteinG:Math.round(totalProtein),fiberG:Math.round(totalFiber),veggieServings:totalVeggies},db.medLog)
 
+  // Category list for filter pills
+  const CATEGORIES = ['All','Protein','Dal','Veggie','Grains','Roti','Fruit','Dairy','Nuts','Snack','NonVeg','Drinks','SouthI','Fats','Mixed']
+  const CAT_LABELS = {All:'All',Protein:'🥚 Protein',Dal:'🫘 Dal',Veggie:'🥦 Veggies',Grains:'🍚 Rice & Grains',Roti:'🫓 Roti',Fruit:'🍌 Fruits',Dairy:'🥛 Dairy',Nuts:'🥜 Nuts & Seeds',Snack:'🧆 Snacks',NonVeg:'🍗 Non-Veg',Drinks:'🫖 Drinks',SouthI:'🥘 South Indian',Fats:'🧈 Fats',Mixed:'🍱 Dishes'}
+
   function search(q){
     setQuery(q)
-    setSugg(q.trim() ? FOOD_DB.filter(d=>d.n.toLowerCase().includes(q.toLowerCase())).slice(0,8) : [])
+    const cat = activeCategory === 'All' ? null : activeCategory
+    setSugg(q.trim()
+      ? FOOD_DB.filter(d =>
+          d.n.toLowerCase().includes(q.toLowerCase()) &&
+          (!cat || d.cat === cat)
+        ).slice(0,10)
+      : []
+    )
+  }
+
+  function filterByCategory(cat) {
+    setActiveCategory(cat)
+    if (query.trim()) {
+      const c = cat === 'All' ? null : cat
+      setSugg(FOOD_DB.filter(d =>
+        d.n.toLowerCase().includes(query.toLowerCase()) &&
+        (!c || d.cat === c)
+      ).slice(0,10))
+    }
   }
 
   function selectItem(item){
@@ -776,15 +1020,16 @@ function LogTab({ uid, db, setDb, showToast }) {
   async function save(){
     setSaving(true)
     const log = {
-      ...f, date:today,
+      ...f, date:logDate,
       foodItems: items,
       proteinG:  Math.round(totalProtein),
       fiberG:    Math.round(totalFiber),
       veggieServings: totalVeggies, ...sc
     }
-    await saveDailyLog(uid, today, log)
-    setDb({...db, todayLog:log})
-    showToast('Log saved ✓')
+    await saveDailyLog(uid, logDate, log)
+    if (isToday) setDb({...db, todayLog:log})
+    else setDateLog(log)
+    showToast(`Log saved for ${logDate === today ? 'today' : logDate} ✓`)
     setSaving(false)
   }
 
@@ -812,6 +1057,36 @@ function LogTab({ uid, db, setDb, showToast }) {
 
   return(
     <div className="fade-up">
+
+      {/* ── Date Picker Banner ────────────────────────────────────────── */}
+      <div style={{background:isToday?'#F0FDF4':'#FFFBEB',border:`1.5px solid ${isToday?'#BBF7D0':'#FDE68A'}`,borderRadius:13,padding:'12px 16px',marginBottom:14,display:'flex',alignItems:'center',gap:12,flexWrap:'wrap'}}>
+        <div style={{flex:1}}>
+          <div style={{fontSize:12,fontWeight:700,color:isToday?'#059669':'#92400E',marginBottom:3}}>
+            {isToday ? '📅 Logging for Today' : `📅 Logging for ${new Date(logDate+'T00:00:00').toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}`}
+          </div>
+          <div style={{fontSize:11,color:isToday?'#10B981':'#B45309'}}>
+            {isToday ? 'Switch date below to fill a missed day' : dateLog ? '✓ Existing data loaded — you can edit and re-save' : 'No data for this day yet — fill it in now'}
+          </div>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
+          <input type="date" className="fi" max={today}
+            value={logDate}
+            onChange={e => { if(e.target.value) setLogDate(e.target.value) }}
+            style={{width:150,padding:'8px 10px',fontSize:13,border:'1.5px solid #E2E8F0',borderRadius:8}}
+          />
+          {!isToday && (
+            <button onClick={()=>setLogDate(today)} style={{padding:'8px 12px',borderRadius:8,border:'1.5px solid #10B981',background:'#F0FDF4',color:'#059669',fontSize:12,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>
+              Today
+            </button>
+          )}
+        </div>
+      </div>
+
+      {dateLoading && (
+        <div style={{display:'flex',alignItems:'center',gap:8,padding:'10px 14px',background:'white',border:'1px solid #E8EEF4',borderRadius:10,marginBottom:12,color:'#64748B',fontSize:13}}>
+          <Spin size={16}/> Loading data for {logDate}...
+        </div>
+      )}
       {/* Score strip */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6,marginBottom:14}}>
         {[{l:'Nutrition',v:sc.nutrition,c:'#10B981'},{l:'Hydration',v:sc.hydration,c:'#0EA5E9'},
@@ -935,10 +1210,23 @@ function LogTab({ uid, db, setDb, showToast }) {
 
             {adding&&(
               <div style={{padding:'0 14px 14px',borderTop:'1px solid #F1F5F9'}}>
+
+                {/* Category filter pills */}
+                <div style={{display:'flex',gap:5,overflowX:'auto',scrollbarWidth:'none',WebkitOverflowScrolling:'touch',paddingBottom:6,marginTop:12,marginBottom:10}}>
+                  {CATEGORIES.map(cat=>(
+                    <button key={cat} onClick={()=>filterByCategory(cat)} style={{
+                      flexShrink:0,padding:'5px 11px',borderRadius:20,fontSize:11,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap',
+                      border:`1.5px solid ${activeCategory===cat?'#10B981':'#E2E8F0'}`,
+                      background:activeCategory===cat?'#F0FDF4':'white',
+                      color:activeCategory===cat?'#059669':'#64748B'
+                    }}>{CAT_LABELS[cat]||cat}</button>
+                  ))}
+                </div>
+
                 {/* Search input */}
                 <div style={{position:'relative',marginTop:12}}>
                   <input type="text" className="fi"
-                    placeholder="Search: eggs, dal, paneer, roti, chicken..."
+                    placeholder="Search 200+ foods: rajma, palak, dosa, roti, chicken..."
                     value={query}
                     onChange={e=>search(e.target.value)}
                     autoFocus
