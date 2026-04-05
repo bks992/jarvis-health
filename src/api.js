@@ -14,6 +14,16 @@ export async function askJarvis(messages, systemExtra = '', userEmail = '') {
   return data.content?.find(b => b.type === 'text')?.text || 'No response'
 }
 
+// ── PDF TO BASE64 ─────────────────────────────────────────────────────────────
+export function pdfToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onerror = reject
+    reader.onload = (ev) => resolve(ev.target.result.split(',')[1])
+    reader.readAsDataURL(file)
+  })
+}
+
 // ── IMAGE COMPRESSION ─────────────────────────────────────────────────────────
 export function imgToBase64(file, maxMB = 4.5) {
   return new Promise((resolve, reject) => {

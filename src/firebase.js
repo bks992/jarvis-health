@@ -51,12 +51,16 @@ export const getFoodLogs = async (uid) => {
 }
 
 // ── BLOOD REPORTS ────────────────────────────────────────────────────────────
-export const saveBloodReport = (uid, data) => addDoc(col(uid, 'bloodReports'), { ...data, ts: ts() })
+export const saveBloodReport = async (uid, data) => {
+  const docRef = await addDoc(col(uid, 'bloodReports'), { ...data, ts: ts() })
+  return docRef.id
+}
 export const getBloodReports = async (uid) => {
   const q = query(col(uid, 'bloodReports'), orderBy('ts','desc'))
   const s = await getDocs(q)
   return s.docs.map(d => ({ id: d.id, ...d.data() }))
 }
+export const deleteBloodReport = (uid, id) => deleteDoc(ref(uid, 'bloodReports', id))
 
 // ── MEDICINES ────────────────────────────────────────────────────────────────
 export const saveMedicine     = (uid, id, data) => setDoc(ref(uid, 'medicines', id), { ...data, ts: ts() })

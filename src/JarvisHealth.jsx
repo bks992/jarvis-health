@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import {
-  getFoodLogs, saveFoodLog, deleteFoodLog, getBloodReports, saveBloodReport,
+  getFoodLogs, saveFoodLog, deleteFoodLog, getBloodReports, saveBloodReport, deleteBloodReport,
   getMedicines, saveMedicine, deleteMedicine, getMedLog, saveMedLog,
   getHealthProfile, saveHealthProfile,
   getGuides, saveGuide, getPlans, savePlan,
   getChat, saveChat, getIntolerances, saveIntolerance,
   getDailyLog, saveDailyLog,
 } from './firebase'
-import { askJarvis, imgToBase64, speak, stopSpeaking, unlockSpeech } from './api'
+import { askJarvis, imgToBase64, pdfToBase64, speak, stopSpeaking, unlockSpeech } from './api'
 
 // ─── MEDICAL PROTOCOL KNOWLEDGE BASE ─────────────────────────────────────────
 const PROTOCOL_KNOWLEDGE = `
@@ -1862,8 +1862,196 @@ function MedTab({ uid, db, setDb, showToast }) {
   )
 }
 // ─── TRACK TAB — FIX #2 (English names) FIX #6 (correct data) ───────────────
-function TrackTab({ allLogs }) {
+
+// ─── FOOD GOAL TRACKER ────────────────────────────────────────────────────────
+const DEFAULT_GOALS = {
+  proteinG: 80, waterL: 2, healthDrinksMl: 400,
+  yogaMins: 25, pranayamaMins: 15, walkingSteps: 8000,
+  sleepH: 7.5, creonDoses: 3, fiberG: 25,
+}
+
+function GoalTracker({ allLogs, db, uid, setDb, showToast }) {
+  const [goals, setGoals] = useState({...DEFAULT_GOALS, ...(db.goals||{})})
+  const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const today = new Date().toISOString().slice(0,10)
+  const todayLog = db.todayLog
+
+  const GOAL_DEFS = [
+    {k:'proteinG',    label:'Protein',          unit:'g',    icon:'💪', color:'#10B981', desc:'Muscle & immune repair'},
+    {k:'fiberG',      label:'Fiber',             unit:'g',    icon:'🌾', color:'#F59E0B', desc:'Gut health'},
+    {k:'waterL',      label:'Plain Water',       unit:'L',    icon:'💧', color:'#0EA5E9', desc:'Liver flush'},
+    {k:'healthDrinksMl',label:'Health Drinks',   unit:'ml',   icon:'🫖', color:'#7DD3FC', desc:'Medicinal hydration'},
+    {k:'yogaMins',    label:'Yoga',              unit:'min',  icon:'🧘', color:'#F59E0B', desc:'Body & lymph'},
+    {k:'pranayamaMins',label:'Pranayama',        unit:'min',  icon:'🌬️', color:'#FCD34D', desc:'NK cell boost'},
+    {k:'walkingSteps',label:'Steps',             unit:'',     icon:'🚶', color:'#8B5CF6', desc:'Cancer prevention'},
+    {k:'sleepH',      label:'Sleep',             unit:'h',    icon:'😴', color:'#EC4899', desc:'Growth hormone'},
+    {k:'creonDoses',  label:'CREON doses',       unit:'',     icon:'💊', color:'#0EA5E9', desc:'Enzyme compliance'},
+  ]
+
+  // Last 7 days achievement
+  const last7 = allLogs.slice(0,7)
+  function hit(log, k) {
+    if (!log) return false
+    const v = +log[k]||0
+    return v >= +goals[k]
+  }
+
+  async function saveGoals() {
+    setSaving(true)
+    try {
+      await saveDailyLog(uid, 'goals', goals)
+      setDb({...db, goals})
+      showToast('Goals saved ✓')
+      setEditing(false)
+    } catch(e) { showToast('Error saving goals') }
+    setSaving(false)
+  }
+
+  const todayAchieved = GOAL_DEFS.filter(g => hit(todayLog, g.k)).length
+  const totalGoals = GOAL_DEFS.length
+
+  return (
+    <div>
+      {/* Today's Goal Summary */}
+      <div style={{background:'linear-gradient(135deg,#ECFDF5,#EFF6FF)',border:'1px solid #A7F3D0',borderRadius:14,padding:'16px 18px',marginBottom:14}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+          <div>
+            <div style={{fontSize:15,fontWeight:800,color:'#065F46'}}>🎯 Today's Goal Achievement</div>
+            <div style={{fontSize:12,color:'#047857',marginTop:2}}>{todayAchieved} of {totalGoals} goals hit today</div>
+          </div>
+          <div style={{textAlign:'center'}}>
+            <div style={{fontSize:32,fontWeight:800,color:todayAchieved>=totalGoals*0.8?'#10B981':todayAchieved>=totalGoals*0.5?'#F59E0B':'#EF4444'}}>{Math.round(todayAchieved/totalGoals*100)}%</div>
+          </div>
+        </div>
+        {/* Progress bar */}
+        <div style={{height:8,background:'#D1FAE5',borderRadius:4,overflow:'hidden',marginBottom:8}}>
+          <div style={{width:`${(todayAchieved/totalGoals)*100}%`,height:'100%',background:'#10B981',borderRadius:4,transition:'width 0.8s ease'}}/>
+        </div>
+        {!todayLog&&<div style={{fontSize:11,color:'#059669',marginTop:4}}>→ Log today's data to see your goal progress</div>}
+      </div>
+
+      {/* Goal cards grid */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))',gap:8,marginBottom:14}}>
+        {GOAL_DEFS.map(g=>{
+          const actual = +(todayLog?.[g.k]||0)
+          const target = +goals[g.k]
+          const pct = Math.min(100, target>0 ? Math.round(actual/target*100) : 0)
+          const achieved = actual >= target && actual > 0
+          const hasData = actual > 0
+
+          // 7-day streak for this goal
+          const streak = (() => { let s=0; for(let i=0;i<last7.length;i++){if(hit(last7[i],g.k))s++;else break}; return s })()
+
+          return (
+            <div key={g.k} style={{background:'white',border:`1.5px solid ${achieved?g.color+'50':'#E8EEF4'}`,borderRadius:12,padding:'12px',boxShadow:'0 1px 4px rgba(15,23,42,0.05)',position:'relative',overflow:'hidden'}}>
+              {achieved&&<div style={{position:'absolute',top:0,right:0,width:0,height:0,borderStyle:'solid',borderWidth:'0 28px 28px 0',borderColor:`transparent ${g.color} transparent transparent`}}/>}
+              <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>
+                <span style={{fontSize:18}}>{g.icon}</span>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'#0F172A'}}>{g.label}</div>
+                  <div style={{fontSize:9,color:'#94A3B8'}}>{g.desc}</div>
+                </div>
+              </div>
+              {/* Progress bar */}
+              <div style={{height:5,background:'#F1F5F9',borderRadius:3,overflow:'hidden',marginBottom:6}}>
+                <div style={{width:`${pct}%`,height:'100%',background:achieved?g.color:pct>60?g.color+'99':'#CBD5E1',borderRadius:3,transition:'width 0.6s'}}/>
+              </div>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline'}}>
+                <span style={{fontSize:13,fontWeight:800,color:hasData?(achieved?g.color:'#0F172A'):'#CBD5E1'}}>
+                  {hasData?actual+'':'—'}{g.unit}
+                </span>
+                <span style={{fontSize:10,color:'#94A3B8'}}>/ {target}{g.unit}</span>
+              </div>
+              {streak>0&&<div style={{fontSize:9,fontWeight:700,color:g.color,marginTop:3}}>🔥 {streak} day streak</div>}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* 7-day heatmap */}
+      {last7.length>0&&(
+        <div className="card" style={{marginBottom:14}}>
+          <div className="card-title">7-Day Goal Heatmap</div>
+          <div style={{overflowX:'auto'}}>
+            <table style={{width:'100%',borderCollapse:'collapse',minWidth:400}}>
+              <thead>
+                <tr>
+                  <td style={{fontSize:10,color:'#94A3B8',fontWeight:600,padding:'4px 6px',width:90}}>Goal</td>
+                  {last7.map((l,i)=>(
+                    <td key={i} style={{fontSize:10,color:'#94A3B8',textAlign:'center',padding:'4px 2px',fontWeight:600}}>
+                      {l?new Date(l.date+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short'}):'—'}
+                    </td>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {GOAL_DEFS.map(g=>(
+                  <tr key={g.k}>
+                    <td style={{fontSize:11,color:'#374151',padding:'4px 6px',fontWeight:500}}>{g.icon} {g.label}</td>
+                    {last7.map((l,i)=>{
+                      const achieved = hit(l,g.k)
+                      const hasData = l && +l[g.k]>0
+                      return (
+                        <td key={i} style={{textAlign:'center',padding:'3px 2px'}}>
+                          <div style={{width:28,height:28,borderRadius:6,background:!hasData?'#F1F5F9':achieved?g.color:'#FEE2E2',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto',fontSize:11}}>
+                            {!hasData?'':achieved?'✓':'✗'}
+                          </div>
+                        </td>
+                      )
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div style={{display:'flex',gap:12,marginTop:10,fontSize:11,color:'#64748B'}}>
+            <span style={{display:'flex',alignItems:'center',gap:4}}><div style={{width:12,height:12,borderRadius:3,background:'#10B981'}}/> Goal hit</span>
+            <span style={{display:'flex',alignItems:'center',gap:4}}><div style={{width:12,height:12,borderRadius:3,background:'#FEE2E2'}}/> Missed</span>
+            <span style={{display:'flex',alignItems:'center',gap:4}}><div style={{width:12,height:12,borderRadius:3,background:'#F1F5F9'}}/> Not logged</span>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Goals */}
+      <div className="card">
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+          <div className="card-title" style={{marginBottom:0}}>🎯 My Daily Targets</div>
+          <button onClick={()=>setEditing(e=>!e)} className="btn btn-ou btn-sm">{editing?'Cancel':'Edit Goals'}</button>
+        </div>
+        {editing?(
+          <>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12}}>
+              {GOAL_DEFS.map(g=>(
+                <div key={g.k} className="fg" style={{marginBottom:0}}>
+                  <label className="fl" style={{fontSize:11}}>{g.icon} {g.label} ({g.unit||'count'})</label>
+                  <input type="text" inputMode="decimal" className="fi" value={goals[g.k]||''} style={{fontSize:13}}
+                    onChange={e=>{const v=e.target.value;if(v===''||/^\d*\.?\d*$/.test(v))setGoals(p=>({...p,[g.k]:v}))}}/>
+                </div>
+              ))}
+            </div>
+            <button className="btn btn-gr btn-full" onClick={saveGoals} disabled={saving}>
+              {saving?<><Spin size={14} color="white"/>Saving...</>:'💾 Save My Goals'}
+            </button>
+          </>
+        ):(
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6}}>
+            {GOAL_DEFS.map(g=>(
+              <div key={g.k} style={{textAlign:'center',padding:'8px 6px',background:'#F8FAFC',borderRadius:8}}>
+                <div style={{fontSize:9,color:'#94A3B8',fontWeight:600,marginBottom:2}}>{g.icon} {g.label}</div>
+                <div style={{fontSize:14,fontWeight:800,color:g.color}}>{goals[g.k]}{g.unit}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function TrackTab({ allLogs, db, uid, setDb, showToast }) {
   const [period, setPeriod] = useState(7)
+  const [trackView, setTrackView] = useState('progress')
   const days = useMemo(() => {
     const today = new Date(); const result = []
     for (let i = period-1; i>=0; i--) {
@@ -1879,8 +2067,13 @@ function TrackTab({ allLogs }) {
   let streak=0; for(let i=days.length-1;i>=0;i--){if(days[i].log&&days[i].overall>=40)streak++;else break}
   const avg = k => logged.length ? Math.round(logged.reduce((s,d)=>s+(d[k]||0),0)/logged.length) : 0
 
-  if (logged.length===0) return (
+  if (logged.length===0 && trackView!=='goals') return (
     <div className="fade-up">
+      <div style={{display:'flex',gap:6,marginBottom:14,background:'white',border:'1px solid #E8EEF4',borderRadius:10,padding:3}}>
+        {[['progress','📊 Progress'],['goals','🎯 Goals']].map(([v,l])=>(
+          <button key={v} onClick={()=>setTrackView(v)} style={{flex:1,padding:'8px 4px',borderRadius:8,border:'none',background:trackView===v?'#0EA5E9':'transparent',color:trackView===v?'white':'#64748B',fontSize:12,fontWeight:700,cursor:'pointer',transition:'all 0.15s'}}>{l}</button>
+        ))}
+      </div>
       <div style={{display:'flex',gap:8,marginBottom:16}}>
         {[7,15,30].map(p=><button key={p} className={`btn btn-sm ${period===p?'btn-pr':'btn-ou'}`} onClick={()=>setPeriod(p)}>{p} Days</button>)}
       </div>
@@ -1894,6 +2087,16 @@ function TrackTab({ allLogs }) {
 
   return (
     <div className="fade-up">
+      {/* View switcher */}
+      <div style={{display:'flex',gap:0,background:'white',border:'1px solid #E8EEF4',borderRadius:10,padding:3,marginBottom:14}}>
+        {[['progress','📊 Progress'],['goals','🎯 Goal Tracker']].map(([v,l])=>(
+          <button key={v} onClick={()=>setTrackView(v)} style={{flex:1,padding:'8px 4px',borderRadius:8,border:'none',background:trackView===v?'#0EA5E9':'transparent',color:trackView===v?'white':'#64748B',fontSize:12,fontWeight:700,cursor:'pointer',transition:'all 0.15s'}}>{l}</button>
+        ))}
+      </div>
+
+      {trackView==='goals'&&<GoalTracker allLogs={allLogs} db={db} uid={uid} setDb={setDb} showToast={showToast}/>}
+
+      {trackView==='progress'&&<>
       <div style={{display:'flex',gap:8,marginBottom:14,alignItems:'center'}}>
         {[7,15,30].map(p=><button key={p} className={`btn btn-sm ${period===p?'btn-pr':'btn-ou'}`} onClick={()=>setPeriod(p)}>{p} Days</button>)}
         <span style={{marginLeft:'auto',fontSize:13,color:'#64748B',fontWeight:600}}>🔥 {streak} day streak</span>
@@ -1962,6 +2165,7 @@ function TrackTab({ allLogs }) {
           </div>
         ))}
       </div>
+      </>}
     </div>
   )
 }
@@ -2139,7 +2343,7 @@ function Dashboard({ db, uid, setDb, setTab, allLogs, profile }) {
   )
 }
 // ─── AI COACH — FIX #10 (no auto-speak, only on button press) ────────────────
-function AICoach({ uid, db, userEmail, aiLoading, setAiLoading, profile }) {
+function AICoach({ uid, db, userEmail, aiLoading, setAiLoading, profile, allLogs }) {
   const [msgs, setMsgs] = useState([{
     role:'assistant',
     content:'Namaste. I am JARVIS — your personal cancer recovery assistant.\n\nI have your complete medical history loaded. Ask me anything:\n\n• What should I eat right now?\n• How do I reduce CA 19-9?\n• Give me today\'s full recovery plan\n• Explain my pranayama routine\n• How do I rebuild sperm health after chemo?\n• I feel tired today — what should I do?\n\nPress 🔊 on any response to hear it aloud.'
@@ -2152,10 +2356,51 @@ function AICoach({ uid, db, userEmail, aiLoading, setAiLoading, profile }) {
     const sc = scorePillars(db.todayLog, db.medLog)
     const meds = (db.medicines||[]).map(m=>`${m.name} ${m.dose} (${m.timing})`).join('; ')||'none'
     const intols = (db.intolerances||[]).join(', ')||'none'
-    const foods = (db.foodLogs||[]).filter(f=>f.date===new Date().toLocaleDateString('en-IN')).map(f=>`${f.name} (${f.verdict}, ${f.score}/10)`).join('; ')||'none today'
+    const todayStr = new Date().toLocaleDateString('en-IN')
+    const foods = (db.foodLogs||[]).filter(f=>f.date===todayStr).map(f=>`${f.name} (${f.verdict}, ${f.score}/10)`).join('; ')||'none today'
+    const allFoods = (db.foodLogs||[]).slice(0,15).map(f=>`${f.date}: ${f.name} (${f.verdict}, ${f.score}/10)`).join(' | ')||'none'
     const symptoms = db.todayLog?.symptoms||'none'
     const wt = db.todayLog?.weightKg?`${db.todayLog.weightKg}kg`:'not recorded'
-    return `${PROTOCOL_KNOWLEDGE}\n\nCURRENT PATIENT DATA:\nCA 19-9 current: ${profile.ca199Current||'unknown'} U/mL (target ~6)\nRecovery phase: ${profile.recoveryPhase||'1'}\nCurrent weight: ${wt}\nMedicines taking: ${meds}\nFood intolerances: ${intols}\nToday's food: ${foods}\nSymptoms today: ${symptoms}\nToday's scores: Nutrition ${sc.nutrition}% · Hydration ${sc.hydration}% · Mind&Body ${sc.mindBody}% · Exercise ${sc.exercise}% · Medicine ${sc.medicine}% · Overall ${sc.overall}%\nSurgery: ${profile.surgeryDetails||'distal pancreatectomy'}\nOther notes: ${profile.extraNotes||'none'}\n\nYou are JARVIS — warm, precise, evidence-based. Always connect advice to recovery goals. Be specific, not generic.`
+    const labReports = (db.bloodReports||[]).slice(0,3).map(r=>`[${r.date}]: ${r.summary||r.full?.slice(0,300)}`).join('\n')||'none'
+    const todayLog = db.todayLog ? `Sleep: ${db.todayLog.sleepH||'?'}h | Water: ${db.todayLog.waterL||'?'}L | Health drinks: ${db.todayLog.healthDrinksMl||'?'}ml | Yoga: ${db.todayLog.yogaMins||'?'}min | Pranayama: ${db.todayLog.pranayamaMins||'?'}min | Steps: ${db.todayLog.walkingSteps||'?'} | Gym: ${db.todayLog.gymGroup||'none'} | CREON: ${db.todayLog.creonDoses||'?'} doses | Gas: ${db.todayLog.gasLevel||'?'}/10 | Bloating: ${db.todayLog.bloating||'?'}/10` : 'not logged yet'
+    const recentLogs = (db.allLogs||[]).slice(0,7).map(l=>l?`${l.date}: score ${l.overall||'?'}, protein ${l.proteinG||'?'}g, water ${l.waterL||'?'}L, steps ${l.walkingSteps||'?'}, sleep ${l.sleepH||'?'}h`:'').filter(Boolean).join(' | ')||'no recent logs'
+    const goals = profile.goals||'not set'
+    const targetCA = '~6 U/mL'
+    const chatCtx = msgs.slice(-8).map(m=>`${m.role==='user'?'USER':'JARVIS'}: ${typeof m.content==='string'?m.content.slice(0,200):''}`).join('\n')
+    return `${PROTOCOL_KNOWLEDGE}
+
+COMPLETE PATIENT DATA (use ALL of this to answer):
+CA 19-9 current: ${profile.ca199Current||'unknown'} U/mL (target ${targetCA})
+Recovery phase: ${profile.recoveryPhase||'1'}
+Current weight: ${wt} | Target weight: ${profile.weightTarget||'not set'}kg
+Surgery: ${profile.surgeryDetails||'distal pancreatectomy + liver ablation'}
+Chemo completed: ${profile.chemoHistory||'multiple regimens completed'}
+Other treatments: ${profile.otherTx||'radiation + ablation'}
+Doctor: ${profile.doctorName||'not set'}
+Fertility goal: ${profile.fertilityGoal||'none'}
+Personal goals: ${goals}
+
+MEDICINES & SUPPLEMENTS: ${meds}
+FOOD INTOLERANCES: ${intols}
+
+TODAY'S LOG (${todayStr}): ${todayLog}
+TODAY'S FOOD: ${foods}
+TODAY'S SCORES: Nutrition ${sc.nutrition}% | Hydration ${sc.hydration}% | Mind&Body ${sc.mindBody}% | Exercise ${sc.exercise}% | Medicine ${sc.medicine}% | OVERALL ${sc.overall}%
+SYMPTOMS TODAY: ${symptoms}
+
+RECENT 7-DAY HISTORY:
+${recentLogs}
+
+FOOD HISTORY (last 15 meals):
+${allFoods}
+
+LAB REPORTS (recent):
+${labReports}
+
+RECENT CHAT CONTEXT (last 8 messages):
+${chatCtx}
+
+You are JARVIS — the patient's personal AI cancer recovery coach. You have FULL access to all their data above. Reference specific numbers from their logs when answering. If they ask about something from a previous message, use the chat context. Be warm, specific, evidence-based. Always connect advice to their actual current data.`
   }
 
   async function send(override) {
@@ -2224,77 +2469,312 @@ function AICoach({ uid, db, userEmail, aiLoading, setAiLoading, profile }) {
 }
 
 // ─── BLOOD TAB ────────────────────────────────────────────────────────────────
-function BloodTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading }) {
-  const [mode, setMode] = useState('manual'); const [text, setText] = useState('')
+function BloodTab({ uid, db, setDb, userEmail, aiLoading, setAiLoading, showToast }) {
+  const [mode, setMode] = useState('paste')
+  const [text, setText] = useState('')
   const [img, setImg] = useState(null); const [imgData, setImgData] = useState(null)
-  const [result, setResult] = useState(null); const fileRef = useRef()
+  const [pdfData, setPdfData] = useState(null); const [pdfName, setPdfName] = useState(null)
+  const [result, setResult] = useState(null)
+  const [expandedReport, setExpandedReport] = useState(null)
+  const fileRef = useRef(); const pdfRef = useRef()
 
   const ctx=()=>`Patient: Pancreatic cancer (distal pancreatectomy), liver metastasis treated with radiation + ablation, chemo complete, REMISSION. CA 19-9 target ~6. Partial pancreatectomy = blood sugar regulation affected. Liver had radiation = LFT important. Post-chemo = CBC and immunity markers matter. Medicines: ${(db.medicines||[]).map(m=>m.name).join(', ')||'none'}.`
 
+  const ANALYSIS_PROMPT = `Analyze this lab report for a pancreatic cancer patient in remission. Respond in this EXACT structured format:
+
+##SUMMARY##
+[2-3 sentence overall assessment]
+
+##STATUS##
+[GOOD / NEEDS_ATTENTION / CRITICAL]
+
+##KEY_MARKERS##
+[List each marker as: MARKER_NAME | VALUE | REFERENCE | STATUS(normal/low/high/critical) | MEANING]
+
+##CA199##
+[CA 19-9 specific analysis — current value vs target ~6 U/mL]
+
+##LIVER##
+[LFT analysis — ALT, AST, Bilirubin, Albumin — liver had radiation+ablation]
+
+##BLOOD_SUGAR##
+[Glucose, HbA1c — partial pancreatectomy means insulin affected]
+
+##IMMUNITY##
+[CBC — WBC, lymphocytes, neutrophils — post-chemo immune recovery]
+
+##URGENT##
+[Any values needing immediate doctor attention, or NONE]
+
+##DIET_CHANGES##
+[3-5 specific dietary changes based on these results]
+
+##ENCOURAGEMENT##
+[Warm, specific encouraging note based on the actual numbers]`
+
   async function analyze() {
+    if (mode==='paste' && !text.trim()) { showToast('Please paste your report text first'); return }
+    if (mode==='photo' && !imgData) { showToast('Please upload a photo first'); return }
+    if (mode==='pdf' && !pdfData) { showToast('Please upload a PDF first'); return }
     setAiLoading(true); setResult(null)
     try {
-      const msgs = mode==='manual'
-        ?[{role:'user',content:`${ctx()}\n\nMy blood report:\n${text}\n\nProvide:\n1. SUMMARY (2-3 sentences)\n2. KEY MARKERS (each: value, normal/low/high, what it means)\n3. CA 19-9 (critical — my target is ~6)\n4. LIVER HEALTH (had radiation + ablation)\n5. BLOOD SUGAR (partial pancreatectomy)\n6. IMMUNITY STATUS (post-chemo)\n7. URGENT ACTIONS (anything needing immediate attention)\n8. DIETARY CHANGES (specific foods to add or remove)\n9. ENCOURAGING NOTE`}]
-        :[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:imgData}},{type:'text',text:`${ctx()}\n\nAnalyze this blood report: SUMMARY, KEY MARKERS, CA 19-9, LIVER HEALTH, BLOOD SUGAR, IMMUNITY, URGENT ACTIONS, DIETARY CHANGES, ENCOURAGING NOTE.`}]}]
+      let msgs
+      if (mode==='paste') {
+        msgs = [{role:'user',content:`${ctx()}\n\nMy blood report:\n${text}\n\n${ANALYSIS_PROMPT}`}]
+      } else if (mode==='photo') {
+        msgs = [{role:'user',content:[
+          {type:'image',source:{type:'base64',media_type:'image/jpeg',data:imgData}},
+          {type:'text',text:`${ctx()}\n\n${ANALYSIS_PROMPT}`}
+        ]}]
+      } else if (mode==='pdf') {
+        msgs = [{role:'user',content:[
+          {type:'document',source:{type:'base64',media_type:'application/pdf',data:pdfData}},
+          {type:'text',text:`${ctx()}\n\n${ANALYSIS_PROMPT}`}
+        ]}]
+      }
       const resp = await askJarvis(msgs,'',userEmail)
-      const entry = {id:Date.now(),date:new Date().toLocaleDateString('en-IN'),summary:resp.slice(0,220),full:resp}
-      await saveBloodReport(uid,entry)
-      setDb({...db,bloodReports:[entry,...(db.bloodReports||[])]})
+      const firestoreId = await saveBloodReport(uid, {
+        date: new Date().toLocaleDateString('en-IN'),
+        dateISO: new Date().toISOString().slice(0,10),
+        summary: resp.match(/##SUMMARY##\n([\s\S]*?)(?=##)/)?.[1]?.trim()?.slice(0,300) || resp.slice(0,300),
+        status: resp.match(/##STATUS##\n(\w+)/)?.[1]?.trim() || 'GOOD',
+        full: resp,
+        source: mode,
+        fileName: pdfName || null
+      })
+      const entry = {
+        id: firestoreId,
+        date: new Date().toLocaleDateString('en-IN'),
+        dateISO: new Date().toISOString().slice(0,10),
+        summary: resp.match(/##SUMMARY##\n([\s\S]*?)(?=##)/)?.[1]?.trim()?.slice(0,300) || resp.slice(0,300),
+        status: resp.match(/##STATUS##\n(\w+)/)?.[1]?.trim() || 'GOOD',
+        full: resp, source: mode, fileName: pdfName || null
+      }
+      setDb({...db, bloodReports:[entry,...(db.bloodReports||[])]})
       setResult(entry)
-      // FIX #10: no auto-speak
-    } catch(e){setResult({full:'Error: '+e.message})}
+      setExpandedReport(firestoreId)
+    } catch(e){ showToast('Error: '+e.message); setResult({full:'Error: '+e.message, status:'ERROR'}) }
     setAiLoading(false)
   }
 
+  function parseMarkers(full) {
+    const section = full?.match(/##KEY_MARKERS##\n([\s\S]*?)(?=##|$)/)?.[1] || ''
+    return section.trim().split('\n').filter(l=>l.includes('|')).map(line => {
+      const [name,value,ref,status,meaning] = line.split('|').map(s=>s.trim())
+      return {name,value,ref,status,meaning}
+    }).filter(m=>m.name)
+  }
+
+  function getSection(full, key) {
+    return full?.match(new RegExp(`##${key}##\n([\s\S]*?)(?=##|$)`))?.[1]?.trim() || ''
+  }
+
+  const statusColors = {normal:'#10B981', low:'#F59E0B', high:'#EF4444', critical:'#DC2626', GOOD:'#10B981', NEEDS_ATTENTION:'#F59E0B', CRITICAL:'#EF4444', ERROR:'#DC2626'}
+  const statusBg = {normal:'#F0FDF4', low:'#FFFBEB', high:'#FEF2F2', critical:'#FEF2F2', GOOD:'#F0FDF4', NEEDS_ATTENTION:'#FFFBEB', CRITICAL:'#FEF2F2'}
+
   return (
     <div className="fade-up">
+
+      {/* ── Upload Panel ── */}
       <div className="card">
-        <div className="card-title">Analyze Blood Report</div>
-        <div className="tabs">
-          <button className={`tab${mode==='manual'?' on':''}`} onClick={()=>setMode('manual')}>✏️ Type values</button>
-          <button className={`tab${mode==='photo'?' on':''}`} onClick={()=>setMode('photo')}>📷 Upload photo</button>
+        <div style={{fontSize:15,fontWeight:800,color:'#0F172A',marginBottom:4}}>🧪 Lab Report Analysis</div>
+        <div style={{fontSize:12,color:'#64748B',marginBottom:14}}>Upload or paste your report — JARVIS analyzes every marker against your cancer recovery context</div>
+
+        {/* Mode tabs */}
+        <div style={{display:'flex',gap:0,background:'#F8FAFC',border:'1px solid #E8EEF4',borderRadius:10,padding:3,marginBottom:16}}>
+          {[['paste','📋 Paste Text'],['photo','📷 Photo'],['pdf','📄 PDF']].map(([m,l])=>(
+            <button key={m} onClick={()=>setMode(m)} style={{flex:1,padding:'8px 4px',borderRadius:8,border:'none',background:mode===m?'white':'transparent',color:mode===m?'#7C3AED':'#64748B',fontSize:12,fontWeight:700,cursor:'pointer',transition:'all 0.15s',boxShadow:mode===m?'0 1px 4px rgba(0,0,0,0.1)':'none'}}>{l}</button>
+          ))}
         </div>
-        {mode==='manual'?(
+
+        {/* Paste mode */}
+        {mode==='paste'&&(
           <>
-            <div className="fg"><label className="fl">Enter lab values (one per line)</label>
-              <textarea className="fi" rows={10} value={text} onChange={e=>setText(e.target.value)} style={{fontFamily:'monospace',fontSize:13,height:220}} placeholder={'CA 19-9: 28 U/mL\nHbA1c: 6.2%\nFasting Glucose: 105 mg/dL\nVitamin D: 22 ng/mL\nHemoglobin: 11.5 g/dL\nALT: 38 U/L\nAST: 32 U/L\nTotal Bilirubin: 0.8\n...'}/>
+            <div style={{padding:'10px 12px',background:'#EFF6FF',border:'1px solid #BFDBFE',borderRadius:8,marginBottom:12,fontSize:12,color:'#1D4ED8'}}>
+              💡 Copy your entire report from Agilus, Thyrocare, SRL, or any lab → paste below. JARVIS reads everything.
             </div>
-            <button className="btn btn-pr btn-full" onClick={analyze} disabled={!text.trim()||aiLoading}>{aiLoading?<><Spin size={15} color="white"/>Analyzing...</>:'Analyze Report'}</button>
+            <textarea className="fi" rows={8} value={text} onChange={e=>setText(e.target.value)}
+              style={{fontFamily:'monospace',fontSize:12,height:200,marginBottom:12}}
+              placeholder="Paste full report text here...&#10;&#10;CA 19-9: 28.4 U/mL&#10;Hemoglobin: 11.5 g/dL&#10;Fasting Glucose: 98 mg/dL&#10;ALT (SGPT): 38 U/L&#10;Vitamin D: 22 ng/mL"/>
+            <button className="btn btn-full" onClick={analyze} disabled={!text.trim()||aiLoading}
+              style={{background:'#7C3AED',color:'white',border:'none',padding:'13px',fontSize:14,fontWeight:700,borderRadius:10,cursor:'pointer'}}>
+              {aiLoading?<><Spin size={15} color="white"/>Analyzing your report...</>:'🔬 Analyze Report'}
+            </button>
           </>
-        ):(
+        )}
+
+        {/* Photo mode */}
+        {mode==='photo'&&(
           <>
             <div className={`upload-z${img?' has-img':''}`} onClick={()=>!img&&fileRef.current.click()}>
-              {img?<img src={img} alt="report" style={{width:'100%',maxHeight:220,objectFit:'contain'}}/>:(<><div style={{fontSize:36,marginBottom:8}}>📋</div><div style={{fontSize:14,fontWeight:600,color:'#64748B'}}>Upload blood test report</div><div style={{fontSize:12,color:'#94A3B8',marginTop:4}}>Photo or scan</div></>)}
+              {img?<img src={img} alt="report" style={{width:'100%',maxHeight:220,objectFit:'contain'}}/>
+                :(<><div style={{fontSize:36,marginBottom:8}}>📋</div><div style={{fontSize:14,fontWeight:600,color:'#64748B'}}>Tap to upload lab report photo</div><div style={{fontSize:12,color:'#94A3B8',marginTop:4}}>Works with Agilus, SRL, Thyrocare, any lab printout</div></>)}
             </div>
             <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={async e=>{const f=e.target.files[0];if(!f)return;setImg(URL.createObjectURL(f));setImgData(await imgToBase64(f))}}/>
-            <div className="upload-btns">
+            <div className="upload-btns" style={{marginTop:10}}>
               <label className="upload-lbl">📷 Camera<input type="file" accept="image/*" capture="environment" style={{display:'none'}} onChange={async e=>{const f=e.target.files[0];if(!f)return;setImg(URL.createObjectURL(f));setImgData(await imgToBase64(f))}}/></label>
               <label className="upload-lbl">🖼 Gallery<input type="file" accept="image/*" style={{display:'none'}} onChange={async e=>{const f=e.target.files[0];if(!f)return;setImg(URL.createObjectURL(f));setImgData(await imgToBase64(f))}}/></label>
             </div>
-            {img&&<button className="btn btn-pr btn-full" style={{marginTop:10}} onClick={analyze} disabled={!imgData||aiLoading}>{aiLoading?<><Spin size={15} color="white"/>Analyzing...</>:'Analyze Report'}</button>}
+            {img&&<button className="btn btn-full" style={{marginTop:10,background:'#7C3AED',color:'white',border:'none',padding:'13px',fontSize:14,fontWeight:700,borderRadius:10,cursor:'pointer'}} onClick={analyze} disabled={!imgData||aiLoading}>{aiLoading?<><Spin size={15} color="white"/>Analyzing...</>:'🔬 Analyze Report'}</button>}
+          </>
+        )}
+
+        {/* PDF mode */}
+        {mode==='pdf'&&(
+          <>
+            <div style={{padding:'10px 12px',background:'#F5F3FF',border:'1px solid #DDD6FE',borderRadius:8,marginBottom:12,fontSize:12,color:'#7C3AED'}}>
+              📄 Upload PDF from Agilus Diagnostics, SRL, Thyrocare, Apollo, or any lab. JARVIS reads the full document.
+            </div>
+            {!pdfData?(
+              <label style={{display:'block',cursor:'pointer'}}>
+                <div style={{border:'2px dashed #DDD6FE',borderRadius:12,padding:'32px 16px',textAlign:'center',background:'#FAFAFF',transition:'all 0.15s'}}
+                  onMouseEnter={e=>e.currentTarget.style.background='#F5F3FF'}
+                  onMouseLeave={e=>e.currentTarget.style.background='#FAFAFF'}>
+                  <div style={{fontSize:40,marginBottom:8}}>📄</div>
+                  <div style={{fontSize:14,fontWeight:700,color:'#7C3AED',marginBottom:4}}>Tap to upload PDF report</div>
+                  <div style={{fontSize:12,color:'#94A3B8'}}>Max 10MB · Any lab report PDF</div>
+                </div>
+                <input ref={pdfRef} type="file" accept="application/pdf" style={{display:'none'}} onChange={async e=>{
+                  const f=e.target.files[0]; if(!f) return
+                  if(f.size>10*1024*1024){showToast('PDF too large (max 10MB)');return}
+                  setPdfName(f.name)
+                  setPdfData(await pdfToBase64(f))
+                  showToast('PDF loaded: '+f.name)
+                }}/>
+              </label>
+            ):(
+              <div style={{padding:'14px 16px',background:'#F5F3FF',border:'1.5px solid #7C3AED',borderRadius:12,display:'flex',alignItems:'center',gap:12,marginBottom:12}}>
+                <span style={{fontSize:28}}>📄</span>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:700,color:'#7C3AED'}}>{pdfName}</div>
+                  <div style={{fontSize:11,color:'#94A3B8'}}>PDF loaded and ready to analyze</div>
+                </div>
+                <button onClick={()=>{setPdfData(null);setPdfName(null)}} style={{padding:'5px 10px',borderRadius:7,border:'1px solid #DDD6FE',background:'white',color:'#EF4444',fontSize:12,cursor:'pointer'}}>Remove</button>
+              </div>
+            )}
+            {pdfData&&<button className="btn btn-full" style={{background:'#7C3AED',color:'white',border:'none',padding:'13px',fontSize:14,fontWeight:700,borderRadius:10,cursor:'pointer'}} onClick={analyze} disabled={aiLoading}>{aiLoading?<><Spin size={15} color="white"/>Reading PDF & Analyzing...</>:'🔬 Analyze PDF Report'}</button>}
           </>
         )}
       </div>
-      {result&&(
-        <div className="card fade-up">
-          <div style={{display:'flex',justifyContent:'space-between',marginBottom:12}}>
-            <div className="card-title" style={{marginBottom:0}}>Analysis — {result.date}</div>
-            {/* FIX #10: voice only on button press */}
-            <button onClick={()=>speak(result.full,{max:450})} className="btn btn-ou btn-sm">🔊 Listen</button>
+
+      {/* ── Current Analysis Result ── */}
+      {result&&!result.full?.startsWith('Error')&&(
+        <div className="card fade-up" style={{borderTop:`4px solid ${statusColors[result.status]||'#7C3AED'}`}}>
+          <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:16}}>
+            <div style={{width:52,height:52,borderRadius:14,background:statusBg[result.status]||'#F5F3FF',border:`2px solid ${statusColors[result.status]||'#7C3AED'}30`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,flexShrink:0}}>
+              {result.status==='GOOD'?'✅':result.status==='CRITICAL'?'🚨':'⚠️'}
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:16,fontWeight:800,color:'#0F172A'}}>Lab Report — {result.date}</div>
+              <div style={{fontSize:12,fontWeight:700,color:statusColors[result.status]||'#7C3AED',marginTop:2}}>{result.status?.replace('_',' ')}</div>
+            </div>
+            <button onClick={()=>speak(result.full,{max:480})} className="btn btn-ou btn-sm">🔊</button>
           </div>
-          <div style={{fontSize:13,color:'#374151',lineHeight:1.8,whiteSpace:'pre-wrap'}}>{result.full}</div>
-          <div style={{marginTop:12,padding:'10px 12px',background:'#FFFBEB',border:'1px solid #FDE68A',borderRadius:8,fontSize:12,color:'#92400E'}}>⚠ Share with your oncologist for all medical decisions.</div>
+
+          {/* Summary */}
+          <div style={{padding:'12px 14px',background:'#F8FAFC',borderRadius:10,marginBottom:14,fontSize:13,color:'#374151',lineHeight:1.7}}>
+            {getSection(result.full,'SUMMARY')}
+          </div>
+
+          {/* Key Markers Table - Agilus style */}
+          {parseMarkers(result.full).length>0&&(
+            <div style={{marginBottom:14}}>
+              <div style={{fontSize:11,fontWeight:700,color:'#64748B',textTransform:'uppercase',letterSpacing:0.6,marginBottom:8}}>Key Markers</div>
+              <div style={{border:'1px solid #E8EEF4',borderRadius:10,overflow:'hidden'}}>
+                <div style={{display:'grid',gridTemplateColumns:'1.5fr 1fr 1fr 0.8fr',background:'#F8FAFC',padding:'8px 12px',borderBottom:'1px solid #E8EEF4'}}>
+                  {['Test','Result','Reference','Status'].map(h=><div key={h} style={{fontSize:10,fontWeight:700,color:'#94A3B8',textTransform:'uppercase'}}>{h}</div>)}
+                </div>
+                {parseMarkers(result.full).map((m,i)=>(
+                  <div key={i} style={{display:'grid',gridTemplateColumns:'1.5fr 1fr 1fr 0.8fr',padding:'10px 12px',borderBottom:i<parseMarkers(result.full).length-1?'1px solid #F8FAFC':'none',background:i%2===0?'white':'#FAFAFA',alignItems:'center'}}>
+                    <div style={{fontSize:12,fontWeight:600,color:'#0F172A'}}>{m.name}</div>
+                    <div style={{fontSize:13,fontWeight:800,color:statusColors[m.status]||'#0F172A'}}>{m.value}</div>
+                    <div style={{fontSize:11,color:'#94A3B8'}}>{m.ref}</div>
+                    <div style={{padding:'2px 7px',borderRadius:5,background:statusBg[m.status]||'#F8FAFC',color:statusColors[m.status]||'#64748B',fontSize:10,fontWeight:700,textTransform:'uppercase',display:'inline-block'}}>{m.status}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Sections */}
+          {[['CA 19-9','CA199','#7C3AED'],['Liver Health','LIVER','#F59E0B'],['Blood Sugar','BLOOD_SUGAR','#0EA5E9'],['Immunity','IMMUNITY','#10B981'],['Urgent Actions','URGENT','#EF4444'],['Diet Changes','DIET_CHANGES','#10B981'],['Encouragement','ENCOURAGEMENT','#10B981']].map(([label,key,color])=>{
+            const content = getSection(result.full, key)
+            if (!content) return null
+            return (
+              <div key={key} style={{marginBottom:10,padding:'10px 12px',background:`${color}07`,border:`1px solid ${color}20`,borderRadius:9,borderLeft:`3px solid ${color}`}}>
+                <div style={{fontSize:10,fontWeight:700,color:color,marginBottom:4,textTransform:'uppercase'}}>{label}</div>
+                <div style={{fontSize:12,color:'#374151',lineHeight:1.7}}>{content}</div>
+              </div>
+            )
+          })}
+          <div style={{marginTop:10,padding:'10px 12px',background:'#FFFBEB',border:'1px solid #FDE68A',borderRadius:8,fontSize:11,color:'#92400E'}}>⚠ Always share with your oncologist before changing any medication or treatment.</div>
         </div>
       )}
+
+      {/* ── Report History - Agilus style ── */}
       {(db.bloodReports||[]).length>0&&(
-        <div className="card"><div className="card-title">History</div>
-          {(db.bloodReports||[]).slice(0,4).map(r=>(
-            <div key={r.id} style={{padding:'10px 0',borderBottom:'1px solid #F1F5F9'}}>
-              <div style={{fontSize:11,fontWeight:700,color:'#7C3AED',marginBottom:3}}>{r.date}</div>
-              <div style={{fontSize:12,color:'#64748B'}}>{r.summary?.slice(0,140)}...</div>
-            </div>
-          ))}
+        <div className="card">
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+            <div className="card-title" style={{marginBottom:0}}>🗂 Report History</div>
+            <span style={{fontSize:12,color:'#94A3B8'}}>{(db.bloodReports||[]).length} reports</span>
+          </div>
+          {(db.bloodReports||[]).map((r,i)=>{
+            const isOpen = expandedReport===r.id
+            const markers = parseMarkers(r.full||'')
+            const urgent = getSection(r.full||'','URGENT')
+            return (
+              <div key={r.id} style={{border:`1.5px solid ${isOpen?statusColors[r.status]+'40':'#E8EEF4'}`,borderRadius:12,marginBottom:8,overflow:'hidden'}}>
+                {/* Row header */}
+                <div style={{display:'flex',alignItems:'center',gap:10,padding:'12px 14px',cursor:'pointer',background:isOpen?`${statusColors[r.status]||'#7C3AED'}06`:'white'}} onClick={()=>setExpandedReport(isOpen?null:r.id)}>
+                  <div style={{width:10,height:10,borderRadius:'50%',background:statusColors[r.status]||'#7C3AED',flexShrink:0}}/>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:13,fontWeight:700,color:'#0F172A'}}>Lab Report — {r.date}</div>
+                    <div style={{fontSize:11,color:'#94A3B8',marginTop:1}}>{r.source==='pdf'?`📄 ${r.fileName||'PDF'}`:'Text/Photo'} · {markers.length} markers analyzed</div>
+                  </div>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <span style={{padding:'3px 9px',borderRadius:20,fontSize:10,fontWeight:700,background:statusBg[r.status]||'#F5F3FF',color:statusColors[r.status]||'#7C3AED'}}>{r.status?.replace('_',' ')||'ANALYZED'}</span>
+                    <button onClick={async e=>{
+                      e.stopPropagation()
+                      if(!confirm('Delete this report?')) return
+                      try{
+                        await deleteBloodReport(uid,r.id)
+                        setDb({...db,bloodReports:(db.bloodReports||[]).filter(x=>x.id!==r.id)})
+                        showToast('Report deleted ✓')
+                        if(expandedReport===r.id) setExpandedReport(null)
+                      }catch(err){showToast('Error: '+err.message)}
+                    }} style={{width:28,height:28,borderRadius:7,border:'1px solid #FECACA',background:'#FEF2F2',color:'#EF4444',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',WebkitTapHighlightColor:'transparent'}}>×</button>
+                    <span style={{color:'#94A3B8',fontSize:11}}>{isOpen?'▲':'▼'}</span>
+                  </div>
+                </div>
+
+                {/* Expanded view */}
+                {isOpen&&(
+                  <div style={{borderTop:`1px solid ${statusColors[r.status]||'#7C3AED'}20`,padding:'14px'}}>
+                    <div style={{fontSize:12,color:'#374151',lineHeight:1.7,marginBottom:12}}>{getSection(r.full,'SUMMARY')||r.summary}</div>
+                    {markers.length>0&&(
+                      <div style={{border:'1px solid #E8EEF4',borderRadius:9,overflow:'hidden',marginBottom:10}}>
+                        <div style={{display:'grid',gridTemplateColumns:'1.5fr 1fr 1fr 0.8fr',background:'#F8FAFC',padding:'7px 12px',borderBottom:'1px solid #E8EEF4'}}>
+                          {['Test','Result','Reference','Status'].map(h=><div key={h} style={{fontSize:9,fontWeight:700,color:'#94A3B8',textTransform:'uppercase'}}>{h}</div>)}
+                        </div>
+                        {markers.map((m,mi)=>(
+                          <div key={mi} style={{display:'grid',gridTemplateColumns:'1.5fr 1fr 1fr 0.8fr',padding:'8px 12px',borderBottom:mi<markers.length-1?'1px solid #F8FAFC':'none',background:mi%2===0?'white':'#FAFAFA',alignItems:'center'}}>
+                            <div style={{fontSize:11,fontWeight:600,color:'#0F172A'}}>{m.name}</div>
+                            <div style={{fontSize:12,fontWeight:800,color:statusColors[m.status]||'#0F172A'}}>{m.value}</div>
+                            <div style={{fontSize:10,color:'#94A3B8'}}>{m.ref}</div>
+                            <div style={{padding:'2px 6px',borderRadius:4,background:statusBg[m.status]||'#F8FAFC',color:statusColors[m.status]||'#64748B',fontSize:9,fontWeight:700,textTransform:'uppercase',display:'inline-block'}}>{m.status}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {urgent&&urgent.toUpperCase()!=='NONE'&&<div style={{padding:'9px 12px',background:'#FEF2F2',border:'1px solid #FECACA',borderRadius:8,fontSize:12,color:'#DC2626',marginBottom:8}}><strong>⚠ Urgent:</strong> {urgent}</div>}
+                    <div style={{display:'flex',gap:8}}>
+                      <button onClick={()=>speak(r.full,{max:500})} className="btn btn-ou btn-sm" style={{flex:1}}>🔊 Listen to full analysis</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
     </div>
@@ -3065,9 +3545,10 @@ export default function JarvisHealth({ user, onLogout }) {
       const pastLogs=(await Promise.all(logPs)).filter(Boolean)
       const todayLog=daily&&Object.keys(daily).length>3?{...daily,date:today}:null
       setAllLogs(todayLog?[todayLog,...pastLogs]:pastLogs)
+      const goalsDoc = await getDailyLog(uid,'goals').catch(()=>({}))
       setDb({foodLogs:food,bloodReports:blood,recoveryGuides:guides,fitnessPlans:plans,
              intolerances:intols,todayChecks:daily?.checks||{},todayLog,medicines:meds,
-             medLog:{...medlog,date:today}})
+             medLog:{...medlog,date:today},goals:goalsDoc||{}})
       setProfile(prof||{})
       setReady(true)
     }
@@ -3118,7 +3599,7 @@ export default function JarvisHealth({ user, onLogout }) {
     }
   }
 
-  const shared={uid,db,setDb:dbUpdate,userEmail,aiLoading,setAiLoading,showToast,profile}
+  const shared={uid,db:{...db,allLogs},setDb:dbUpdate,userEmail,aiLoading,setAiLoading,showToast,profile}
   const todaySc=scorePillars(db.todayLog,db.medLog)
   const hasNoLog=!db.todayLog
 
@@ -3191,13 +3672,13 @@ export default function JarvisHealth({ user, onLogout }) {
             <Dashboard {...shared} setTab={handleTab} allLogs={allLogs}/>
           </div>
           {visited.has('log')   &&<div style={{display:tab==='log'?'block':'none'}}><LogTab {...shared}/></div>}
-          {visited.has('track') &&<div style={{display:tab==='track'?'block':'none'}}><TrackTab allLogs={allLogs}/></div>}
+          {visited.has('track') &&<div style={{display:tab==='track'?'block':'none'}}><TrackTab allLogs={allLogs} db={db} uid={uid} setDb={dbUpdate} showToast={showToast}/></div>}
           {visited.has('food')  &&<div style={{display:tab==='food'?'block':'none'}}><FoodTab {...shared}/></div>}
           {visited.has('meds')  &&<div style={{display:tab==='meds'?'block':'none'}}><MedTab {...shared}/></div>}
-          {visited.has('blood') &&<div style={{display:tab==='blood'?'block':'none'}}><BloodTab {...shared}/></div>}
+          {visited.has('blood') &&<div style={{display:tab==='blood'?'block':'none'}}><BloodTab {...shared} showToast={showToast}/></div>}
           {visited.has('fit')   &&<div style={{display:tab==='fit'?'block':'none'}}><FitTab {...shared}/></div>}
           {visited.has('heal')  &&<div style={{display:tab==='heal'?'block':'none'}}><HealTab {...shared}/></div>}
-          {visited.has('ai')    &&<div style={{display:tab==='ai'?'block':'none'}}><AICoach uid={uid} db={db} userEmail={userEmail} aiLoading={aiLoading} setAiLoading={setAiLoading} profile={profile}/></div>}
+          {visited.has('ai')    &&<div style={{display:tab==='ai'?'block':'none'}}><AICoach uid={uid} db={db} userEmail={userEmail} aiLoading={aiLoading} setAiLoading={setAiLoading} profile={profile} allLogs={allLogs}/></div>}
           {visited.has('prof')  &&<div style={{display:tab==='prof'?'block':'none'}}><ProfileTab uid={uid} profile={profile} setProfile={setProfile} showToast={showToast}/></div>}
           {visited.has('super') &&<div style={{display:tab==='super'?'block':'none'}}><SuperTab userEmail={userEmail} aiLoading={aiLoading} setAiLoading={setAiLoading}/></div>}
           {visited.has('plan')  &&<div style={{display:tab==='plan'?'block':'none'}}><RoutineTab userEmail={userEmail} aiLoading={aiLoading} setAiLoading={setAiLoading}/></div>}
